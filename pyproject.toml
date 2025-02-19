@@ -1,0 +1,51 @@
+[tool.poetry]
+name = "ChemVista"
+version = "0.1.0"
+description = ""
+authors = ["ivan <imtambovcev@gmail.com>"]
+readme = "README.md"
+packages = [{include = "chemvista"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+ase = "^3.22.1"
+matplotlib = "^3.7.1"
+pyvista = "^0.38.5"
+networkx = "^3.0"
+pathlib = "^1.0.1"
+numpy = "^1.0"
+pandas = "^2.1.0"
+yattag = "^1.15.1"
+pyperclip = "^1.8.2"
+ipython = "^8.15.0"
+rdkit = "^2023.3.3"
+scikit-learn = "^1.3.0"
+cclib = "^1.8"
+scipy = "^1.11.2"
+nx-ase = {git = "https://github.com/imtambovtcev/nx_ase.git"}
+pyqt5 = "^5.15.11"
+pyvistaqt = "^0.11.2"
+vtk = "<9.4.0"
+
+[tool.poetry.extras]
+qt = ["PyQt5", "pyvistaqt"]
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.2.0"
+pytest-cov = "^4.1.0"
+ipykernel = "^6.25.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+neb_plot = 'chem_utils.neb_plot:main'
+xyz_to_allxyz = 'chem_utils.xyz_to_allxyz:main'
+check_and_copy_path = 'chem_utils.check_and_copy_path:main'
+format_xyz = 'chem_utils.format_xyz:main'
+get_image = 'chem_utils.get_image:main'
+get_orb = 'chem_utils.get_orb:main'
+mirror_xyz = 'chem_utils.mirror_xyz:main'
+molecular_distance = 'chem_utils.molecular_distance:main'
+render_molecule = 'chem_utils.render_molecule:main'
