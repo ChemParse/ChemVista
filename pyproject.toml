@@ -26,6 +26,7 @@ nx-ase = {git = "https://github.com/imtambovtcev/nx_ase.git"}
 pyqt5 = "^5.15.11"
 pyvistaqt = "^0.11.2"
 vtk = "<9.4.0"
+pytest-qt = "^4"
 
 [tool.poetry.extras]
 qt = ["PyQt5", "pyvistaqt"]
@@ -34,6 +35,10 @@ qt = ["PyQt5", "pyvistaqt"]
 pre-commit = "^3.2.0"
 pytest-cov = "^4.1.0"
 ipykernel = "^6.25.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^8.3.4"
+pytest-qt = "^4.2.0"
 
 [build-system]
 requires = ["poetry-core"]

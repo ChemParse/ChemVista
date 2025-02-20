@@ -65,8 +65,10 @@ class ScalarFieldSettingsDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
+        save_button.setObjectName("Save")  # Set object name for testing
         save_button.clicked.connect(self.accept)
         cancel_button = QPushButton("Cancel")
+        cancel_button.setObjectName("Cancel")  # Set object name for testing
         cancel_button.clicked.connect(self.reject)
 
         button_layout.addWidget(save_button)
@@ -142,8 +144,10 @@ class RenderSettingsDialog(QDialog):
         # Buttons
         button_layout = QHBoxLayout()
         save_button = QPushButton("Save")
+        save_button.setObjectName("Save")  # Set object name for testing
         save_button.clicked.connect(self.accept)
         cancel_button = QPushButton("Cancel")
+        cancel_button.setObjectName("Cancel")  # Set object name for testing
         cancel_button.clicked.connect(self.reject)
 
         button_layout.addWidget(save_button)

@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QLabel, QPushButton
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QIcon
 import pathlib
+# Import the compiled resources
+from ..resources import icons_rc  # Add this import
 
 
 class MoleculeListItem(QWidget):
