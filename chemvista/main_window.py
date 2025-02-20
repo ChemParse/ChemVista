@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import (QMainWindow, QDockWidget, QListWidget,
-                             QMenuBar, QToolBar, QAction, QFileDialog,
-                             QMessageBox, QWidget, QVBoxLayout, QLabel)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import (QMainWindow, QDockWidget, QAction, QFileDialog,
+                             QMessageBox, QToolBar, QDialog)
+from PyQt5.QtCore import Qt
 import pyvista as pv
 from pyvistaqt import QtInteractor
 import os
@@ -9,44 +8,10 @@ from nx_ase.molecule import Molecule
 from .scene_objects import SceneManager
 import pathlib
 from .renderer import MoleculeRenderer
-
-
-class ObjectListWidget(QWidget):
-    selection_changed = pyqtSignal(int)
-
-    def __init__(self, scene_manager, parent=None):
-        super().__init__(parent)
-        self.scene_manager = scene_manager
-
-        layout = QVBoxLayout()
-        self.list_widget = QListWidget()
-        self.list_widget.itemSelectionChanged.connect(
-            self._on_selection_changed)
-        layout.addWidget(self.list_widget)
-
-        # Connect to scene manager signals
-        self.scene_manager.object_added.connect(self._on_object_added)
-        self.scene_manager.object_removed.connect(self._on_object_removed)
-
-        self.setLayout(layout)
-
-    def _on_object_added(self, scene_obj):
-        self.list_widget.addItem(scene_obj.name)
-
-    def _on_object_removed(self, index):
-        self.list_widget.takeItem(index)
-
-    def _on_selection_changed(self):
-        selected_items = self.list_widget.selectedItems()
-        if selected_items:
-            index = self.list_widget.row(selected_items[0])
-            self.selection_changed.emit(index)
-
-    def get_selected_index(self):
-        selected_items = self.list_widget.selectedItems()
-        if selected_items:
-            return self.list_widget.row(selected_items[0])
-        return None
+from .widgets.object_list import ObjectListWidget
+from PyQt5 import QtCore
+import chemvista.resources.icons_rc
+from .widgets.settings_dialog import RenderSettingsDialog
 
 
 class ChemVistaApp(QMainWindow):
@@ -127,8 +92,12 @@ class ChemVistaApp(QMainWindow):
         self.object_list_widget = ObjectListWidget(self.scene_manager)
         self.object_list_widget.selection_changed.connect(
             self.on_selection_changed)
-        dock.setWidget(self.object_list_widget)
+        self.object_list_widget.visibility_changed.connect(
+            self.on_visibility_changed)
+        self.object_list_widget.settings_requested.connect(
+            self.on_settings_requested)
 
+        dock.setWidget(self.object_list_widget)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
     def create_pyvista_widget(self):
@@ -187,10 +156,14 @@ class ChemVistaApp(QMainWindow):
 
         for scene_obj in self.scene_manager.objects:
             if scene_obj.visible:
+                settings = scene_obj.render_settings
                 self.renderer.render_molecule(
                     molecule=scene_obj.molecule,
                     plotter=self.plotter,
-                    alpha=scene_obj.opacity
+                    show_hydrogens=settings.show_hydrogens,
+                    alpha=settings.alpha,  # Changed from opacity to alpha
+                    show_numbers=settings.show_numbers,
+                    resolution=settings.resolution
                 )
 
         self.plotter.reset_camera()
@@ -199,3 +172,19 @@ class ChemVistaApp(QMainWindow):
     def on_selection_changed(self):
         """Handle object selection in the list"""
         pass
+
+    def on_visibility_changed(self, index: int, visible: bool):
+        """Handle visibility toggle for a molecule"""
+        if 0 <= index < len(self.scene_manager.objects):
+            self.scene_manager.objects[index].visible = visible
+            self.refresh_view()
+
+    def on_settings_requested(self, index: int):
+        """Handle settings button click for a molecule"""
+        if 0 <= index < len(self.scene_manager.objects):
+            scene_obj = self.scene_manager.get_object(index)
+            dialog = RenderSettingsDialog(scene_obj.render_settings, self)
+
+            if dialog.exec_() == QDialog.Accepted:
+                scene_obj.render_settings = dialog.get_settings()
+                self.refresh_view()

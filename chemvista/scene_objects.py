@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 import numpy as np
 from nx_ase.molecule import Molecule
 from PyQt5.QtCore import QObject, pyqtSignal
+from .render_settings import RenderSettings, GlobalSettings
 
 
 @dataclass
@@ -10,8 +11,8 @@ class SceneObject:
     name: str
     molecule: Molecule
     visible: bool = True
-    color_scheme: str = 'default'
-    opacity: float = 1.0
+    render_settings: RenderSettings = field(
+        default_factory=GlobalSettings.get_default_settings)
 
 
 class SceneManager(QObject):
