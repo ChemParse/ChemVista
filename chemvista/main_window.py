@@ -4,14 +4,14 @@ from PyQt5.QtCore import Qt
 import pyvista as pv
 from pyvistaqt import QtInteractor
 import os
-from nx_ase.molecule import Molecule
-from .scene_objects import SceneManager
+from nx_ase import Molecule, ScalarField
+from .scene_objects import SceneManager, SceneObject, ScalarFieldObject  # Added imports
 import pathlib
-from .renderer import MoleculeRenderer
+from .renderer import MoleculeRenderer, ScalarFieldRenderer
 from .widgets.object_list import ObjectListWidget
 from PyQt5 import QtCore
 import chemvista.resources.icons_rc
-from .widgets.settings_dialog import RenderSettingsDialog
+from .widgets.settings_dialog import RenderSettingsDialog, ScalarFieldSettingsDialog
 
 
 class ChemVistaApp(QMainWindow):
@@ -23,8 +23,9 @@ class ChemVistaApp(QMainWindow):
         # Initialize scene manager
         self.scene_manager = SceneManager()
 
-        # Initialize renderer
-        self.renderer = MoleculeRenderer()
+        # Initialize renderers
+        self.molecule_renderer = MoleculeRenderer()
+        self.scalar_field_renderer = ScalarFieldRenderer()
 
         # Create menu bar
         self.create_menu_bar()
@@ -41,12 +42,13 @@ class ChemVistaApp(QMainWindow):
         # Debug: Load test molecule
         if debug:
             try:
-                test_file = pathlib.Path(
-                    "/home/ivan/Science/hannes_nanomotors/nanomotors/fluorene/0/B3LYP/6_31G_d_p/cis1.xyz")
-                if test_file.exists():
-                    molecule = Molecule.load(test_file)
-                    self.scene_manager.add_object("debug_molecule", molecule)
-                    self.refresh_view()
+                test_molecule = pathlib.Path(
+                    __file__).parent.parent / 'tests' / 'data' / 'mpf_motor.xyz'
+                # self._load_molecule_from_xyz(test_molecule)
+                test_scalar_field = pathlib.Path(
+                    __file__).parent.parent / 'tests' / 'data' / 'C2H4.eldens.cube'
+                # self._load_scalar_field(test_scalar_field)
+                self._load_molecule_from_cube(test_scalar_field)
             except Exception as e:
                 print(f"Debug load failed: {e}")
 
@@ -104,20 +106,65 @@ class ChemVistaApp(QMainWindow):
         self.plotter = QtInteractor(self)
         self.setCentralWidget(self.plotter)
 
+    def _load_molecule_from_xyz(self, filepath: pathlib.Path):
+        """Load molecule from XYZ file"""
+        molecule = Molecule.load(filepath)
+        self.scene_manager.add_object(filepath.name, molecule)
+        self.refresh_view()
+
+    def _load_molecule_from_cube(self, filepath: pathlib.Path):
+        """Load both molecule and its scalar field from cube file"""
+        molecule = Molecule.load_from_cube(filepath)
+
+        # Add molecule first
+        mol_name = filepath.name
+        self.scene_manager.add_object(mol_name, molecule)
+
+        # Then add its associated scalar field
+        for field_name, scalar_field in molecule.scalar_fields.items():
+            self.scene_manager.add_object(field_name, scalar_field)
+
+        self.refresh_view()
+
+    def _load_scalar_field(self, filepath: pathlib.Path):
+        """Load scalar field from cube file"""
+        scalar_field = ScalarField.load_cube(filepath)
+        field_name = f"{filepath.stem}_field"
+        self.scene_manager.add_object(field_name, scalar_field)
+        self.refresh_view()
+
     def open_file(self):
+        """UI function to handle file opening"""
         try:
             file_name, _ = QFileDialog.getOpenFileName(
                 self,
-                "Open Molecule File",
+                "Open File",
                 "",
-                "XYZ files (*.xyz);;All Files (*)"
+                "All Supported Files (*.xyz *.cube);;XYZ files (*.xyz);;Cube files (*.cube);;All Files (*)"
             )
 
             if file_name:
-                molecule = Molecule.load(file_name)
-                name = os.path.basename(file_name)
-                self.scene_manager.add_object(name, molecule)
-                self.refresh_view()
+                filepath = pathlib.Path(file_name)
+                if filepath.suffix.lower() == '.cube':
+                    msg = QMessageBox(self)
+                    msg.setWindowTitle("Load Cube File")
+                    msg.setText("How would you like to load this cube file?")
+
+                    # Add custom buttons
+                    molecule_button = msg.addButton(
+                        "As Molecule + Field", QMessageBox.ActionRole)
+                    field_button = msg.addButton(
+                        "As Scalar Field Only", QMessageBox.ActionRole)
+                    msg.addButton(QMessageBox.Cancel)
+
+                    msg.exec_()
+
+                    if msg.clickedButton() == molecule_button:
+                        self._load_molecule_from_cube(filepath)
+                    elif msg.clickedButton() == field_button:
+                        self._load_scalar_field(filepath)
+                else:
+                    self._load_molecule_from_xyz(filepath)
 
         except Exception as e:
             QMessageBox.critical(
@@ -156,15 +203,20 @@ class ChemVistaApp(QMainWindow):
 
         for scene_obj in self.scene_manager.objects:
             if scene_obj.visible:
-                settings = scene_obj.render_settings
-                self.renderer.render_molecule(
-                    molecule=scene_obj.molecule,
-                    plotter=self.plotter,
-                    show_hydrogens=settings.show_hydrogens,
-                    alpha=settings.alpha,  # Changed from opacity to alpha
-                    show_numbers=settings.show_numbers,
-                    resolution=settings.resolution
-                )
+                if isinstance(scene_obj, SceneObject):
+                    # Render molecule
+                    self.molecule_renderer.render(
+                        molecule=scene_obj.molecule,
+                        plotter=self.plotter,
+                        settings=vars(scene_obj.render_settings)
+                    )
+                elif isinstance(scene_obj, ScalarFieldObject):
+                    # Render scalar field
+                    self.scalar_field_renderer.render(
+                        field=scene_obj.scalar_field,
+                        plotter=self.plotter,
+                        settings=vars(scene_obj.render_settings)
+                    )
 
         self.plotter.reset_camera()
         self.plotter.update()
@@ -180,10 +232,15 @@ class ChemVistaApp(QMainWindow):
             self.refresh_view()
 
     def on_settings_requested(self, index: int):
-        """Handle settings button click for a molecule"""
+        """Handle settings button click for a molecule or scalar field"""
         if 0 <= index < len(self.scene_manager.objects):
             scene_obj = self.scene_manager.get_object(index)
-            dialog = RenderSettingsDialog(scene_obj.render_settings, self)
+
+            if isinstance(scene_obj, SceneObject):
+                dialog = RenderSettingsDialog(scene_obj.render_settings, self)
+            else:  # ScalarFieldObject
+                dialog = ScalarFieldSettingsDialog(
+                    scene_obj.render_settings, self)
 
             if dialog.exec_() == QDialog.Accepted:
                 scene_obj.render_settings = dialog.get_settings()
