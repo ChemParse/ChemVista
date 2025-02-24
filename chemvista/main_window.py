@@ -3,13 +3,14 @@ from PyQt5.QtWidgets import (QMainWindow, QDockWidget, QAction, QFileDialog,
 from PyQt5.QtCore import Qt
 from pyvistaqt import QtInteractor
 import pathlib
+from typing import Dict, List, Optional
 from .scene_objects import SceneManager
 from .widgets.object_list import ObjectListWidget
 from .widgets.settings_dialog import RenderSettingsDialog, ScalarFieldSettingsDialog
 
 
 class ChemVistaApp(QMainWindow):
-    def __init__(self, scene_manager=None, debug=True):
+    def __init__(self, scene_manager: SceneManager | None = None, init_files: Optional[Dict[str, List[pathlib.Path]]] = None):
         super().__init__()
         self.setWindowTitle("ChemVista")
         self.resize(1200, 800)
@@ -32,18 +33,34 @@ class ChemVistaApp(QMainWindow):
         # Set plotter in scene manager
         self.scene_manager.plotter = self.plotter
 
-        # Debug: Load test files
-        if debug:
-            try:
-                data_dir = pathlib.Path(
-                    __file__).parent.parent / 'tests' / 'data'
-                test_cube = data_dir / 'C2H4.eldens.cube'
-                self.scene_manager.load_molecule_from_cube(test_cube)
-                self.refresh_view()
-            except Exception as e:
-                print(f"Debug load failed: {e}")
+        # Load initial files if provided
+        if init_files:
+            self.load_initial_files(init_files)
 
         self.show()
+
+    def load_initial_files(self, init_files: Dict[str, List[pathlib.Path]]):
+        """Load files specified in initialization dictionary"""
+        try:
+            # Load XYZ files
+            for xyz_file in init_files.get('xyz_files', []):
+                self.scene_manager.load_molecule(xyz_file)
+
+            # Load cube files as molecules with fields
+            for cube_file in init_files.get('cube_mol_files', []):
+                self.scene_manager.load_molecule_from_cube(cube_file)
+
+            # Load cube files as scalar fields
+            for cube_file in init_files.get('cube_field_files', []):
+                self.scene_manager.load_scalar_field(cube_file)
+
+            # Refresh view after loading all files
+            if any(len(files) > 0 for files in init_files.values()):
+                self.refresh_view()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to load initial files: {str(e)}")
 
     def create_menu_bar(self):
         menubar = self.menuBar()

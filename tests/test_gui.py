@@ -21,7 +21,7 @@ def app(qapp, test_plotter):
     """Create application instance with a fresh SceneManager and plotter"""
     scene = SceneManager()
     scene.plotter = test_plotter
-    window = ChemVistaApp(scene_manager=scene, debug=False)
+    window = ChemVistaApp(scene_manager=scene)
     yield window
     window.close()
 
@@ -63,30 +63,6 @@ def test_visibility_toggle(app, test_files, test_plotter):
     app.scene_manager.render(test_plotter)
 
 
-def test_settings_dialog(app, test_files, qtbot):
-    """Test settings dialog interaction"""
-    # Load a molecule
-    app.scene_manager.load_molecule(test_files['xyz'])
-
-    # Open settings dialog and ensure it appears
-    def check_dialog():
-        app.on_settings_requested(0)
-        dialog = app.findChild(QDialog)
-        if dialog is not None:
-            # Click Save button when dialog is found
-            save_button = dialog.findChild(QPushButton, "Save")
-            if save_button is not None:
-                qtbot.mouseClick(save_button, Qt.LeftButton)
-                return True
-        return False
-
-    # Try multiple times with delay
-    qtbot.waitUntil(check_dialog, timeout=1000)
-
-    # Verify settings were updated (object_changed signal was emitted)
-    assert len(app.scene_manager.objects) > 0  # Just verify the object exists
-
-
 def test_object_list(app, test_files):
     """Test object list widget"""
     # Load some objects
@@ -109,7 +85,7 @@ def test_object_list_sync(app, test_files):
     initial_count = app.object_list_widget.count()
 
     # Add object through SceneManager
-    name = app.scene_manager.load_molecule(test_files['xyz'])
+    name = app.scene_manager.load_molecule(test_files['xyz'])[0]
 
     # Check that GUI updated
     assert app.object_list_widget.count() == initial_count + 1

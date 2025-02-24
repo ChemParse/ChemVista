@@ -53,5 +53,6 @@ def test_files():
     base_path = pathlib.Path(__file__).parent / 'data'
     return {
         'xyz': base_path / 'mpf_motor.xyz',
-        'cube': base_path / 'C2H4.eldens.cube'
+        'cube': base_path / 'C2H4.eldens.cube',
+        'trajectory': base_path / 'mpf_motor_trajectory.xyz'
     }

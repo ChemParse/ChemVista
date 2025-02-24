@@ -6,7 +6,7 @@ from chemvista.render_settings import RenderSettings, ScalarFieldRenderSettings
 @pytest.fixture
 def scene_with_objects(test_files):
     scene = SceneManager()
-    mol_name = scene.load_molecule(test_files['xyz'])
+    mol_name = scene.load_molecule(test_files['xyz'])[0]
     field_names = scene.load_molecule_from_cube(test_files['cube'])
     return scene, mol_name, field_names
 

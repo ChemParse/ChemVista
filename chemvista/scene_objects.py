@@ -1,5 +1,5 @@
 import pyvista as pv
-from nx_ase import Molecule, ScalarField
+from nx_ase import Molecule, ScalarField, Path
 import pathlib
 from typing import Union, Optional, List, Dict
 from .renderer import MoleculeRenderer, ScalarFieldRenderer
@@ -49,11 +49,17 @@ class SceneManager(QObject):
             self.plotter = pv.Plotter(off_screen=off_screen)
         return self.plotter
 
-    def load_molecule(self, filepath: Union[str, pathlib.Path]) -> str:
-        """Load molecule from XYZ file"""
+    def load_molecule(self, filepath: Union[str, pathlib.Path]) -> List[str]:
+        """Load molecules from XYZ file"""
         filepath = pathlib.Path(filepath)
-        molecule = Molecule.load(filepath)
-        return self.add_object(filepath.name, molecule)
+        if not filepath.exists():
+            raise FileNotFoundError(f"File {filepath} not found")
+        path = Path.load(filepath)
+        if len(path) == 1:
+            molecule = path[0]
+            return [self.add_object(filepath.stem, molecule)]
+
+        return [self.add_object(f"{filepath.stem}_{i}", molecule) for i, molecule in enumerate(path)]
 
     def load_molecule_from_cube(self, filepath: Union[str, pathlib.Path]) -> List[str]:
         """Load both molecule and its scalar field from cube file"""

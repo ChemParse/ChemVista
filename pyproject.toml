@@ -26,7 +26,6 @@ nx-ase = {git = "https://github.com/imtambovtcev/nx_ase.git"}
 pyqt5 = "^5.15.11"
 pyvistaqt = "^0.11.2"
 vtk = "<9.4.0"
-pytest-qt = "^4"
 
 [tool.poetry.extras]
 qt = ["PyQt5", "pyvistaqt"]
@@ -38,19 +37,11 @@ ipykernel = "^6.25.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.3.4"
-pytest-qt = "^4.2.0"
+pytest-qt = "^4"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-neb_plot = 'chem_utils.neb_plot:main'
-xyz_to_allxyz = 'chem_utils.xyz_to_allxyz:main'
-check_and_copy_path = 'chem_utils.check_and_copy_path:main'
-format_xyz = 'chem_utils.format_xyz:main'
-get_image = 'chem_utils.get_image:main'
-get_orb = 'chem_utils.get_orb:main'
-mirror_xyz = 'chem_utils.mirror_xyz:main'
-molecular_distance = 'chem_utils.molecular_distance:main'
-render_molecule = 'chem_utils.render_molecule:main'
+chemvista = "chemvista.cli:main"

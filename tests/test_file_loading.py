@@ -14,13 +14,14 @@ def test_files():
     base_path = pathlib.Path(__file__).parent / 'data'
     return {
         'xyz': base_path / 'mpf_motor.xyz',
-        'cube': base_path / 'C2H4.eldens.cube'
+        'cube': base_path / 'C2H4.eldens.cube',
+        'trajectory': base_path / 'mpf_motor_trajectroy.xyz'
     }
 
 
 @pytest.fixture
 def chem_vista_app():
-    app = ChemVistaApp(debug=False)
+    app = ChemVistaApp()
     yield app
     app.close()
 
@@ -59,3 +60,14 @@ def test_invalid_cube_file(chem_vista_app):
     """Test loading a non-existent cube file"""
     with pytest.raises(Exception):
         chem_vista_app._load_scalar_field(pathlib.Path('nonexistent.cube'))
+
+
+def test_load_trajectory(chem_vista_app, test_files):
+    """Test loading a trajectory XYZ file"""
+    names = chem_vista_app.scene_manager.load_molecule(
+        test_files['trajectory'])
+    for name in names:
+        obj = chem_vista_app.scene_manager.get_object_by_name(name)
+        assert isinstance(obj.molecule, Molecule)
+
+    assert len(chem_vista_app.scene_manager.objects) == 10

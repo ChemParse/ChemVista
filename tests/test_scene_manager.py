@@ -26,7 +26,7 @@ def scene(test_plotter):
 
 def test_load_molecule(scene, test_files):
     """Test loading molecule from XYZ file"""
-    name = scene.load_molecule(test_files['xyz'])
+    name = scene.load_molecule(test_files['xyz'])[0]
     assert len(scene.objects) == 1
     obj = scene.get_object_by_name(name)
     assert isinstance(obj.molecule, Molecule)
@@ -58,7 +58,7 @@ def test_load_cube_as_field(scene, test_files):
 
 def test_visibility_control(scene, test_files):
     """Test object visibility control"""
-    name = scene.load_molecule(test_files['xyz'])
+    name = scene.load_molecule(test_files['xyz'])[0]
     obj = scene.get_object_by_name(name)
     assert obj.visible  # Should be visible by default
 
@@ -87,7 +87,7 @@ def test_render_scalar_field(scene, test_files, test_plotter):
 
 def test_settings_update(scene, test_files):
     """Test updating render settings"""
-    name = scene.load_molecule(test_files['xyz'])
+    name = scene.load_molecule(test_files['xyz'])[0]
     obj = scene.get_object_by_name(name)
 
     # Modify settings
@@ -123,7 +123,7 @@ def test_signals_emission(scene, test_files):
         lambda x, v: visibility_signals.append((x, v)))
 
     # Load molecule should emit object_added
-    name = scene.load_molecule(test_files['xyz'])
+    name = scene.load_molecule(test_files['xyz'])[0]
     assert len(added_signals) == 1
     assert added_signals[0] == name
 
@@ -135,7 +135,8 @@ def test_signals_emission(scene, test_files):
 
 def test_render_with_settings(scene, test_files):
     """Test rendering with custom settings"""
-    name = scene.load_molecule(test_files['xyz'])
+    name = scene.load_molecule(test_files['xyz'])[0]
+
     obj = scene.get_object_by_name(name)
 
     # Modify settings
