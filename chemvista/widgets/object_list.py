@@ -12,6 +12,9 @@ class ObjectListWidget(QListWidget):
         super().__init__(parent)
         self.scene_manager = scene_manager
 
+        # Enable multi-selection
+        self.setSelectionMode(QListWidget.ExtendedSelection)
+
         # Connect to scene manager signals
         self.scene_manager.object_added.connect(self._on_object_added)
         self.scene_manager.object_removed.connect(self._on_object_removed)
@@ -82,20 +85,38 @@ class ObjectListWidget(QListWidget):
         if not item:
             return
 
-        widget = self.itemWidget(item)
+        selected_items = self.selectedItems()
         menu = QMenu(self)
 
-        # Add visibility action
-        vis_action = menu.addAction("Visible")
-        vis_action.setCheckable(True)
-        vis_action.setChecked(widget.is_visible)
-        vis_action.triggered.connect(
-            lambda checked, w=widget: w._toggle_visibility())
+        # If multiple items are selected, only show visibility toggle
+        if len(selected_items) > 1:
+            vis_action = menu.addAction("Toggle Visibility")
+            vis_action.triggered.connect(self._toggle_selected_visibility)
+        else:
+            # Single item menu
+            widget = self.itemWidget(item)
+            vis_action = menu.addAction("Visible")
+            vis_action.setCheckable(True)
+            vis_action.setChecked(widget.is_visible)
+            vis_action.triggered.connect(
+                lambda checked, w=widget: w._toggle_visibility())
 
-        # Add settings action
-        settings_action = menu.addAction("Settings")
-        settings_action.triggered.connect(
-            lambda: self.settings_requested.emit(self.row(item)))
+            # Add settings action only for single selection
+            settings_action = menu.addAction("Settings")
+            settings_action.triggered.connect(
+                lambda: self.settings_requested.emit(self.row(item)))
 
         # Show context menu at cursor position
         menu.exec_(event.globalPos())
+
+    def _toggle_selected_visibility(self):
+        """Toggle visibility for all selected items"""
+        selected_items = self.selectedItems()
+        # Use the opposite of the first item's visibility as the new state
+        first_widget = self.itemWidget(selected_items[0])
+        new_state = not first_widget.is_visible
+
+        # Update all selected items
+        for item in selected_items:
+            widget = self.itemWidget(item)
+            widget._toggle_visibility(force_state=new_state)
