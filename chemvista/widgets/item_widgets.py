@@ -46,8 +46,13 @@ class MoleculeListItem(QWidget):
 
         self.setLayout(layout)
 
-    def _toggle_visibility(self):
-        self.is_visible = not self.is_visible
+    def _toggle_visibility(self, force_state=None):
+        """Toggle visibility with optional forced state"""
+        if force_state is not None:
+            self.is_visible = force_state
+        else:
+            self.is_visible = not self.is_visible
+
         icon_name = ":/icons/icons/eye-outline.svg" if self.is_visible else ":/icons/icons/eye-off-outline.svg"
         self.vis_button.setIcon(QIcon(icon_name))
         self.visibility_changed.emit(self.is_visible)

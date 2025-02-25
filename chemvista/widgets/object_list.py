@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QListWidget, QListWidgetItem, QMenu
 from PyQt5.QtCore import pyqtSignal, Qt
 from .item_widgets import MoleculeListItem
 
@@ -75,3 +75,27 @@ class ObjectListWidget(QListWidget):
         """Get currently selected item index"""
         current = self.currentItem()
         return self.row(current) if current else None
+
+    def contextMenuEvent(self, event):
+        """Handle right-click context menu"""
+        item = self.itemAt(event.pos())
+        if not item:
+            return
+
+        widget = self.itemWidget(item)
+        menu = QMenu(self)
+
+        # Add visibility action
+        vis_action = menu.addAction("Visible")
+        vis_action.setCheckable(True)
+        vis_action.setChecked(widget.is_visible)
+        vis_action.triggered.connect(
+            lambda checked, w=widget: w._toggle_visibility())
+
+        # Add settings action
+        settings_action = menu.addAction("Settings")
+        settings_action.triggered.connect(
+            lambda: self.settings_requested.emit(self.row(item)))
+
+        # Show context menu at cursor position
+        menu.exec_(event.globalPos())
