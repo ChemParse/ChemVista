@@ -45,3 +45,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 chemvista = "chemvista.cli:main"
+chemvista-generate-icons = "chemvista.utils:generate_icons"
+
+

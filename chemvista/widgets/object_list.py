@@ -36,7 +36,12 @@ class ObjectListWidget(QListWidget):
         item = QListWidgetItem(self)
         self.addItem(item)
 
-        widget = MoleculeListItem(name)
+        # Determine object type
+        obj = self.scene_manager.get_object_by_name(name)
+        obj_type = 'scalar_field' if hasattr(
+            obj, 'scalar_field') else 'molecule'
+
+        widget = MoleculeListItem(name, obj_type=obj_type)
         widget.visibility_changed.connect(lambda v, idx=self.row(
             item): self.visibility_changed.emit(idx, v))
         widget.settings_clicked.connect(lambda idx=self.row(

@@ -10,13 +10,24 @@ class MoleculeListItem(QWidget):
     visibility_changed = pyqtSignal(bool)
     settings_clicked = pyqtSignal()
 
-    def __init__(self, name: str, parent=None):
+    def __init__(self, name: str, obj_type: str = 'molecule', parent=None):
         super().__init__(parent)
         self.name = name
         self.is_visible = True
 
         layout = QHBoxLayout()
         layout.setContentsMargins(2, 2, 2, 2)
+
+        # Type icon
+        type_icon_map = {
+            'molecule': ":/icons/icons/molecule.svg",
+            'scalar_field': ":/icons/icons/sine-wave.svg",
+            'trajectory': ":/icons/icons/chart-timeline-variant.svg"
+        }
+        type_icon = QLabel()
+        type_icon.setPixmap(QIcon(type_icon_map.get(
+            obj_type, type_icon_map['molecule'])).pixmap(24, 24))
+        layout.addWidget(type_icon)
 
         # Name label
         self.label = QLabel(name)

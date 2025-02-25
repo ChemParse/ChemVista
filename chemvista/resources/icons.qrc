@@ -4,5 +4,8 @@
         <file>icons/eye-outline.svg</file>
         <file>icons/eye-off-outline.svg</file>
         <file>icons/cog-outline.svg</file>
+        <file>icons/molecule.svg</file>
+        <file>icons/sine-wave.svg</file>
+        <file>icons/chart-timeline-variant.svg</file>
     </qresource>
 </RCC>
