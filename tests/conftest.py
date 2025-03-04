@@ -5,6 +5,7 @@ import sys
 import pyvista as pv
 import vtk
 import pathlib
+from chemvista.main_window import ChemVistaApp
 
 
 @pytest.fixture(scope="session")
@@ -36,7 +37,10 @@ def setup_test_env():
     # Use dummy rendering backend for tests
     plotter = pv.Plotter(off_screen=True)
     yield plotter
-    plotter.close()
+    try:
+        plotter.close()
+    except (AttributeError, RuntimeError):
+        pass
 
 
 @pytest.fixture
@@ -44,7 +48,10 @@ def test_plotter():
     """Provide a fresh plotter for each test"""
     plotter = pv.Plotter(off_screen=True)
     yield plotter
-    plotter.close()
+    try:
+        plotter.close()
+    except (AttributeError, RuntimeError):
+        pass
 
 
 @pytest.fixture
@@ -56,3 +63,16 @@ def test_files():
         'cube': base_path / 'C2H4.eldens.cube',
         'trajectory': base_path / 'mpf_motor_trajectory.xyz'
     }
+
+
+@pytest.fixture
+def chem_vista_app(qapp):
+    """Create ChemVistaApp instance for testing"""
+    app = ChemVistaApp()
+    yield app
+    # Clean up
+    try:
+        if app.scene_manager.plotter is not None:
+            app.scene_manager.plotter.close()
+    except (AttributeError, RuntimeError):
+        pass

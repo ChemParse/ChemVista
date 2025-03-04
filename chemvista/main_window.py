@@ -5,7 +5,7 @@ from pyvistaqt import QtInteractor
 import pathlib
 from typing import Dict, List, Optional
 from .scene_objects import SceneManager
-from .widgets.object_list import ObjectListWidget
+from .widgets.object_list import ObjectTreeWidget
 from .widgets.settings_dialog import RenderSettingsDialog, ScalarFieldSettingsDialog
 
 
@@ -37,7 +37,13 @@ class ChemVistaApp(QMainWindow):
         if init_files:
             self.load_initial_files(init_files)
 
+        # Make sure tree is expanded by default
+        self.object_list_widget.expandAll()
+
+        # Show the window and raise it to front
         self.show()
+        self.raise_()
+        self.activateWindow()
 
     def load_initial_files(self, init_files: Dict[str, List[pathlib.Path]]):
         """Load files specified in initialization dictionary"""
@@ -99,7 +105,7 @@ class ChemVistaApp(QMainWindow):
         dock = QDockWidget("Objects", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
 
-        self.object_list_widget = ObjectListWidget(self.scene_manager)
+        self.object_list_widget = ObjectTreeWidget(self.scene_manager)
         self.object_list_widget.selection_changed.connect(
             self.on_selection_changed)
         self.object_list_widget.visibility_changed.connect(
@@ -150,17 +156,17 @@ class ChemVistaApp(QMainWindow):
 
     def save_file(self):
         """Save selected object to file"""
-        if not self.scene_manager.objects:
+        if not self.scene_manager.root_objects:  # Changed from objects to root_objects
             QMessageBox.warning(self, "Warning", "No objects to save!")
             return
 
         try:
-            selected_index = self.object_list_widget.get_selected_index()
-            if selected_index is None:
+            selected_uuid = self.object_list_widget.get_selected_uuid()
+            if selected_uuid is None:
                 QMessageBox.warning(self, "Warning", "No object selected!")
                 return
 
-            obj = self.scene_manager.get_object(selected_index)
+            obj = self.scene_manager.get_object_by_uuid(selected_uuid)
 
             file_name, _ = QFileDialog.getSaveFileName(
                 self,
@@ -170,7 +176,11 @@ class ChemVistaApp(QMainWindow):
             )
 
             if file_name:
-                self.scene_manager.save_molecule(obj.name, file_name)
+                if hasattr(obj, 'molecule'):
+                    obj.molecule.save(file_name)
+                else:
+                    QMessageBox.warning(
+                        self, "Warning", "Can only save molecules!")
 
         except Exception as e:
             QMessageBox.critical(
@@ -185,27 +195,24 @@ class ChemVistaApp(QMainWindow):
         """Handle object selection in the list"""
         pass
 
-    def on_visibility_changed(self, index: int, visible: bool):
+    def on_visibility_changed(self, uuid: str, visible: bool):
         """Handle visibility toggle"""
-        if 0 <= index < len(self.scene_manager.objects):
-            obj = self.scene_manager.get_object(index)
-            self.scene_manager.set_visibility(obj.name, visible)
-            self.refresh_view()
+        print(f"Visibility changed for {uuid}: {visible}")
+        self.scene_manager.set_visibility(uuid, visible)
+        self.refresh_view()
 
-    def on_settings_requested(self, index: int):
+    def on_settings_requested(self, uuid: str):
         """Handle settings button click"""
-        if 0 <= index < len(self.scene_manager.objects):
-            obj = self.scene_manager.get_object(index)
+        obj = self.scene_manager.get_object_by_uuid(uuid)
 
-            # Create dialog with explicit parent
-            if hasattr(obj, 'molecule'):
-                dialog = RenderSettingsDialog(obj.render_settings, parent=self)
-            else:
-                dialog = ScalarFieldSettingsDialog(
-                    obj.render_settings, parent=self)
+        # Create dialog with explicit parent
+        if hasattr(obj, 'molecule'):
+            dialog = RenderSettingsDialog(obj.render_settings, parent=self)
+        else:
+            dialog = ScalarFieldSettingsDialog(
+                obj.render_settings, parent=self)
 
-            # Show dialog as modal
-            if dialog.exec_() == QDialog.Accepted:
-                self.scene_manager.update_settings(
-                    obj.name, dialog.get_settings())
-                self.refresh_view()
+        # Show dialog as modal
+        if dialog.exec_() == QDialog.Accepted:
+            self.scene_manager.update_settings(uuid, dialog.get_settings())
+            self.refresh_view()
