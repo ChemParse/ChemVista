@@ -5,7 +5,11 @@ import sys
 import pyvista as pv
 import vtk
 import pathlib
-from chemvista.main_window import ChemVistaApp
+import tempfile
+from chemvista.gui.main_window import ChemVistaApp
+from nx_ase import Molecule
+from nx_ase import Trajectory
+from nx_ase import ScalarField
 
 
 @pytest.fixture(scope="session")
@@ -59,8 +63,10 @@ def test_files():
     """Shared test files fixture"""
     base_path = pathlib.Path(__file__).parent / 'data'
     return {
-        'xyz': base_path / 'mpf_motor.xyz',
-        'cube': base_path / 'C2H4.eldens.cube',
+        'molecule_1': base_path / 'mpf_motor.xyz',
+        'molecule_2': base_path / 'C6H6.xyz',
+        'molecule_3': base_path / 'mpf_motor.xyz',
+        'scalar_filed_cube': base_path / 'C2H4.eldens.cube',
         'trajectory': base_path / 'mpf_motor_trajectory.xyz'
     }
 
@@ -76,3 +82,54 @@ def chem_vista_app(qapp):
             app.scene_manager.plotter.close()
     except (AttributeError, RuntimeError):
         pass
+
+
+@pytest.fixture
+def test_objects(test_files):
+    """Create test objects from test files"""
+
+    molecule_1 = Molecule.load(test_files['molecule_1'])
+    molecule_2 = Molecule.load(test_files['molecule_2'])
+    molecule_3 = Molecule.load(test_files['molecule_3'])
+
+    scalar_field = ScalarField.load_cube(
+        test_files['scalar_filed_cube'])
+
+    trajectory = Trajectory.load(test_files['trajectory'])
+
+    # Create a molecule with scalar field
+    molecule_with_field = Molecule.load_from_cube(
+        test_files['scalar_filed_cube'])
+
+    return {
+        'molecule_1': molecule_1,
+        'molecule_2': molecule_2,
+        'molecule_3': molecule_3,
+        'scalar_field': scalar_field,
+        'trajectory': trajectory,
+        'molecule_with_field': molecule_with_field
+    }
+
+
+@pytest.fixture
+def ensure_trajectory_file():
+    """Create a guaranteed multi-frame trajectory file for testing"""
+    # Create a temporary file
+    with tempfile.NamedTemporaryFile(suffix='.xyz', delete=False) as tmp:
+        filepath = pathlib.Path(tmp.name)
+
+    # Create a simple trajectory with two frames
+    mol1 = Molecule(symbols=['C', 'O'],
+                    positions=[[0.0, 0.0, 0.0], [0.0, 0.0, 1.2]])
+
+    mol2 = Molecule(symbols=['C', 'O'],
+                    positions=[[0.0, 0.0, 0.0], [0.0, 0.0, 1.3]])
+
+    # Save to temporary file
+    traj = Trajectory([mol1, mol2])
+    traj.save(filepath)
+
+    yield filepath
+
+    # Clean up
+    filepath.unlink(missing_ok=True)

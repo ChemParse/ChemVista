@@ -4,8 +4,8 @@ from PyQt5.QtCore import Qt
 from pyvistaqt import QtInteractor
 import pathlib
 from typing import Dict, List, Optional
-from .scene_objects import SceneManager
-from .widgets.object_list import ObjectTreeWidget
+from ..scene_manager import SceneManager
+from .widgets.object_tree import ObjectTreeWidget
 from .widgets.settings_dialog import RenderSettingsDialog, ScalarFieldSettingsDialog
 
 
@@ -50,7 +50,7 @@ class ChemVistaApp(QMainWindow):
         try:
             # Load XYZ files
             for xyz_file in init_files.get('xyz_files', []):
-                self.scene_manager.load_molecule(xyz_file)
+                self.scene_manager.load_xyz(xyz_file)
 
             # Load cube files as molecules with fields
             for cube_file in init_files.get('cube_mol_files', []):
@@ -58,7 +58,7 @@ class ChemVistaApp(QMainWindow):
 
             # Load cube files as scalar fields
             for cube_file in init_files.get('cube_field_files', []):
-                self.scene_manager.load_scalar_field(cube_file)
+                self.scene_manager.load_scalar_field_from_cube(cube_file)
 
             # Refresh view after loading all files
             if any(len(files) > 0 for files in init_files.values()):
@@ -144,9 +144,10 @@ class ChemVistaApp(QMainWindow):
                     if choice == QMessageBox.Yes:
                         self.scene_manager.load_molecule_from_cube(filepath)
                     else:
-                        self.scene_manager.load_scalar_field(filepath)
+                        self.scene_manager.load_scalar_field_from_cube(
+                            filepath)
                 else:
-                    self.scene_manager.load_molecule(filepath)
+                    self.scene_manager.load_xyz(filepath)
 
                 self.refresh_view()
 
@@ -156,7 +157,7 @@ class ChemVistaApp(QMainWindow):
 
     def save_file(self):
         """Save selected object to file"""
-        if not self.scene_manager.root_objects:  # Changed from objects to root_objects
+        if not self.scene_manager.children:  # Changed from objects to root_objects
             QMessageBox.warning(self, "Warning", "No objects to save!")
             return
 

@@ -1,4 +1,4 @@
-from chemvista.scene_objects import SceneManager
+from chemvista.scene_manager import SceneManager
 import pathlib
 
 # Initialize scene manager
@@ -10,7 +10,7 @@ mol_file = data_dir / 'mpf_motor.xyz'
 cube_file = data_dir / 'C2H4.eldens.cube'
 
 # Load molecule from XYZ
-mol_name = scene.load_molecule(mol_file)
+mol_name = scene.load_xyz(mol_file)
 
 # Update its settings
 mol_obj = scene.get_object_by_name(mol_name)

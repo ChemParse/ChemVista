@@ -5,6 +5,12 @@ import copy
 
 @dataclass
 class RenderSettings:
+    def copy(self):
+        return copy.deepcopy(self)
+
+
+@dataclass
+class MoleculeRenderSettings(RenderSettings):
     show_hydrogens: bool = True
     show_numbers: bool = False
     alpha: float = 1.0  # Changed from opacity to alpha
@@ -12,12 +18,9 @@ class RenderSettings:
     # Override colors for specific elements
     custom_colors: Dict[str, list] = field(default_factory=dict)
 
-    def copy(self):
-        return copy.deepcopy(self)
-
 
 @dataclass
-class ScalarFieldRenderSettings:
+class ScalarFieldRenderSettings(RenderSettings):
     visible: bool = True
     isosurface_value: float = 0.1
     show_grid_surface: bool = False
@@ -31,8 +34,10 @@ class ScalarFieldRenderSettings:
     show_filtered_points: bool = False
     point_value_range: tuple = (0.0, 1.0)
 
-    def copy(self):
-        return copy.deepcopy(self)
+
+@dataclass
+class TrajectoryRenderSettings(RenderSettings):
+    pass
 
 
 class GlobalSettings:
@@ -41,12 +46,12 @@ class GlobalSettings:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance.render_settings = RenderSettings()
+            cls._instance.render_settings = MoleculeRenderSettings()
             cls._instance.scalar_field_settings = ScalarFieldRenderSettings()
         return cls._instance
 
     @classmethod
-    def get_default_settings(cls) -> RenderSettings:
+    def get_default_settings(cls) -> MoleculeRenderSettings:
         return cls().render_settings.copy()
 
     @classmethod

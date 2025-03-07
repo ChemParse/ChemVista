@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QCheckBox,
                              QGroupBox, QFormLayout, QColorDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from ..render_settings import RenderSettings, ScalarFieldRenderSettings
+from ...renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings
 
 
 class ScalarFieldSettingsDialog(QDialog):
@@ -102,7 +102,7 @@ class ScalarFieldSettingsDialog(QDialog):
 
 
 class RenderSettingsDialog(QDialog):
-    def __init__(self, settings: RenderSettings, parent=None):
+    def __init__(self, settings: MoleculeRenderSettings, parent=None):
         super().__init__(parent)
         self.settings = settings.copy()
         self.setWindowTitle("Render Settings")
@@ -156,7 +156,7 @@ class RenderSettingsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def get_settings(self) -> RenderSettings:
+    def get_settings(self) -> MoleculeRenderSettings:
         if self.result() == QDialog.Accepted:
             self.settings.show_hydrogens = self.show_hydrogens.isChecked()
             self.settings.show_numbers = self.show_numbers.isChecked()

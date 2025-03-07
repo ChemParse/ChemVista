@@ -40,29 +40,19 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Load default test file for demonstration
-    test_cube = pathlib.Path(__file__).parent.parent / \
-        'tests' / 'data' / 'C2H4.eldens.cube'
+    test_files_dir = pathlib.Path(__file__).parent.parent / 'tests' / 'data'
+    test_cube = test_files_dir / 'C2H4.eldens.cube'
+    test_molecule = test_files_dir / 'mpf_motor.xyz'
+    test_trajectory = test_files_dir / 'mpf_motor_trajectory.xyz'
 
     logger.info(f"Loading test cube file: {test_cube}")
+    logger.info(f"Loading test trajectory file: {test_trajectory}")
 
     # Create and show window
     window = ChemVistaApp(init_files={
-        'cube_mol_files': [test_cube]
+        'cube_mol_files': [test_cube],
+        'xyz_files': [test_molecule, test_trajectory]
     })
-
-    # Print scene tree structure after a short delay
-    def print_scene_tree():
-        if hasattr(window.scene_manager, 'log_tree_changes'):
-            window.scene_manager.log_tree_changes(
-                "Initial scene tree structure")
-        else:
-            logger.info("Current scene tree structure:")
-            if hasattr(window.scene_manager, 'format_tree'):
-                logger.info(window.scene_manager.format_tree())
-            else:
-                logger.info("<Tree display not available>")
-
-    QTimer.singleShot(1000, print_scene_tree)
 
     # Keep application running
     sys.exit(app.exec_())

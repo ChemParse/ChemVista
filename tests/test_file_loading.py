@@ -2,7 +2,7 @@ import pytest
 import pathlib
 from PyQt5.QtWidgets import QApplication
 import sys
-from chemvista.main_window import ChemVistaApp
+from chemvista.gui.main_window import ChemVistaApp
 from nx_ase import Molecule, ScalarField
 import numpy as np
 

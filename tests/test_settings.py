@@ -1,6 +1,6 @@
 import pytest
-from chemvista.scene_objects import SceneManager
-from chemvista.render_settings import RenderSettings, ScalarFieldRenderSettings
+from chemvista.scene_manager import SceneManager
+from chemvista.renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings
 
 
 @pytest.fixture
@@ -8,9 +8,9 @@ def scene_with_objects(test_plotter, test_files):
     """Create a scene with molecule and scalar field objects"""
     scene = SceneManager()
     scene.plotter = test_plotter
-    mol_uuid = scene.load_molecule(test_files['xyz'])[0]
-    field_uuids = scene.load_molecule_from_cube(test_files['cube'])
-    return scene, mol_uuid, field_uuids
+    mol_uuid = scene.load_xyz(test_files['molecule_1'])
+    field_uuid = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
+    return scene, mol_uuid, field_uuid
 
 
 def test_molecule_settings_update(scene_with_objects):
@@ -20,9 +20,8 @@ def test_molecule_settings_update(scene_with_objects):
     mol_obj = scene.get_object_by_uuid(mol_uuid)
 
     # Create new settings
-    settings = RenderSettings()
+    settings = MoleculeRenderSettings()
     settings.show_hydrogens = False
-    settings.bond_radius = 0.2
     settings.show_numbers = True
 
     # Update settings
@@ -30,7 +29,6 @@ def test_molecule_settings_update(scene_with_objects):
 
     # Verify settings were applied
     assert not mol_obj.render_settings.show_hydrogens
-    assert mol_obj.render_settings.bond_radius == 0.2
     assert mol_obj.render_settings.show_numbers
 
 
@@ -44,13 +42,13 @@ def test_scalar_field_settings_update(scene_with_objects):
     # Create new settings
     settings = ScalarFieldRenderSettings()
     settings.opacity = 0.7
-    settings.n_contours = 5
-    settings.colormap = 'viridis'
+    settings.isosurface_value = 0.2
+    settings.color = 'red'
 
     # Update settings
     scene.update_settings(field_uuid, settings)
 
     # Verify settings were applied
     assert field_obj.render_settings.opacity == 0.7
-    assert field_obj.render_settings.n_contours == 5
-    assert field_obj.render_settings.colormap == 'viridis'
+    assert field_obj.render_settings.isosurface_value == 0.2
+    assert field_obj.render_settings.color == 'red'

@@ -10,7 +10,7 @@ from .base import Renderer
 class MoleculeRenderer(Renderer):
     def __init__(self):
         settings_path = pathlib.Path(
-            __file__).parent.parent / 'renderer_settings.json'
+            __file__).parent / 'molecule_renderer_settings.json'
         with open(settings_path) as f:
             self.atoms_settings = json.load(f)
 

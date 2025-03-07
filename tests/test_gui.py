@@ -3,8 +3,8 @@ from PyQt5.QtWidgets import QApplication, QMessageBox, QDialog, QPushButton, QFi
 from PyQt5.QtCore import Qt
 from PyQt5.QtTest import QTest
 import pathlib
-from chemvista.main_window import ChemVistaApp
-from chemvista.scene_objects import SceneManager
+from chemvista.gui.main_window import ChemVistaApp
+from chemvista.scene_manager import SceneManager
 
 
 @pytest.fixture
