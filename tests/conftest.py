@@ -10,6 +10,7 @@ from chemvista.gui.main_window import ChemVistaApp
 from nx_ase import Molecule
 from nx_ase import Trajectory
 from nx_ase import ScalarField
+from unittest.mock import MagicMock
 
 
 @pytest.fixture(scope="session")
@@ -49,13 +50,14 @@ def setup_test_env():
 
 @pytest.fixture
 def test_plotter():
-    """Provide a fresh plotter for each test"""
+    """Create a test plotter that can be used in tests without rendering"""
     plotter = pv.Plotter(off_screen=True)
-    yield plotter
-    try:
-        plotter.close()
-    except (AttributeError, RuntimeError):
-        pass
+
+    # Mock the update method to prevent rendering pipeline errors in tests
+    original_update = plotter.update
+    plotter.update = MagicMock(side_effect=lambda: None)
+
+    return plotter
 
 
 @pytest.fixture

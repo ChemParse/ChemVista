@@ -1,12 +1,20 @@
-from PyQt5.QtWidgets import (QMainWindow, QDockWidget, QAction, QFileDialog,
-                             QMessageBox, QToolBar, QDialog)
-from PyQt5.QtCore import Qt
-from pyvistaqt import QtInteractor
 import pathlib
 from typing import Dict, List, Optional
+
+from PyQt5.QtCore import QObject, Qt, pyqtSignal
+from PyQt5.QtWidgets import (QAction, QDialog, QDockWidget, QFileDialog,
+                             QMainWindow, QMessageBox, QToolBar)
+
 from ..scene_manager import SceneManager
-from .widgets.object_tree import ObjectTreeWidget
-from .widgets.settings_dialog import RenderSettingsDialog, ScalarFieldSettingsDialog
+from ..tree_structure import TreeSignals
+from .scene import SceneWidget, SceneWidgetSignals
+from .widgets.object_tree import ObjectTreeWidget, TreeWidgetSignals
+import logging
+from .widgets.settings_dialog import (RenderSettingsDialog,
+                                      ScalarFieldSettingsDialog)
+
+# Set up logger
+logger = logging.getLogger("chemvista.gui.main_window")
 
 
 class ChemVistaApp(QMainWindow):
@@ -14,9 +22,18 @@ class ChemVistaApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("ChemVista")
         self.resize(1200, 800)
-
+        self.scene_widget_signals = SceneWidgetSignals()
+        self.tree_signals = TreeSignals()
+        self.tree_widget_signals = TreeWidgetSignals()
         # Use provided scene manager or create new one
-        self.scene_manager = scene_manager or SceneManager()
+        if scene_manager is None:
+            logger.info("Creating new scene manager")
+            self.scene_manager = SceneManager(tree_signals=self.tree_signals)
+        else:
+            logger.info("Using provided scene manager")
+            self.scene_manager = scene_manager
+            # Set tree signals for the provided scene manager
+            self.scene_manager.tree_signals = self.tree_signals
 
         # Create menu bar
         self.create_menu_bar()
@@ -24,14 +41,11 @@ class ChemVistaApp(QMainWindow):
         # Create tool bar
         self.create_tool_bar()
 
-        # Create left panel for object list
+        # Create central SceneWidget first
+        self.create_scene_widget()
+
+        # Create left panel for object list and connect signals to scene widget
         self.create_object_list()
-
-        # Create central PyVista widget
-        self.create_pyvista_widget()
-
-        # Set plotter in scene manager
-        self.scene_manager.plotter = self.plotter
 
         # Load initial files if provided
         if init_files:
@@ -44,6 +58,8 @@ class ChemVistaApp(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
+
+        self.refresh_view()
 
     def load_initial_files(self, init_files: Dict[str, List[pathlib.Path]]):
         """Load files specified in initialization dictionary"""
@@ -92,6 +108,12 @@ class ChemVistaApp(QMainWindow):
         refresh_action.triggered.connect(self.refresh_view)
         view_menu.addAction(refresh_action)
 
+        # Add reset camera action
+        reset_camera_action = QAction("Reset Camera", self)
+        reset_camera_action.setShortcut("Ctrl+R")
+        reset_camera_action.triggered.connect(self.reset_camera)
+        view_menu.addAction(reset_camera_action)
+
     def create_tool_bar(self):
         toolbar = QToolBar()
         self.addToolBar(toolbar)
@@ -105,20 +127,18 @@ class ChemVistaApp(QMainWindow):
         dock = QDockWidget("Objects", self)
         dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
 
-        self.object_list_widget = ObjectTreeWidget(self.scene_manager)
-        self.object_list_widget.selection_changed.connect(
-            self.on_selection_changed)
-        self.object_list_widget.visibility_changed.connect(
-            self.on_visibility_changed)
-        self.object_list_widget.settings_requested.connect(
-            self.on_settings_requested)
+        self.object_list_widget = ObjectTreeWidget(
+            self.scene_manager, self, tree_widget_signals=self.tree_widget_signals, tree_signals=self.tree_signals)
 
         dock.setWidget(self.object_list_widget)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
-    def create_pyvista_widget(self):
-        self.plotter = QtInteractor(self)
-        self.setCentralWidget(self.plotter)
+    def create_scene_widget(self):
+        """Create the central SceneWidget"""
+        self.scene_widget = SceneWidget(
+            self.scene_manager, self, scene_widget_signals=self.scene_widget_signals, tree_signals=self.tree_signals)
+        self.setCentralWidget(self.scene_widget)
+        self.plotter = self.scene_widget.plotter
 
     def open_file(self):
         """UI function to handle file opening"""
@@ -157,7 +177,7 @@ class ChemVistaApp(QMainWindow):
 
     def save_file(self):
         """Save selected object to file"""
-        if not self.scene_manager.children:  # Changed from objects to root_objects
+        if not self.scene_manager.root_objects:
             QMessageBox.warning(self, "Warning", "No objects to save!")
             return
 
@@ -189,8 +209,13 @@ class ChemVistaApp(QMainWindow):
 
     def refresh_view(self):
         """Update the visualization"""
-        self.scene_manager.render(self.plotter)
-        self.plotter.update()
+        logger.info("Refreshing view")
+        self.scene_widget.refresh_view()
+
+    def reset_camera(self):
+        """Reset the camera to show all objects"""
+        logger.info("Resetting camera")
+        self.scene_widget.reset_camera()
 
     def on_selection_changed(self):
         """Handle object selection in the list"""
@@ -198,8 +223,21 @@ class ChemVistaApp(QMainWindow):
 
     def on_visibility_changed(self, uuid: str, visible: bool):
         """Handle visibility toggle"""
-        print(f"Visibility changed for {uuid}: {visible}")
-        self.scene_manager.set_visibility(uuid, visible)
+        logger.debug(f"Visibility changed for {uuid}: {visible}")
+        # Update visibility state in scene manager
+        if self.scene_manager.set_visibility(uuid, visible):
+            # No need to force view refresh here as render_changed signal will handle it
+            pass
+
+    def on_render_changed(self, uuid: str = None):
+        """Handle render change signal from tree"""
+        self.refresh_view()
+
+    def on_structure_changed(self):
+        """Handle structure change signal from tree"""
+        # Update the tree itself
+        self.object_list_widget._refresh_tree()
+        # Also refresh the view
         self.refresh_view()
 
     def on_settings_requested(self, uuid: str):
@@ -216,4 +254,9 @@ class ChemVistaApp(QMainWindow):
         # Show dialog as modal
         if dialog.exec_() == QDialog.Accepted:
             self.scene_manager.update_settings(uuid, dialog.get_settings())
-            self.refresh_view()
+            # No need to call refresh_view here as on_render_changed will be triggered
+            # by the update_settings method through the scene manager signals
+
+    def take_screenshot(self, filename=None):
+        """Take a screenshot of the current view"""
+        return self.scene_widget.take_screenshot(filename)

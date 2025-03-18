@@ -19,7 +19,7 @@ logger = logging.getLogger("chemvista.manager")
 class SceneManager():
     """Manages the scene graph and provides operations on scene objects"""
 
-    def __init__(self, signals=None):
+    def __init__(self, tree_signals: Optional[TreeSignals] = None):
         super().__init__()
         self.molecule_renderer = MoleculeRenderer()
         self.scalar_field_renderer = ScalarFieldRenderer()
@@ -29,8 +29,21 @@ class SceneManager():
         self.root = TreeNode(name="Scene", node_type="root")
 
         # Create tree signals
-        self._signals = signals
-        self.root._signals = self._signals
+        self._tree_signals = None
+        self.tree_signals = tree_signals
+
+    @property
+    def tree_signals(self):
+        """Get the signals object"""
+        return self._tree_signals
+
+    @tree_signals.setter
+    def tree_signals(self, value):
+        """Set the signals object"""
+        self._tree_signals = value
+        for node_path, tree_node in self.root.iter_tree():
+            logger.debug(f"Setting signals for {tree_node.name}")
+            tree_node.signals = value
 
     def __del__(self):
         """Cleanup resources"""
@@ -64,7 +77,7 @@ class SceneManager():
         if len(path) == 1:
             molecule = path[0]
             mol_obj = MoleculeObject(
-                name=filepath.stem, molecule=molecule, visible=True, signals=self._signals)
+                name=filepath.stem, molecule=molecule, visible=True, signals=self._tree_signals)
 
             success, message = self.root.add_child(mol_obj)
             if not success:
@@ -81,7 +94,7 @@ class SceneManager():
         # Create trajectory object using from_xyz_file
         # (this already creates molecule children internally)
         traj_obj = TrajectoryObject.from_trajectory(
-            path, name=filepath.stem, signals=self._signals)
+            path, name=filepath.stem, signals=self._tree_signals)
 
         # Add to root AFTER registration
         success, message = self.root.add_child(traj_obj)
@@ -103,7 +116,7 @@ class SceneManager():
         # Create molecule object with integrated scalar field
         # (this creates scalar field children internally)
         mol_obj = MoleculeObject.from_cube_file(
-            filepath, name=filepath.stem, signals=self._signals)
+            filepath, name=filepath.stem, signals=self._tree_signals)
 
         # Register the molecule and all its scalar field children
         success, message = self.root.add_child(mol_obj)
@@ -158,14 +171,21 @@ class SceneManager():
     def set_visibility(self, uuid: str, visible: bool) -> None:
         """Set object visibility"""
         # Use the TreeNode visibility method directly
-        self.root.set_visibility(uuid, visible)
+        success = self.root.set_visibility(uuid, visible)
+
+        logger.debug(
+            f"Visibility changed for {uuid}: {visible} - success: {success}")
+
+        return success
 
     def update_settings(self, uuid: str, settings) -> None:
         """Update render settings for an object"""
         obj = self.get_object_by_uuid(uuid)
-        if hasattr(obj, 'render_settings'):
-            obj.render_settings = settings
-            self._signals.node_changed.emit(uuid)
+        if obj is None:
+            logger.warning(f"Object with UUID {uuid} not found")
+            return
+
+        obj.update_settings(settings)
 
     def render(self, plotter: Optional[pv.Plotter] = None, **kwargs) -> pv.Plotter:
         """Render all visible objects"""

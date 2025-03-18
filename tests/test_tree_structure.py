@@ -217,8 +217,9 @@ class TestTreeSignals:
     """Tests for tree signal emission"""
 
     @pytest.fixture
-    def signals(self):
+    def signals(self, qtbot):
         """Create a signals object for testing"""
+        # Using qtbot ensures we have a QApplication running
         return TreeSignals()
 
     def test_signal_emission(self, signals, qtbot):

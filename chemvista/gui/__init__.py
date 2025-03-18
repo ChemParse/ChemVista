@@ -4,7 +4,7 @@ from .widgets import ObjectTreeWidget
 from .scene import SceneWidget
 
 __all__ = [
-    'SceneManager',
-    'SceneTreeWidget',
     'ChemVistaApp',
+    'ObjectTreeWidget',
+    'SceneWidget',
 ]

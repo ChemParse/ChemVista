@@ -22,7 +22,15 @@ T = TypeVar('T')  # Generic type for scene object data
 
 
 class SceneObject(TreeNode[T]):
-    pass
+    @property
+    def render_settings(self):
+        return self._render_settings
+
+    @render_settings.setter
+    def render_settings(self, value):
+        self._render_settings = value
+        if self.signals:
+            self.signals.render_changed.emit(self.uuid)
 
 
 class ScalarFieldObject(SceneObject):
@@ -30,7 +38,7 @@ class ScalarFieldObject(SceneObject):
         super().__init__(name=name, data=scalar_field,
                          node_type="scalar_field", parent=parent, visible=visible, signals=signals)
         self.scalar_field = scalar_field
-        self.render_settings = ScalarFieldRenderSettings()
+        self._render_settings = ScalarFieldRenderSettings()
 
     def _can_add_child(self, child):
         return False, 'Scalar field objects cannot have children'
@@ -48,7 +56,7 @@ class MoleculeObject(SceneObject):
         super().__init__(name=name, data=molecule,
                          node_type="molecule", parent=parent, visible=visible, signals=signals)
         self.molecule = molecule
-        self.render_settings = MoleculeRenderSettings()
+        self._render_settings = MoleculeRenderSettings()
 
     def _can_add_child(self, child):
         """Override to restrict children to scalar fields"""
@@ -101,6 +109,40 @@ class MoleculeObject(SceneObject):
         # Use parent class to remove the child properly
         return super().remove_child(child)
 
+    def reorder_child(self, uuid: str, new_position: int):
+        """Reorder the child with the given UUID to the new position"""
+        # Find the child by UUID
+        child_obj = self._children.get(uuid)
+        if not child_obj:
+            return False, f'Child with UUID {uuid} not found'
+
+        name = child_obj.name
+
+        # Get current positions of scalar fields in both children and molecule
+        children_list = list(self._children.values())
+        old_position = children_list.index(child_obj)
+
+        items = list(self.molecule.scalar_fields.items())
+        item = items.pop(old_position)
+        items.insert(new_position, item)
+        self.molecule.scalar_fields = dict(items)
+
+        success, msg = super().reorder_child(uuid, new_position)
+        if not success:
+            raise ValueError('Failed to reorder children: ' + msg)
+
+        return True, f'Successfully reordered {name} to position {new_position}'
+
+    @classmethod
+    def from_molecule(cls, molecule: Molecule, name: str, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'MoleculeObject':
+        molecule_object = cls(name, molecule, parent, visible, signals)
+        for scalar_field_name, scalar_field in molecule.scalar_fields.items():
+            scalar_field_object = ScalarFieldObject(
+                scalar_field_name, scalar_field, molecule_object, visible, signals)
+            molecule_object._add_child_to_tree(scalar_field_object)
+
+        return molecule_object
+
     @classmethod
     def from_xyz_file(cls, path: Union[str, pathlib.Path], name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'MoleculeObject':
         molecule = Molecule.load(path)
@@ -134,7 +176,7 @@ class TrajectoryObject(SceneObject):
         super().__init__(name=name, node_type="trajectory",
                          parent=parent, visible=visible, signals=signals)
         self.trajectory = trajectory
-        self.render_settings = TrajectoryRenderSettings()
+        self._render_settings = TrajectoryRenderSettings()
         self.data = trajectory
 
     def _can_add_child(self, child):
@@ -201,13 +243,34 @@ class TrajectoryObject(SceneObject):
         # Use parent class to remove the child properly
         return super().remove_child(child)
 
+    def reorder_child(self, uuid, new_position):
+        """Reorder the child with the given UUID to the new position"""
+        # Find the child by UUID
+        child_obj = self._children.get(uuid)
+        if not child_obj:
+            return False, f'Child with UUID {uuid} not found'
+
+        # Get current index of child and store molecule
+        children_list = list(self._children.values())
+        old_position = children_list.index(child_obj)
+        molecule = self.trajectory[old_position]
+
+        # Remove molecule from old position and insert at new position
+        self.trajectory.remove_image(old_position)
+        self.trajectory.insert(new_position, molecule)
+
+        return super().reorder_child(uuid, new_position)
+
     @classmethod
     def from_trajectory(cls, trajectory, name, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'TrajectoryObject':
-        trajectory_object = cls(name, trajectory, parent, visible)
+        logger.info(
+            f"Creating trajectory {name} object with {len(trajectory)} frames")
+        trajectory_object = cls(name, trajectory, parent, visible, signals)
         # Create molecule objects for each frame
         for i, image in enumerate(trajectory):
             image_name = f'Frame_{i}'
-
+            logger.debug(
+                f"Creating molecule object for {image_name} with signals {signals}")
             molecule_object = MoleculeObject(
                 image_name, image, trajectory_object, visible=i == 0, signals=signals)
             trajectory_object._add_child_to_tree(molecule_object)

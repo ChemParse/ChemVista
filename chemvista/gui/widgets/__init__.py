@@ -1,1 +1,1 @@
-from .object_tree import ObjectTreeWidget
+from .object_tree.object_tree_widget import ObjectTreeWidget, TreeWidgetSignals

@@ -2,7 +2,7 @@ import sys
 import logging
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
-from chemvista import ChemVistaApp
+from chemvista.gui import ChemVistaApp
 import pathlib
 
 
@@ -10,11 +10,11 @@ def setup_console_logger():
     """Set up a basic console logger"""
     # Get the root logger
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Create console handler
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.INFO)
+    handler.setLevel(logging.DEBUG)
 
     # Create formatter
     formatter = logging.Formatter(
@@ -26,8 +26,13 @@ def setup_console_logger():
         logger.addHandler(handler)
 
     # Set specific loggers' levels
-    logging.getLogger("chemvista.scene").setLevel(logging.INFO)
-    logging.getLogger("chemvista.ui.tree").setLevel(logging.INFO)
+    logging.getLogger("chemvista.gui.main_window").setLevel(logging.DEBUG)
+    logging.getLogger("chemvista.scene").setLevel(logging.DEBUG)
+    logging.getLogger("chemvista.tree").setLevel(logging.DEBUG)
+    logging.getLogger(
+        "chemvista.ui.widgets.object_tree").setLevel(logging.DEBUG)
+    logging.getLogger(
+        "chemvista.ui.widgets.object_tree.item_widgets").setLevel(logging.INFO)
 
     return logger
 

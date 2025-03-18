@@ -4,6 +4,9 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QCheckBox,
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from ...renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings
+import logging
+
+logger = logging.getLogger("chemvista.ui.widgets.settings_dialog")
 
 
 class ScalarFieldSettingsDialog(QDialog):
