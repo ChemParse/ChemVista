@@ -157,36 +157,22 @@ class TreeNode(Generic[T]):
         for child in self._children.values():
             child._invalidate_path_cache()
 
-    def _add_child_internal(self, child: 'TreeNode') -> bool:
-        """Internal method to add a child node"""
-        if child.uuid in self._children:
-            return False
+    def _can_add_child(self, child: 'TreeNode') -> Tuple[bool, str]:
+        """Check if a child can be added - subclasses can override to restrict by type"""
+        return True, ""
 
-        # Set parent without triggering parent setter again
-        old_parent = child._parent
-        child._parent = self
-        self._children[child.uuid] = child
+    def add_child(self, child: 'TreeNode', position: Optional[int] = None, send_signals: bool = True) -> Tuple[bool, str]:
+        """
+        Add a child to this node with optional position, returns success and message
 
-        # Invalidate path cache
-        child._invalidate_path_cache()
+        Args:
+            child: The child node to add
+            position: Optional position index (None means append to end)
+            send_signals: Whether to emit signals after the operation (default: True)
 
-        return True
-
-    def _remove_child_internal(self, child: 'TreeNode') -> bool:
-        """Internal method to remove a child node"""
-        if child.uuid not in self._children:
-            return False
-
-        # Remove from children
-        del self._children[child.uuid]
-
-        # Remove parent reference
-        child._parent = None
-
-        return True
-
-    def _add_child_to_tree(self, child: 'TreeNode', position: Optional[int] = None) -> Tuple[bool, str]:
-        """Add a child to this node with optional position, returns success and message"""
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
         logger.debug(f"Adding child {child.name} to {self.name}")
 
         # Check if child can be added (allow subclasses to restrict by type)
@@ -196,22 +182,32 @@ class TreeNode(Generic[T]):
 
         # Basic add if position not specified
         if position is None:
-            success = self._add_child_internal(child)
+            # Add the child directly
+            if child.uuid in self._children:
+                return False, "Child already exists in this parent"
 
-            # Emit signals if successful and signals object exists
-            if success and self._signals:
+            child._parent = self
+            self._children[child.uuid] = child
+            child._invalidate_path_cache()
+
+            # Emit signals if requested
+            if send_signals and self._signals:
                 self._signals.node_added.emit(child.uuid)
                 self._signals.tree_structure_changed.emit()
 
-            return success, "Node added" if success else "Failed to add node"
+            return True, "Node added"
 
         # Handle positioned add
         children_list = list(self._children.values())
         if 0 <= position <= len(children_list):
-            # First add the child to ensure UUID registration
-            success = self._add_child_internal(child)
-            if not success:
-                return False, "Failed to add child"
+            # First check if child is already in children
+            if child.uuid in self._children:
+                return False, "Child already exists in this parent"
+
+            # Add the child
+            child._parent = self
+            self._children[child.uuid] = child
+            child._invalidate_path_cache()
 
             # Then reorder by rebuilding the list and dictionary
             children_list = list(self._children.values())
@@ -222,8 +218,8 @@ class TreeNode(Generic[T]):
             # Rebuild dictionary to maintain order
             self._children = {node.uuid: node for node in children_list}
 
-            # Emit signals if signals object exists
-            if self._signals:
+            # Emit signals if requested
+            if send_signals and self._signals:
                 self._signals.node_added.emit(child.uuid)
                 self._signals.tree_structure_changed.emit()
 
@@ -231,12 +227,17 @@ class TreeNode(Generic[T]):
 
         return False, f"Invalid position {position}"
 
-    def add_child(self, child: 'TreeNode', position: Optional[int] = None) -> Tuple[bool, str]:
-        """Add a child to this node with optional position, returns success and message"""
-        return self._add_child_to_tree(child, position)
+    def remove_child(self, child: Union['TreeNode', str], send_signals: bool = True) -> Optional['TreeNode']:
+        """
+        Remove a child from this node, returns the removed child or None if not found
 
-    def remove_child(self, child: Union['TreeNode', str]) -> Optional['TreeNode']:
-        """Remove a child from this node, returns the removed child or None if not found"""
+        Args:
+            child: The child node or its UUID to remove
+            send_signals: Whether to emit signals after the operation (default: True)
+
+        Returns:
+            The removed TreeNode or None if not found
+        """
         # Handle string UUID as argument
         if isinstance(child, str):
             child_obj = self._children.get(child)
@@ -244,17 +245,24 @@ class TreeNode(Generic[T]):
                 return None
             child = child_obj
 
-        # Remove the child
-        success = self._remove_child_internal(child)
+        # Check if the child exists in our children dictionary
+        if child.uuid not in self._children:
+            return None
 
-        # Emit signals if successful and signals object exists
-        if success and self._signals and hasattr(child, 'uuid'):
+        # Remove from children
+        del self._children[child.uuid]
+
+        # Remove parent reference
+        child._parent = None
+
+        # Emit signals if requested and signals object exists
+        if send_signals and self._signals and hasattr(child, 'uuid'):
             self._signals.node_removed.emit(child.uuid)
             self._signals.tree_structure_changed.emit()
 
-        return child if success else None
+        return child
 
-    def move(self, child_obj: Union['TreeNode', str], new_parent: Union['TreeNode', str],
+    def move(self, child_obj: Union['TreeNode', str], new_parent: Union['TreeNode', 'str'],
              position: Optional[int] = None) -> Tuple[bool, str]:
         """Move a child to a new parent with optional position, returns success and message"""
         # Handle string UUID as argument
@@ -263,6 +271,8 @@ class TreeNode(Generic[T]):
             if not child_obj:
                 logger.warning(f"Child node {child_obj} not found")
                 return False, "Child node not found"
+        current_parent = child_obj.parent
+
         if isinstance(new_parent, str):
             new_parent = self.get_object_by_uuid(new_parent)
             if not new_parent:
@@ -272,38 +282,41 @@ class TreeNode(Generic[T]):
         logger.debug(
             f"Moving node {child_obj.name} ({child_obj.uuid}) to {new_parent.name} ({new_parent.uuid}) with position {position}")
 
-        if new_parent == child_obj.parent:
+        if new_parent == current_parent:
             logger.debug(
                 f"Node {child_obj.name} already belongs to target parent {new_parent.name}, reordering instead of moving")
-            if position is not None:
-                # Reorder child within parent
-                return new_parent.reorder_child(child_obj.uuid, position)
-            logger.debug("No position specified, no action taken")
-            return False, "Node already belongs to target parent, no position specified"
+            return new_parent.reorder_child(child_obj, position)
 
         # Check if new parent can accept this child
         can_add, msg = new_parent._can_add_child(child_obj)
         if not can_add:
+            logger.warning(
+                f"Cannot move node to target: {msg}")
             return False, f"Cannot move to target: {msg}"
 
+        # Remove from current parent without sending signals
+        if current_parent:
+            current_parent.remove_child(child_obj, send_signals=False)
+
         # Add to new parent
-        success, add_msg = new_parent.add_child(child_obj, position)
+        success, add_msg = new_parent.add_child(
+            child_obj, position, send_signals=True)
 
         if success:
-            # Remove from current parent
-            self.remove_child(child_obj)
-            if self._signals:
-                self._signals.node_removed.emit(child_obj.uuid)
-                self._signals.tree_structure_changed.emit()
-
+            logger.debug(
+                f"Node {child_obj.name} moved successfully to {new_parent.name}")
+            logger.debug(f'{child_obj.parent = }')
+            logger.debug(
+                f'New parent children = {[child.name for child in new_parent.children]}')
+            logger.debug(
+                f'Old parent children = {[child.name for child in current_parent.children]}' if current_parent else 'No old parent')
+            logger.debug(self.format_tree())
             return success, f"Node moved successfully to {new_parent.name}"
 
         else:
+            logger.warning(
+                f"Failed to move node: {add_msg}")
             return success, f"Failed to move node: {add_msg}"
-
-    def _can_add_child(self, child: 'TreeNode') -> Tuple[bool, str]:
-        """Check if a child can be added - subclasses can override to restrict by type"""
-        return True, ""
 
     def set_visibility(self, uuid_or_node: Union[str, 'TreeNode'], visible: bool) -> bool:
         """Set visibility of a node by UUID or reference"""
@@ -539,52 +552,47 @@ class TreeNode(Generic[T]):
         # Fix: use proper string join
         return "\n".join(lines) if len(lines) > 1 else "Tree: < empty >"
 
-    def reorder_child(self, uuid: str, new_position: int) -> Tuple[bool, str]:
+    def reorder_child(self, child: 'TreeNode', new_position: int | None, send_signals: bool = True) -> Tuple[bool, str]:
         """
-        Reorder a child within its current parent without changing tree structure.
+        Reorder a child within its current parent.
 
         Args:
-            uuid: UUID string of the child to reorder
+            child: TreeNode object
             new_position: New position index for the child
+            send_signals: Whether to emit signals after the operation
 
         Returns:
             Tuple of (success, message)
         """
-        # Check if child exists
-        if uuid not in self._children:
-            return False, "Child node not found"
+
+        # Verify child belongs to this parent
+        if child.uuid not in self._children:
+            return False, "Child does not belong to this parent"
 
         # Get current list of children
         children_list = list(self._children.values())
-        child_node = self._children[uuid]
+        new_position = new_position or len(children_list) - 1
 
         # Check if position is valid
         if not (0 <= new_position < len(children_list)):
             return False, f"Invalid position {new_position}, valid range is 0-{len(children_list)-1}"
 
         # Get current position
-        current_position = children_list.index(child_node)
+        current_position = children_list.index(child)
 
         # If position is the same, no change needed
         if current_position == new_position:
             return True, "Child already at requested position"
 
         # Remove from current position and insert at new position
-        children_list.remove(child_node)
-        children_list.insert(new_position, child_node)
+        children_list.remove(child)
+        children_list.insert(new_position, child)
 
         # Rebuild dictionary to maintain order
         self._children = {node.uuid: node for node in children_list}
 
-        logger.debug(
-            f"Reordered child {child_node.name} from position {current_position} to {new_position}")
-
-        logger.debug(
-            f'New order: {", ".join([child.name for child in children_list])}')
-
-        print(f'{self._signals = }')
-        # Emit signal if signals object exists
-        if self._signals:
+        # Emit signal if requested and signals object exists
+        if send_signals and self._signals:
             self._signals.tree_structure_changed.emit()
 
         return True, f"Child moved from position {current_position} to {new_position}"

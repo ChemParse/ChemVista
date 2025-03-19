@@ -9,7 +9,7 @@ from ....tree_structure import TreeSignals, TreeNode
 from PyQt5.QtCore import QObject
 
 # Create logger
-logger = logging.getLogger("chemvista.ui.widgets.object_tree")
+logger = logging.getLogger("chemvista.ui.widgets.object_tree_widget")
 
 
 class TreeWidgetSignals(QObject):
@@ -65,9 +65,8 @@ class ObjectTreeWidget(QTreeWidget):
         # Initial tree build
         self._refresh_tree()
 
-        # Add a flag to prevent recursive tree structure updates
-        self._refreshing_tree = False
-        self._pending_refresh = False
+        # Flag to manage updates - replaces the previous multiple flags
+        self._updates_enabled = True
 
         logger.debug("Initializing ObjectTreeWidget")
 
@@ -101,29 +100,39 @@ class ObjectTreeWidget(QTreeWidget):
 
         logger.debug("Tree signals connected")
 
+    def enable_updates(self):
+        """Enable tree structure updates"""
+        logger.debug("Updates enabled")
+        self._updates_enabled = True
+
+    def disable_updates(self):
+        """Disable tree structure updates"""
+        logger.debug("Updates disabled")
+        self._updates_enabled = False
+
+    def update_tree(self):
+        """Manually trigger a tree update"""
+        logger.debug("Manual tree update triggered")
+        self._refresh_tree()
+        self._widget_signals.structure_updated.emit()
+
     def _refresh_tree(self):
         """Build or refresh the entire tree from the root node"""
         logger.debug("Starting tree refresh")
+        logger.debug(self.root.format_tree())
 
-        # Set the refreshing flag to prevent recursive calls
-        self._refreshing_tree = True
+        self.clear()
+        self._item_map.clear()
 
-        try:
-            self.clear()
-            self._item_map.clear()
+        # Skip the actual root node, start with its children
+        for child in self.root.children:
+            self._add_node_to_tree(child)
 
-            # Skip the actual root node, start with its children
-            for child in self.root.children:
-                self._add_node_to_tree(child)
+        # Expand the first level by default
+        self.expandToDepth(0)
 
-            # Expand the first level by default
-            self.expandToDepth(0)
-
-            logger.debug(f"Tree refreshed with {len(self._item_map)} items")
-            logger.debug(self.root.format_tree())
-        finally:
-            # Always ensure flag is reset, even if an exception occurs
-            self._refreshing_tree = False
+        logger.debug(f"Tree refreshed with {len(self._item_map)} items")
+        logger.debug(self.root.format_tree())
 
     def _add_node_to_tree(self, node: TreeNode, parent_item: Optional[QTreeWidgetItem] = None) -> QTreeWidgetItem:
         """Recursively add a node and its children to the tree"""
@@ -171,27 +180,18 @@ class ObjectTreeWidget(QTreeWidget):
 
     def _on_tree_structure_changed(self):
         """Handle tree structure changed signal from the tree model"""
-        # Prevent recursive calls during an ongoing refresh
-        if self._refreshing_tree:
-            # Mark that another refresh is needed after current one finishes
-            self._pending_refresh = True
+        # Only process updates when enabled
+        if not self._updates_enabled:
             logger.debug(
-                "Tree structure change notification received while refreshing - deferring refresh")
+                "Tree structure change notification received while updates disabled - ignoring")
             return
 
-        # This is a major change, so refresh the entire tree
+        # Update the tree
         logger.debug("Tree structure changed notification received")
         logger.debug(self.root.format_tree())
         self._refresh_tree()
         self._widget_signals.structure_updated.emit()
         logger.debug("Structure update signal emitted")
-
-        # Check if a pending refresh was requested during this refresh
-        if self._pending_refresh:
-            logger.debug("Processing deferred tree refresh request")
-            self._pending_refresh = False
-            # Use a timer to allow current call stack to complete before doing another refresh
-            QTimer.singleShot(50, self._check_tree_consistency)
 
     def _check_tree_consistency(self):
         """Verify tree UI matches the model structure and fix if needed"""
@@ -204,34 +204,128 @@ class ObjectTreeWidget(QTreeWidget):
             logger.debug("Checking tree consistency")
             self._refresh_tree()
 
+    def _get_drop_indicator_position(self, pos, item) -> str:
+        """
+        Determine more precise drop position relative to the item
+        Returns: 'above', 'below', or None (meaning on the item)
+        """
+        if not item:
+            return None  # On root if no item
+
+        rect = self.visualItemRect(item)
+
+        # Use more precise margins for better control
+        # Max 6 pixels or 1/4 of item height
+        upper_margin = min(rect.height() // 4, 6)
+        # Max 6 pixels or 1/4 of item height
+        lower_margin = min(rect.height() // 4, 6)
+
+        if pos.y() < rect.top() + upper_margin:
+            position = 'above'
+        elif pos.y() > rect.bottom() - lower_margin:
+            position = 'below'
+        else:
+            position = None
+
+        return position
+
+    def _get_relative_item(self, event) -> Tuple[QTreeWidgetItem, str]:
+        """
+        Determine the relative item and position based on the event
+        Returns: (item, position) where position is 'above', 'below', or None
+        """
+        # Get the item at the event position
+        item = self.itemAt(event.pos())
+
+        # If there's no item, return (None, None)
+        if not item:
+            return None, None
+
+        # Determine the position relative to the item
+        position = self._get_drop_indicator_position(event.pos(), item)
+
+        return item, position
+
+    def _get_absolute_item_position(self, item_to_move, relative_item, position) -> Tuple[TreeNode, Union[int, None]]:
+        """
+        Determine the absolute position for a drop operation
+        Returns: (target_node, position) where position is either None or an integer index
+        """
+        # Get the TreeNode corresponding to the relative item
+        if not relative_item:
+            # If there's no relative item, add to root
+            return self.root, None
+
+        relative_uuid = relative_item.data(0, Qt.UserRole)
+        relative_node = self.root.get_object_by_uuid(relative_uuid)
+
+        if not relative_node:
+            logger.debug(
+                f"Relative node not found for UUID {relative_uuid}, using root")
+            return self.root, None
+
+        # Get the TreeNode for the item being moved
+        moving_uuid = item_to_move.data(0, Qt.UserRole)
+        moving_node = self.root.get_object_by_uuid(moving_uuid)
+
+        if not moving_node:
+            logger.debug(f"Moving node not found for UUID {moving_uuid}")
+            return None, None
+
+        # Handle positioning based on indicator
+        if position is None:
+            # We're adding as a child of the relative item
+            logger.debug(f"Drop position: on {relative_node.name}")
+            return relative_node, None
+        elif position in ('above', 'below'):
+            # We're adding as a sibling above or below
+            # The target node is the parent of the relative item
+            parent_node = relative_node.parent if relative_node.parent else self.root
+
+            # Calculate the index position in parent's children list
+            if parent_node:
+                index = parent_node.children.index(relative_node)
+                if position == 'below':
+                    index += 1  # Insert after the target
+
+                # If source and target have the same parent, and we're moving below
+                # an item that is further down in the list, we need to adjust the index
+                if (moving_node.parent == parent_node and
+                        parent_node.children.index(moving_node) < index):
+                    index -= 1  # Adjust for the removal of the source node
+                    logger.debug(
+                        f"Adjusted index for same-parent move: {index}")
+
+                logger.debug(
+                    f"Drop position: {position} {relative_node.name} (index {index} in {parent_node.name})")
+                return parent_node, index
+            else:
+                # Fallback if parent_node is somehow None
+                logger.debug(
+                    f"Parent node is None for {relative_node.name}, using root")
+                return self.root, None
+        else:
+            # Fallback for unexpected position value
+            logger.debug(
+                f"Unknown drop position: {position}, defaulting to on-item (None)")
+            return relative_node, None
+
     def dragMoveEvent(self, event):
         """Override to track drop position indicators during drag operations"""
         super().dragMoveEvent(event)
 
-        # Get drop position information
-        target_item = self.itemAt(event.pos())
+        # Use internal helper to get drop target and position
+        target_item, drop_position = self._get_relative_item(event)
 
         # Handle drops over empty area (no target item)
         if not target_item:
             # When dropping over empty area, set position to 'root'
-            # This is a special case meaning "add to root"
-            drop_position = 'root'
-
-            # Don't log every mouse movement during drag to avoid log spam
-            if self._drop_indicator_position != drop_position:
-                logger.debug(
-                    "Drag indicator: over empty area (will add to root)")
-
-            # No need to draw indicator for empty area, just accept the drag
+            logger.debug("Drag indicator: over empty area (will add to root)")
             self._drawing_drop_indicator = False
-            self._drop_indicator_position = drop_position
+            self._drop_indicator_position = 'root'
             self._drop_target_item = None
             self.viewport().update()
             return
-
-        # Normal case - drop on an item
-        drop_position = self.get_drop_indicator_position(
-            event.pos(), target_item)
 
         # Don't log every mouse movement during drag to avoid log spam
         # Only log when position or target changes
@@ -253,87 +347,13 @@ class ObjectTreeWidget(QTreeWidget):
         elif drop_position == 'below':
             self._drop_rect.setTop(rect.bottom() - 2)
             self._drop_rect.setHeight(3)
-        elif drop_position == 'on':
+        elif drop_position is None:
             # Make the entire item background highlight
             pass
 
         # Force a repaint to show the drop indicator
         self._drawing_drop_indicator = True
         self.viewport().update()
-
-    def get_drop_indicator_position(self, pos, item) -> str:
-        """
-        Determine more precise drop position relative to the item
-        Returns: 'on', 'above', or 'below'
-        """
-        if not item:
-            return 'on'  # On root if no item
-
-        rect = self.visualItemRect(item)
-
-        # Use more precise margins for better control
-        # Max 6 pixels or 1/4 of item height
-        upper_margin = min(rect.height() // 4, 6)
-        # Max 6 pixels or 1/4 of item height
-        lower_margin = min(rect.height() // 4, 6)
-
-        if pos.y() < rect.top() + upper_margin:
-            position = 'above'
-        elif pos.y() > rect.bottom() - lower_margin:
-            position = 'below'
-        else:
-            position = 'on'
-
-        return position
-
-    def _get_target_node_and_position(self, event=None) -> Tuple[TreeNode, Union[str, int]]:
-        """
-        Determine the target node and position for a drop operation
-        Returns: (target_node, position) where position is either 'on' or an integer index
-        """
-        # Special case: dropping on empty area or when position is explicitly set to 'root'
-        if not self._drop_target_item or self._drop_indicator_position == 'root':
-            logger.debug("Drop target is empty area, adding to root at end")
-            # Return root node and a position at the end of its children
-            return self.root, len(self.root.children)
-
-        target_uuid = self._drop_target_item.data(0, Qt.UserRole)
-        target_node = self.root.get_object_by_uuid(target_uuid)
-
-        if not target_node:
-            logger.debug(
-                f"Target node not found for UUID {target_uuid}, using root")
-            return self.root, len(self.root.children)
-
-        position = self._drop_indicator_position
-
-        # Handle positioning based on indicator
-        if position == 'on':
-            # We're adding as a child
-            logger.debug(f"Drop position: on {target_node.name}")
-            return target_node, 'on'
-        elif position in ('above', 'below'):
-            # We're adding as a sibling above or below
-            parent_node = target_node.parent if target_node.parent else self.root
-
-            # Calculate the index position in parent's children list
-            if parent_node:
-                index = parent_node.children.index(target_node)
-                if position == 'below':
-                    index += 1  # Insert after the target
-                logger.debug(
-                    f"Drop position: {position} {target_node.name} (index {index} in {parent_node.name})")
-                return parent_node, index
-            else:
-                # Fallback if parent_node is somehow None
-                logger.debug(
-                    f"Parent node is None for {target_node.name}, using root")
-                return self.root, len(self.root.children)
-        else:
-            # Fallback
-            logger.debug(
-                f"Unknown drop position: {position}, defaulting to 'on'")
-            return target_node, 'on'
 
     def dropEvent(self, event):
         """Handle drop events for drag and drop operations"""
@@ -354,19 +374,24 @@ class ObjectTreeWidget(QTreeWidget):
                 f"Source node not found for drop event: {source_uuid}")
             return
 
-        # Get the target node and position from our tracking during dragMoveEvent
-        target_node, position = self._get_target_node_and_position()
+        # Get the relative item and position using internal helper
+        relative_item, position = self._get_relative_item(event)
 
-        # Block structure update signals temporarily to prevent multiple refreshes
-        old_signals_blocked = self._tree_signals.blockSignals(True)
+        # Get target node and position for the move operation
+        target_node, position = self._get_absolute_item_position(
+            source_item, relative_item, position)
 
-        # Check if source can be moved to target
+        # Disable updates for the duration of the move operation
+        self.disable_updates()
+
+        # Perform the move operation
         success = False
+
         try:
-            if source_node.parent and target_node:
+            if target_node:
                 # Perform the move operation
-                if position == 'on':
-                    # For 'on', we're adding as a child, so omit position parameter
+                if position is None:
+                    # For None, we're adding as a child, so omit position parameter
                     logger.debug(
                         f"Moving {source_node.name} as child of {target_node.name}")
                     success, msg = self.root.move(source_node, target_node)
@@ -393,22 +418,20 @@ class ObjectTreeWidget(QTreeWidget):
                     "Invalid move operation - source has no parent or target is invalid")
                 event.ignore()
         finally:
-            # Always restore signal blocking state
-            self._tree_signals.blockSignals(old_signals_blocked)
-
             # Always reset drop state
             self._reset_drop_state()
 
-            # Now manually trigger a single refresh
+            # Re-enable updates
+            self.enable_updates()
+
+            # Now manually trigger a tree update if the move was successful
             if success:
                 logger.debug(
-                    "Triggering manual tree refresh after successful move")
-                QTimer.singleShot(0, self._refresh_tree)
-            else:
-                # For failed moves, we don't need another refresh
-                pass
+                    "Triggering manual tree update after successful move")
+                self.update_tree()
 
             logger.debug("Drop event completed")
+            logger.debug(self.root.format_tree())
 
     def _reset_drop_state(self):
         """Reset all drop-related state variables"""
@@ -430,7 +453,7 @@ class ObjectTreeWidget(QTreeWidget):
         super().paintEvent(event)
 
         # Draw custom drop indicator if we're dragging
-        if self._drawing_drop_indicator and self._drop_target_item and self._drop_indicator_position:
+        if self._drawing_drop_indicator and self._drop_target_item and self._drop_indicator_position is not None:
             painter = QPainter(self.viewport())
 
             # Set up the painter
@@ -472,7 +495,7 @@ class ObjectTreeWidget(QTreeWidget):
                     QPoint(self._drop_rect.right(), bottom + 3)
                 )
 
-            elif self._drop_indicator_position == 'on':
+            elif self._drop_indicator_position is None:
                 # Draw a rectangle around the item to indicate "adding as child"
                 pen.setStyle(Qt.DashLine)
                 painter.setPen(pen)

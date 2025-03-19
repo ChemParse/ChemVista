@@ -14,7 +14,8 @@ from ...widgets.settings_dialog import (RenderSettingsDialog,
                                         ScalarFieldSettingsDialog)
 
 # Create logger
-logger = logging.getLogger("chemvista.ui.widgets.object_tree.item_widgets")
+logger = logging.getLogger(
+    "chemvista.ui.widgets.object_tree_widget.item_widgets")
 
 
 class ObjectTreeItem(QWidget):

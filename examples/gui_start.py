@@ -30,9 +30,9 @@ def setup_console_logger():
     logging.getLogger("chemvista.scene").setLevel(logging.DEBUG)
     logging.getLogger("chemvista.tree").setLevel(logging.DEBUG)
     logging.getLogger(
-        "chemvista.ui.widgets.object_tree").setLevel(logging.DEBUG)
+        "chemvista.ui.widgets.object_tree_widget").setLevel(logging.DEBUG)
     logging.getLogger(
-        "chemvista.ui.widgets.object_tree.item_widgets").setLevel(logging.INFO)
+        "chemvista.ui.widgets.object_tree_widget.item_widgets").setLevel(logging.INFO)
 
     return logger
 

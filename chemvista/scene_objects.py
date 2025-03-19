@@ -68,105 +68,93 @@ class MoleculeObject(SceneObject):
 
         return True, ""
 
-    def add_child(self, child: SceneObject, position: Optional[int] = None) -> Tuple[bool, str]:
+    def add_child(self, child: SceneObject, position: Optional[int] = None, send_signals: bool = True) -> Tuple[bool, str]:
         """Add a scalar field to molecule and maintain data relationship"""
-        # First check if we can add this child
-        can_add, msg = self._can_add_child(child)
-        if not can_add:
-            return False, msg
 
-        # If it's a scalar field, add to the molecule's data structure
+        success, msg = super().add_child(
+            child=child, position=position, send_signals=False)
+        if not success:
+            return success, msg
+
+        # If it's a scalar field, update the molecule's data
         if isinstance(child, ScalarFieldObject):
-            # Add to parent using the TreeNode implementation
-            success, msg = self._add_child_to_tree(child, position)
-            if not success:
-                return success, msg
-
-            # Also add to molecule's scalar_fields dict
             self.molecule.scalar_fields[child.name] = child.scalar_field
-            return True, "Scalar field added to molecule"
+        else:
+            # This should never happen due to the _can_add_child check, but just in case
+            raise NotImplementedError(
+                "Only ScalarFieldObjects can be added as children to MoleculeObject")
 
-        return False, "Only scalar fields can be added to molecules"
+        if send_signals and self._signals:
+            self._signals.node_added.emit(child.uuid)
+            self._signals.tree_structure_changed.emit()
 
-    def remove_child(self, child):
+        return success, msg
+
+    def remove_child(self, child: SceneObject, send_signals: bool = True):
         """Remove child and also update the molecule data"""
-        if isinstance(child, str):
-            # Find the child by UUID
-            child_obj = None
-            for c in self.children:
-                if c.uuid == child:
-                    child_obj = c
-                    break
 
-            if not child_obj:
-                return None
-            child = child_obj
+        child = super().remove_child(child, send_signals=False)
 
-        # If it's a scalar field, remove from molecule's data
-        if isinstance(child, ScalarFieldObject):
-            self.molecule.scalar_fields.pop(child.name, None)
+        child = self.molecule.scalar_fields.pop(child.name, None)
 
-        # Use parent class to remove the child properly
-        return super().remove_child(child)
+        if send_signals and self._signals:
+            self._signals.node_removed.emit(child.uuid)
+            self._signals.tree_structure_changed.emit()
 
-    def reorder_child(self, uuid: str, new_position: int):
+        return child
+
+    def reorder_child(self, child: SceneObject, new_position: int, send_signals=True):
         """Reorder the child with the given UUID to the new position"""
-        # Find the child by UUID
-        child_obj = self._children.get(uuid)
-        if not child_obj:
-            return False, f'Child with UUID {uuid} not found'
 
-        name = child_obj.name
+        success, msg = super().reorder_child(child, new_position, send_signals=False)
+        if not success:
+            return success, msg
 
         # Get current positions of scalar fields in both children and molecule
         children_list = list(self._children.values())
-        old_position = children_list.index(child_obj)
+        old_position = children_list.index(child.name)
 
         items = list(self.molecule.scalar_fields.items())
         item = items.pop(old_position)
         items.insert(new_position, item)
         self.molecule.scalar_fields = dict(items)
 
-        success, msg = super().reorder_child(uuid, new_position)
         if not success:
             raise ValueError('Failed to reorder children: ' + msg)
 
-        return True, f'Successfully reordered {name} to position {new_position}'
+        if send_signals and self._signals:
+            self._signals.tree_structure_changed.emit()
+
+        return True, f'Successfully reordered {child.name} to position {new_position}'
 
     @classmethod
-    def from_molecule(cls, molecule: Molecule, name: str, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'MoleculeObject':
+    def from_molecule(cls, molecule: Molecule, name: str, parent=None, visible=True, signals: Optional[TreeSignals] = None, send_signals=True) -> 'MoleculeObject':
         molecule_object = cls(name, molecule, parent, visible, signals)
         for scalar_field_name, scalar_field in molecule.scalar_fields.items():
             scalar_field_object = ScalarFieldObject(
                 scalar_field_name, scalar_field, molecule_object, visible, signals)
-            molecule_object._add_child_to_tree(scalar_field_object)
+            molecule_object._children[scalar_field_object.uuid] = scalar_field_object
+
+        if send_signals and molecule_object._signals:
+            molecule_object._signals.tree_structure_changed
 
         return molecule_object
 
     @classmethod
-    def from_xyz_file(cls, path: Union[str, pathlib.Path], name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'MoleculeObject':
+    def from_xyz_file(cls, path: Union[str, pathlib.Path], name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None, send_signals=True) -> 'MoleculeObject':
         molecule = Molecule.load(path)
         if name is None:
             name = pathlib.Path(path).stem
-        return cls(name, molecule, parent, visible, signals)
+        return cls.from_molecule(molecule, name, parent, visible, signals, send_signals=send_signals)
 
     @classmethod
-    def from_cube_file(cls, path: Union[str, pathlib.Path], name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'MoleculeObject':
+    def from_cube_file(cls, path: Union[str, pathlib.Path], name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None, send_signals=True) -> 'MoleculeObject':
         if name is None:
             name = pathlib.Path(path).stem
 
         scalar_field_name = name+'_field'
         molecule = Molecule.load_from_cube(path, name=scalar_field_name)
-        molecule_object = cls(name, molecule, parent, visible, signals)
-
-        # Create scalar field object for the molecule
-        scalar_field = molecule.scalar_fields[scalar_field_name]
-        scalar_field_object = ScalarFieldObject(
-            scalar_field_name, scalar_field, molecule_object, visible, signals)
-
-        molecule_object._add_child_to_tree(scalar_field_object)
-
-        return molecule_object
+        return cls.from_molecule(molecule, name, parent, visible, signals, send_signals=send_signals)
 
 
 class TrajectoryObject(SceneObject):
@@ -189,80 +177,71 @@ class TrajectoryObject(SceneObject):
 
         return True, ""
 
-    def add_child(self, child: SceneObject, position: Optional[int] = None) -> Tuple[bool, str]:
+    def add_child(self, child: SceneObject, position: Optional[int] = None, send_signals: bool = True) -> Tuple[bool, str]:
         """Add a molecule to trajectory and maintain data relationship"""
-        # First check if we can add this child
-        can_add, msg = self._can_add_child(child)
-        if not can_add:
-            return False, msg
 
-        # If it's a molecule, add to the trajectory's data
+        success, msg = super().add_child(
+            child=child, position=position, send_signals=False)
+        if not success:
+            return success, msg
+
+        # If it's a molecule, update the trajectory's data
         if isinstance(child, MoleculeObject):
-            # Determine position within trajectory
-            if position is None:
-                position = len(self.children)
-
-            # Add to parent using the TreeNode implementation
-            success, msg = self._add_child_to_tree(child, position)
-            if not success:
-                return success, msg
-
-            if position == len(self.trajectory):
+            if position is None or position >= len(self.trajectory):
                 self.trajectory.append(child.molecule)
             else:
-                # Also update the trajectory data structure
                 self.trajectory.insert(position, child.molecule)
-            return True, f"Molecule added to trajectory at position {position}"
+        else:
+            # This should never happen due to the _can_add_child check, but just in case
+            raise NotImplementedError(
+                "Only MoleculeObjects can be added as children to TrajectoryObject")
 
-        return False, "Only molecules can be added to trajectories"
+        if send_signals and self._signals:
+            self._signals.node_added.emit(child.uuid)
+            self._signals.tree_structure_changed.emit()
 
-    def remove_child(self, child):
-        """Remove child and update trajectory data"""
-        if isinstance(child, str):
-            # Find the child by UUID
-            child_obj = None
-            for i, c in enumerate(self.children):
-                if c.uuid == child:
-                    child_obj = c
-                    idx = i
-                    break
+        return success, msg
 
-            if not child_obj:
-                return None
-            child = child_obj
+    def remove_child(self, child: SceneObject, send_signals: bool = True):
+        """Remove child and also update the trajectory data"""
 
-        # Find the index of the child in the children list
-        try:
-            idx = self.children.index(child)
-            # Remove from trajectory data structure
-            if idx < len(self.trajectory):
-                self.trajectory.remove_image(idx)
-        except ValueError:
-            pass
+        child = super().remove_child(child, send_signals=False)
 
-        # Use parent class to remove the child properly
-        return super().remove_child(child)
+        # Find the index of the child in the trajectory
+        for i, molecule in enumerate(self.trajectory):
+            if molecule is child.molecule:
+                self.trajectory.remove_image(i)
+                break
 
-    def reorder_child(self, uuid, new_position):
+        if send_signals and self._signals:
+            self._signals.node_removed.emit(child.uuid)
+            self._signals.tree_structure_changed.emit()
+
+        return child
+
+    def reorder_child(self, child: SceneObject, new_position: int, send_signals=True):
         """Reorder the child with the given UUID to the new position"""
-        # Find the child by UUID
-        child_obj = self._children.get(uuid)
-        if not child_obj:
-            return False, f'Child with UUID {uuid} not found'
 
-        # Get current index of child and store molecule
+        success, msg = super().reorder_child(child, new_position, send_signals=False)
+        if not success:
+            return success, msg
+
+        # Get current positions of molecules
         children_list = list(self._children.values())
-        old_position = children_list.index(child_obj)
-        molecule = self.trajectory[old_position]
+        old_position = children_list.index(child)
 
-        # Remove molecule from old position and insert at new position
+        # Update trajectory data order
+        molecule = self.trajectory[old_position]
         self.trajectory.remove_image(old_position)
         self.trajectory.insert(new_position, molecule)
 
-        return super().reorder_child(uuid, new_position)
+        if send_signals and self._signals:
+            self._signals.tree_structure_changed.emit()
+
+        return True, f'Successfully reordered {child.name} to position {new_position}'
 
     @classmethod
-    def from_trajectory(cls, trajectory, name, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'TrajectoryObject':
+    def from_trajectory(cls, trajectory, name, parent=None, visible=True, signals: Optional[TreeSignals] = None, send_signals=True) -> 'TrajectoryObject':
         logger.info(
             f"Creating trajectory {name} object with {len(trajectory)} frames")
         trajectory_object = cls(name, trajectory, parent, visible, signals)
@@ -271,14 +250,17 @@ class TrajectoryObject(SceneObject):
             image_name = f'Frame_{i}'
             logger.debug(
                 f"Creating molecule object for {image_name} with signals {signals}")
-            molecule_object = MoleculeObject(
-                image_name, image, trajectory_object, visible=i == 0, signals=signals)
-            trajectory_object._add_child_to_tree(molecule_object)
+            molecule_object = MoleculeObject.from_molecule(
+                molecule=image, name=image_name, parent=trajectory_object, visible=i == 0, signals=signals, send_signals=False)
+            trajectory_object._children[molecule_object.uuid] = molecule_object
+
+        if send_signals and trajectory_object._signals:
+            trajectory_object._signals.tree_structure_changed.emit()
 
         return trajectory_object
 
     @classmethod
-    def from_xyz_file(cls, path, name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None) -> 'TrajectoryObject':
+    def from_xyz_file(cls, path, name: Optional[str] = None, parent=None, visible=True, signals: Optional[TreeSignals] = None, send_signals=True) -> 'TrajectoryObject':
         trajectory = Trajectory.load(path)
 
         logger.info(f"Loaded trajectory with {len(trajectory)} frames")
@@ -286,4 +268,4 @@ class TrajectoryObject(SceneObject):
         if name is None:
             name = pathlib.Path(path).stem
 
-        return cls.from_trajectory(trajectory, name,  parent, visible, signals)
+        return cls.from_trajectory(trajectory, name,  parent, visible, signals, send_signals=send_signals)
