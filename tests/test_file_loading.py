@@ -29,7 +29,9 @@ def chem_vista_app():
 
 def test_load_xyz(chem_vista_app, test_files):
     """Test loading an XYZ file"""
-    uuid = chem_vista_app.scene_manager.load_molecule(test_files['xyz'])[0]
+
+    uuid = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
+    assert len(chem_vista_app.scene_manager.root.children) == 1
     obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert obj is not None
     assert hasattr(obj, 'molecule')
@@ -38,8 +40,9 @@ def test_load_xyz(chem_vista_app, test_files):
 
 def test_load_cube_as_scalar_field(chem_vista_app, test_files):
     """Test loading a cube file as scalar field only"""
-    uuid = chem_vista_app.scene_manager.load_scalar_field(test_files['cube'])
-    assert len(chem_vista_app.scene_manager.objects) == 1
+    uuid = chem_vista_app.scene_manager.load_scalar_field_from_cube(
+        test_files['cube'])
+    assert len(chem_vista_app.scene_manager.root.children) == 1
     obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert hasattr(obj, 'scalar_field')
     assert obj.scalar_field is not None
@@ -47,17 +50,17 @@ def test_load_cube_as_scalar_field(chem_vista_app, test_files):
 
 def test_load_cube_as_molecule(chem_vista_app, test_files):
     """Test loading a cube file as molecule with field"""
-    uuids = chem_vista_app.scene_manager.load_molecule_from_cube(
+    uuid = chem_vista_app.scene_manager.load_molecule_from_cube(
         test_files['cube'])
-    assert len(uuids) == 2  # Should be molecule and field
 
-    # First object should be molecule
-    mol_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuids[0])
-    assert hasattr(mol_obj, 'molecule')
-
-    # Second object should be field
-    field_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuids[1])
-    assert hasattr(field_obj, 'scalar_field')
+    assert len(chem_vista_app.scene_manager.root.children) == 1
+    molecule_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
+    assert hasattr(molecule_obj, 'molecule')
+    children = molecule_obj.children
+    assert len(children) == 1
+    scalar_field = children[0]
+    assert hasattr(scalar_field, 'scalar_field')
+    assert scalar_field.scalar_field is not None
 
 
 def test_load_trajectory(chem_vista_app, test_files):
@@ -66,21 +69,21 @@ def test_load_trajectory(chem_vista_app, test_files):
     if not test_files['trajectory'].exists():
         pytest.skip(f"Trajectory file not found: {test_files['trajectory']}")
 
-    uuids = chem_vista_app.scene_manager.load_molecule(
+    uuid = chem_vista_app.scene_manager.load_xyz(
         test_files['trajectory'])
-    assert len(uuids) > 1  # Should be multiple frames
 
-    # Verify all objects loaded correctly
-    for uuid in uuids:
-        obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
-        assert obj is not None
-        assert hasattr(obj, 'molecule')
-        assert len(obj.molecule.positions) > 0
+    trajectory_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
+    assert trajectory_obj is not None
+    assert hasattr(trajectory_obj, 'trajectory')
+    assert len(trajectory_obj.trajectory) == 10
+    assert len(trajectory_obj.children) == 10
+
+    assert all(hasattr(obj, 'molecule') for obj in trajectory_obj.children)
 
 
 def test_load_and_render(chem_vista_app, test_files):
     """Test loading and rendering a file"""
-    uuid = chem_vista_app.scene_manager.load_molecule(test_files['xyz'])[0]
+    uuid = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
 
     # Call the scene_manager render method directly instead of on the app
     chem_vista_app.scene_manager.render()
@@ -90,7 +93,7 @@ def test_load_and_render(chem_vista_app, test_files):
 def test_invalid_xyz_file(chem_vista_app):
     """Test loading a non-existent XYZ file"""
     with pytest.raises(Exception):
-        chem_vista_app.scene_manager.load_molecule(
+        chem_vista_app.scene_manager.load_xyz(
             pathlib.Path('nonexistent.xyz'))
 
 

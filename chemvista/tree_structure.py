@@ -115,14 +115,14 @@ class TreeNode(Generic[T]):
         """Set the parent node with proper cleanup"""
         # Remove from old parent if exists
         if self._parent and self in self._parent._children.values():
-            self._parent._remove_child_internal(self)
+            self._parent.remove_child(self, send_signals=False)
 
         # Set new parent
         self._parent = new_parent
 
         # Add to new parent's children if it exists
         if new_parent:
-            new_parent._add_child_internal(self)
+            new_parent.add_child(self, send_signals=False)
 
         # Invalidate path cache
         self._invalidate_path_cache()
@@ -358,7 +358,7 @@ class TreeNode(Generic[T]):
             logger.warning(
                 f"Cannot update settings for {self.name}: no render settings")
 
-    def find_by_path(self, path: Union[str, NodePath]) -> Optional['TreeNode']:
+    def get_by_path(self, path: Union[str, NodePath]) -> Optional['TreeNode']:
         """Find a node by its path"""
         if isinstance(path, str):
             path = NodePath.from_string(path)
@@ -420,7 +420,7 @@ class TreeNode(Generic[T]):
         elif isinstance(item, (NodePath, str)):
             path = item if isinstance(
                 item, NodePath) else NodePath.from_string(item)
-            return self.find_by_path(path) is not None
+            return self.get_by_path(path) is not None
 
         # Not found or unsupported type
         return False

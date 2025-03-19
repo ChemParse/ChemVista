@@ -73,7 +73,7 @@ class TestTreeNode:
         """Test setting up parent-child relationships"""
         root = TreeNode("root")
         child1 = TreeNode("child1")
-        root._add_child_to_tree(child1)
+        root.add_child(child1)
 
         # Test parent was set correctly
         assert child1.parent == root
@@ -98,11 +98,11 @@ class TestTreeNode:
         """Test path generation for nodes"""
         root = TreeNode("root")
         level1 = TreeNode("level1")
-        root._add_child_to_tree(level1)
+        root.add_child(level1)
         level2 = TreeNode("level2")
-        level1._add_child_to_tree(level2)
+        level1.add_child(level2)
         level3 = TreeNode("level3")
-        level2._add_child_to_tree(level3)
+        level2.add_child(level3)
 
         # Test paths at each level
         assert str(root.path) == "/root"
@@ -129,20 +129,20 @@ class TestTreeNode:
         child2 = TreeNode("child2")
 
         # Basic add
-        success, _ = root._add_child_to_tree(child1)
+        success, _ = root.add_child(child1)
         assert success is True
         assert child1 in root.children
         assert child1.parent == root
 
         # Add with position
-        success, _ = root._add_child_to_tree(child2, position=0)
+        success, _ = root.add_child(child2, position=0)
         assert success is True
         assert root.children[0] == child2
         assert root.children[1] == child1
 
         # Invalid position
         child3 = TreeNode("child3")
-        success, _ = root._add_child_to_tree(child3, position=10)
+        success, _ = root.add_child(child3, position=10)
         assert success is False
         assert child3 not in root.children
 
@@ -150,9 +150,9 @@ class TestTreeNode:
         """Test removing children"""
         root = TreeNode("root")
         child1 = TreeNode("child1")
-        root._add_child_to_tree(child1)
+        root.add_child(child1)
         child2 = TreeNode("child2")
-        root._add_child_to_tree(child2)
+        root.add_child(child2)
 
         # Remove by node
         removed = root.remove_child(child1)
@@ -174,9 +174,9 @@ class TestTreeNode:
         """Test path cache invalidation"""
         root = TreeNode("root")
         level1 = TreeNode("level1")
-        root._add_child_to_tree(level1)
+        root.add_child(level1)
         level2 = TreeNode("level2")
-        level1._add_child_to_tree(level2)
+        level1.add_child(level2)
 
         # Cache paths
         path1 = str(level1.path)
@@ -204,11 +204,11 @@ class TestTreeNode:
         image = TreeNode("image", node_type="image")
 
         # Adding allowed type should succeed
-        success, _ = folder._add_child_to_tree(doc)
+        success, _ = folder.add_child(doc)
         assert success is True
 
         # Adding disallowed type should fail
-        success, msg = folder._add_child_to_tree(image)
+        success, msg = folder.add_child(image)
         assert success is False
         assert "can only contain" in msg
 
@@ -242,7 +242,7 @@ class TestTreeSignals:
 
         # Add a child node
         child = TreeNode("child")
-        root._add_child_to_tree(child)
+        root.add_child(child)
 
         # Verify signal was emitted with correct arguments
         assert signal_emitted, "Node added signal was not emitted"
@@ -294,25 +294,25 @@ class TestTreeTraversal:
         root = TreeNode("root")
         folderA = TreeNode("folderA", node_type="folder")
         folderB = TreeNode("folderB", node_type="folder")
-        root._add_child_to_tree(folderA)
-        root._add_child_to_tree(folderB)
+        root.add_child(folderA)
+        root.add_child(folderB)
 
         # Add items to folderA
         fileA1 = TreeNode("fileA1", node_type="file")
-        folderA._add_child_to_tree(fileA1)
+        folderA.add_child(fileA1)
         fileA2 = TreeNode("fileA2", node_type="file")
-        folderA._add_child_to_tree(fileA2)
+        folderA.add_child(fileA2)
 
         # Add nested folder in folderA
         folderA_nested = TreeNode("nested", node_type="folder")
-        folderA._add_child_to_tree(folderA_nested)
+        folderA.add_child(folderA_nested)
         fileA_nested1 = TreeNode(
             "nestedFile1", node_type="file")
-        folderA_nested._add_child_to_tree(fileA_nested1)
+        folderA_nested.add_child(fileA_nested1)
 
         # Add items to folderB
         fileB1 = TreeNode("fileB1", node_type="file")
-        folderB._add_child_to_tree(fileB1)
+        folderB.add_child(fileB1)
 
         return root
 
@@ -378,8 +378,8 @@ class TestTreeTraversal:
         assert NodePath.from_string(
             "/root/folderA/nonexistent") not in sample_tree
 
-    def test_find_by_uuid(self, sample_tree):
-        """Test the find_by_uuid method"""
+    def test_get_object_by_uuid(self, sample_tree):
+        """Test the get_object_by_uuid method"""
         # Get UUID of a nested node
         nested_file = None
         for child in sample_tree.children:
@@ -394,15 +394,15 @@ class TestTreeTraversal:
         assert nested_file is not None, "Test setup failed, couldn't find nested file"
 
         # Test finding by UUID
-        found_node = sample_tree.find_by_uuid(nested_file.uuid)
+        found_node = sample_tree.get_object_by_uuid(nested_file.uuid)
         assert found_node is nested_file
 
         # Test finding the root node UUID
-        found_root = sample_tree.find_by_uuid(sample_tree.uuid)
+        found_root = sample_tree.get_object_by_uuid(sample_tree.uuid)
         assert found_root is sample_tree
 
         # Test with non-existent UUID
-        assert sample_tree.find_by_uuid("nonexistent-uuid") is None
+        assert sample_tree.get_object_by_uuid("nonexistent-uuid") is None
 
     def test_collect_visible_nodes(self, sample_tree):
         """Test collecting only visible nodes"""

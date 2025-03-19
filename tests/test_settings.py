@@ -33,9 +33,7 @@ def test_molecule_settings_update(scene_with_objects):
 
 
 def test_scalar_field_settings_update(scene_with_objects):
-    scene, _, field_uuids = scene_with_objects
-    field_uuid = field_uuids[-1]  # Get scalar field name
-
+    scene, _, field_uuid = scene_with_objects
     # Get scalar field object
     field_obj = scene.get_object_by_uuid(field_uuid)
 

@@ -90,12 +90,12 @@ class MoleculeObject(SceneObject):
 
         return success, msg
 
-    def remove_child(self, child: SceneObject, send_signals: bool = True):
+    def remove_child(self, child: SceneObject, send_signals: bool = True) -> SceneObject:
         """Remove child and also update the molecule data"""
 
         child = super().remove_child(child, send_signals=False)
 
-        child = self.molecule.scalar_fields.pop(child.name, None)
+        scalar_field = self.molecule.scalar_fields.pop(child.name, None)
 
         if send_signals and self._signals:
             self._signals.node_removed.emit(child.uuid)

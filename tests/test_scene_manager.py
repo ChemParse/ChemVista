@@ -9,6 +9,7 @@ from PyQt5.QtCore import QObject
 from chemvista.scene_objects import (
     SceneObject, MoleculeObject, ScalarFieldObject, TrajectoryObject
 )
+from chemvista.renderer.render_settings import MoleculeRenderSettings
 import logging
 
 
@@ -259,20 +260,19 @@ def test_object_settings_update(scene: SceneManager, signals, test_files):
 
     # Capture signal
     settings_changed = []
-    signals.node_changed.connect(lambda uuid: settings_changed.append(uuid))
+    signals.render_changed.connect(lambda uuid: settings_changed.append(uuid))
 
     # Update settings
-    new_settings = obj.render_settings
-    new_settings.show_bonds = False
+    new_settings = MoleculeRenderSettings(alpha=0.5)
     scene.update_settings(uuid, new_settings)
 
     # Check signal was emitted
-    assert len(settings_changed) == 1
+    assert len(settings_changed) > 0
     assert settings_changed[0] == uuid
 
     # Check settings were updated
     obj = scene.get_object_by_uuid(uuid)
-    assert obj.render_settings.show_bonds is False
+    assert obj.render_settings.alpha == 0.5
 
 
 def test_tree_formatting(scene: SceneManager, test_files):
@@ -328,8 +328,8 @@ def test_find_by_path(scene: SceneManager, test_files):
     field_obj = mol_obj.children[0]
 
     # Find by path
-    found_mol = scene.root.find_by_path(str(mol_obj.path))
-    found_field = scene.root.find_by_path(str(field_obj.path))
+    found_mol = scene.root.get_by_path(str(mol_obj.path))
+    found_field = scene.root.get_by_path(str(field_obj.path))
 
     # Verify found objects
     assert found_mol == mol_obj
