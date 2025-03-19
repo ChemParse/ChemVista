@@ -38,9 +38,6 @@ class ChemVistaApp(QMainWindow):
         # Create menu bar
         self.create_menu_bar()
 
-        # Create tool bar
-        self.create_tool_bar()
-
         # Create central SceneWidget first
         self.create_scene_widget()
 
@@ -94,9 +91,9 @@ class ChemVistaApp(QMainWindow):
         open_action.setShortcut("Ctrl+O")
         open_action.triggered.connect(self.open_file)
 
-        save_action = QAction("Save", self)
+        save_action = QAction("Screenshot", self)
         save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.save_file)
+        save_action.triggered.connect(self.on_screenshot)
 
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
@@ -114,14 +111,11 @@ class ChemVistaApp(QMainWindow):
         reset_camera_action.triggered.connect(self.reset_camera)
         view_menu.addAction(reset_camera_action)
 
-    def create_tool_bar(self):
-        toolbar = QToolBar()
-        self.addToolBar(toolbar)
-
-        # Add basic tools (will be implemented later)
-        toolbar.addAction(QAction("Select", self))
-        toolbar.addAction(QAction("Rotate", self))
-        toolbar.addAction(QAction("Pan", self))
+        # Add camera settings action
+        camera_settings_action = QAction("Camera Settings", self)
+        camera_settings_action.setShortcut("Ctrl+K")
+        camera_settings_action.triggered.connect(self.on_camera_settings)
+        view_menu.addAction(camera_settings_action)
 
     def create_object_list(self):
         dock = QDockWidget("Objects", self)
@@ -175,37 +169,34 @@ class ChemVistaApp(QMainWindow):
             QMessageBox.critical(
                 self, "Error", f"Failed to load file: {str(e)}")
 
-    def save_file(self):
-        """Save selected object to file"""
-        if not self.scene_manager.root_objects:
-            QMessageBox.warning(self, "Warning", "No objects to save!")
-            return
-
+    def on_screenshot(self):
+        """Save a screenshot of the current view"""
         try:
-            selected_uuid = self.object_list_widget.get_selected_uuid()
-            if selected_uuid is None:
-                QMessageBox.warning(self, "Warning", "No object selected!")
-                return
-
-            obj = self.scene_manager.get_object_by_uuid(selected_uuid)
-
             file_name, _ = QFileDialog.getSaveFileName(
                 self,
-                "Save File",
+                "Save Screenshot",
                 "",
-                "XYZ files (*.xyz);;All Files (*)"
+                "PNG Files (*.png);;JPG Files (*.jpg);;All Files (*)"
             )
 
             if file_name:
-                if hasattr(obj, 'molecule'):
-                    obj.molecule.save(file_name)
-                else:
-                    QMessageBox.warning(
-                        self, "Warning", "Can only save molecules!")
+                # Add default extension if none specified
+                if not pathlib.Path(file_name).suffix:
+                    file_name += ".png"
+
+                # Take the screenshot using the existing method
+                self.scene_widget.take_screenshot(file_name)
+
+                QMessageBox.information(
+                    self,
+                    "Screenshot Saved",
+                    f"Screenshot saved to {file_name}"
+                )
 
         except Exception as e:
             QMessageBox.critical(
-                self, "Error", f"Failed to save file: {str(e)}")
+                self, "Error", f"Failed to save screenshot: {str(e)}"
+            )
 
     def refresh_view(self):
         """Update the visualization"""
@@ -257,6 +248,6 @@ class ChemVistaApp(QMainWindow):
             # No need to call refresh_view here as on_render_changed will be triggered
             # by the update_settings method through the scene manager signals
 
-    def take_screenshot(self, filename=None):
-        """Take a screenshot of the current view"""
-        return self.scene_widget.take_screenshot(filename)
+    def on_camera_settings(self):
+        """Handle camera settings action"""
+        self.scene_widget.show_camera_settings_dialog()

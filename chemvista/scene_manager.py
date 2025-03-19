@@ -1,16 +1,18 @@
-import pyvista as pv
-from nx_ase import Molecule, ScalarField, Trajectory
+import logging
 import pathlib
 import uuid
-from typing import Union, Optional, List, Dict, Iterator, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple, Union
+
+import numpy as np
+import pyvista as pv
+from nx_ase import Molecule, ScalarField, Trajectory
+
 from .renderer import MoleculeRenderer, ScalarFieldRenderer
-from .renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings
-from .tree_structure import TreeSignals, TreeNode
-import logging
-from .scene_objects import (
-    SceneObject, ScalarFieldObject, MoleculeObject,
-    TrajectoryObject
-)
+from .renderer.render_settings import (MoleculeRenderSettings,
+                                       ScalarFieldRenderSettings)
+from .scene_objects import (MoleculeObject, ScalarFieldObject, SceneObject,
+                            TrajectoryObject)
+from .tree_structure import TreeNode, TreeSignals
 
 # Create a logger for this module
 logger = logging.getLogger("chemvista.manager")
@@ -248,3 +250,53 @@ class SceneManager():
         self.root.move(obj, new_parent, position)
         logger.info(
             f"Moved object with UUID {uuid} to new parent {new_parent_uuid}")
+
+    # def screenshot(self,
+    #                filename: Union[str, pathlib.Path],
+    #                resolution: Tuple[int, int] = (1024, 768),
+    #                transparent_background: bool = False,
+    #                window_size: Optional[Tuple[int, int]] = None,
+    #                return_img: bool = False) -> Union[str, pathlib.Path, np.ndarray]:
+    #     """
+    #     Take a screenshot of the current scene.
+
+    #     Parameters
+    #     ----------
+    #     filename : Union[str, pathlib.Path]
+    #         Path to save the screenshot
+    #     resolution : Tuple[int, int], optional
+    #         Resolution (width, height) of the saved image, by default (1024, 768)
+    #     transparent_background : bool, optional
+    #         Whether to use transparent background, by default False
+    #     window_size : Optional[Tuple[int, int]], optional
+    #         Size of the rendering window, by default None (uses resolution)
+    #     return_img : bool, optional
+    #         Whether to return the image array, by default False
+
+    #     Returns
+    #     -------
+    #     Union[str, pathlib.Path, np.ndarray]
+    #         Path to the saved image or image array if return_img=True
+    #     """
+    #     if self.plotter is None:
+    #         self.create_plotter(off_screen=True)
+
+    #     # Make sure scene is rendered
+    #     self.render()
+
+    #     # Convert to Path object if it's a string
+    #     filename = pathlib.Path(filename)
+
+    #     # Ensure parent directory exists
+    #     filename.parent.mkdir(parents=True, exist_ok=True)
+
+    #     # Take screenshot
+    #     result = self.plotter.screenshot(
+    #         filename=str(filename),
+    #         transparent_background=transparent_background,
+    #         window_size=window_size or resolution,
+    #         return_img=return_img
+    #     )
+
+    #     logger.info(f"Saved screenshot to {filename}")
+    #     return result if return_img else filename
