@@ -251,52 +251,53 @@ class SceneManager():
         logger.info(
             f"Moved object with UUID {uuid} to new parent {new_parent_uuid}")
 
-    # def screenshot(self,
-    #                filename: Union[str, pathlib.Path],
-    #                resolution: Tuple[int, int] = (1024, 768),
-    #                transparent_background: bool = False,
-    #                window_size: Optional[Tuple[int, int]] = None,
-    #                return_img: bool = False) -> Union[str, pathlib.Path, np.ndarray]:
-    #     """
-    #     Take a screenshot of the current scene.
+    def add_molecule(self, molecule: Molecule, name: str) -> str:
+        """Add a molecule object to the scene"""
 
-    #     Parameters
-    #     ----------
-    #     filename : Union[str, pathlib.Path]
-    #         Path to save the screenshot
-    #     resolution : Tuple[int, int], optional
-    #         Resolution (width, height) of the saved image, by default (1024, 768)
-    #     transparent_background : bool, optional
-    #         Whether to use transparent background, by default False
-    #     window_size : Optional[Tuple[int, int]], optional
-    #         Size of the rendering window, by default None (uses resolution)
-    #     return_img : bool, optional
-    #         Whether to return the image array, by default False
+        mol_obj = MoleculeObject.from_molecule(
+            name=name, molecule=molecule, parent=self.root, visible=True, signals=self._tree_signals)
 
-    #     Returns
-    #     -------
-    #     Union[str, pathlib.Path, np.ndarray]
-    #         Path to the saved image or image array if return_img=True
-    #     """
-    #     if self.plotter is None:
-    #         self.create_plotter(off_screen=True)
+        success, message = self.root.add_child(mol_obj)
 
-    #     # Make sure scene is rendered
-    #     self.render()
+        if not success:
+            raise RuntimeError("Failed to add molecule to scene: " + message)
 
-    #     # Convert to Path object if it's a string
-    #     filename = pathlib.Path(filename)
+        return mol_obj.uuid
 
-    #     # Ensure parent directory exists
-    #     filename.parent.mkdir(parents=True, exist_ok=True)
+    def add_scalar_field(self, scalar_field: ScalarField, name: str) -> str:
+        """Add a scalar field object to the scene"""
 
-    #     # Take screenshot
-    #     result = self.plotter.screenshot(
-    #         filename=str(filename),
-    #         transparent_background=transparent_background,
-    #         window_size=window_size or resolution,
-    #         return_img=return_img
-    #     )
+        field_obj = ScalarFieldObject(
+            name=name, scalar_field=scalar_field, parent=self.root, visible=True, signals=self._tree_signals)
 
-    #     logger.info(f"Saved screenshot to {filename}")
-    #     return result if return_img else filename
+        success, message = self.root.add_child(field_obj)
+
+        if not success:
+            raise RuntimeError(
+                "Failed to add scalar field to scene: " + message)
+
+        return field_obj.uuid
+
+    def add_trajectory(self, trajectory: Trajectory, name: str) -> str:
+        """Add a trajectory object to the scene"""
+
+        traj_obj = TrajectoryObject(
+            name=name, trajectory=trajectory, parent=self.root, visible=True, signals=self._tree_signals)
+
+        success, message = self.root.add_child(traj_obj)
+
+        if not success:
+            raise RuntimeError("Failed to add trajectory to scene: " + message)
+
+        return traj_obj.uuid
+
+    def add(self, nx_object: Union[Molecule, ScalarField, Trajectory], name: str) -> str:
+        """Add a new object to the scene"""
+        if isinstance(nx_object, Molecule):
+            return self.add_molecule(nx_object, name)
+        elif isinstance(nx_object, ScalarField):
+            return self.add_scalar_field(nx_object, name)
+        elif isinstance(nx_object, Trajectory):
+            return self.add_trajectory(nx_object, name)
+        else:
+            logger.error(f"Unsupported object type: {type(nx_object)}")

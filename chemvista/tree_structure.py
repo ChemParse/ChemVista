@@ -82,6 +82,7 @@ class TreeNode(Generic[T]):
         self._visible = value
         if self.signals:
             self._signals.visibility_changed.emit(self.uuid, value)
+            self._signals.tree_structure_changed.emit()
             self._signals.render_changed.emit(self.uuid)
 
     @property
