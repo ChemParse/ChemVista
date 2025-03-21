@@ -281,7 +281,7 @@ class SceneManager():
     def add_trajectory(self, trajectory: Trajectory, name: str) -> str:
         """Add a trajectory object to the scene"""
 
-        traj_obj = TrajectoryObject(
+        traj_obj = TrajectoryObject.from_trajectory(
             name=name, trajectory=trajectory, parent=self.root, visible=True, signals=self._tree_signals)
 
         success, message = self.root.add_child(traj_obj)
