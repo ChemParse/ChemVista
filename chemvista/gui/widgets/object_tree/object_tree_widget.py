@@ -28,13 +28,13 @@ class ObjectTreeWidget(QTreeWidget):
         # Map UUIDs to tree items
         self._item_map: Dict[str, QTreeWidgetItem] = {}
 
+        # Track current selection for restoration after updates
+        self._current_selected_uuid: Optional[str] = None
+
         # Track drop position
         self._drop_indicator_position = None
         self._drop_target_item = None
         self._drawing_drop_indicator = False
-        self._drop_rect = QRect()
-
-        # Custom colors for drop indicators
         self._drop_indicator_color = QColor(50, 150, 255)  # Bright blue
 
         # Disable Qt's default drop indicator since we're drawing our own
@@ -121,6 +121,9 @@ class ObjectTreeWidget(QTreeWidget):
         logger.debug("Starting tree refresh")
         logger.debug(self.root.format_tree())
 
+        # Save current selection before clearing
+        previously_selected_uuid = self._current_selected_uuid
+
         self.clear()
         self._item_map.clear()
 
@@ -130,6 +133,10 @@ class ObjectTreeWidget(QTreeWidget):
 
         # Expand the first level by default
         self.expandToDepth(0)
+
+        # Restore previous selection if it exists
+        if previously_selected_uuid:
+            self.select_item_by_uuid(previously_selected_uuid)
 
         logger.debug(f"Tree refreshed with {len(self._item_map)} items")
         logger.debug(self.root.format_tree())
@@ -172,11 +179,49 @@ class ObjectTreeWidget(QTreeWidget):
             # Get the UUID from the selected item
             uuid = selected_items[0].data(0, Qt.UserRole)
             if uuid:
+                # Store the current selection UUID
+                self._current_selected_uuid = uuid
                 self._widget_signals.selection_changed.emit(uuid)
                 logger.debug(
                     f"Selection changed to {selected_items[0].text(0)} ({uuid[:8]})")
         else:
+            # Clear the selection tracking when nothing is selected
+            self._current_selected_uuid = None
             logger.debug("Selection cleared")
+
+    def select_item_by_uuid(self, uuid: str) -> bool:
+        """
+        Select an item by its UUID
+        Returns True if the item was found and selected, False otherwise
+        """
+        if uuid in self._item_map:
+            item = self._item_map[uuid]
+
+            # Clear current selection
+            self.clearSelection()
+
+            # Set as current item and select it
+            self.setCurrentItem(item)
+            item.setSelected(True)
+
+            # Make sure the item is visible by expanding parents
+            parent = item.parent()
+            while parent:
+                parent.setExpanded(True)
+                parent = parent.parent()
+
+            # Scroll to the item
+            self.scrollToItem(item)
+
+            # Update tracking variable
+            self._current_selected_uuid = uuid
+
+            logger.debug(
+                f"Programmatically selected item with UUID {uuid[:8]}")
+            return True
+        else:
+            logger.debug(f"Could not find item with UUID {uuid[:8]} to select")
+            return False
 
     def _on_tree_structure_changed(self):
         """Handle tree structure changed signal from the tree model"""
@@ -190,8 +235,6 @@ class ObjectTreeWidget(QTreeWidget):
         logger.debug("Tree structure changed notification received")
         logger.debug(self.root.format_tree())
         self._refresh_tree()
-        self._widget_signals.structure_updated.emit()
-        logger.debug("Structure update signal emitted")
 
     def _check_tree_consistency(self):
         """Verify tree UI matches the model structure and fix if needed"""
@@ -384,6 +427,9 @@ class ObjectTreeWidget(QTreeWidget):
         # Disable updates for the duration of the move operation
         self.disable_updates()
 
+        # Save the current selection to restore after the operation
+        current_selection = self._current_selected_uuid
+
         # Perform the move operation
         success = False
 
@@ -429,6 +475,10 @@ class ObjectTreeWidget(QTreeWidget):
                 logger.debug(
                     "Triggering manual tree update after successful move")
                 self.update_tree()
+
+                # Restore selection after update
+                if current_selection:
+                    self.select_item_by_uuid(current_selection)
 
             logger.debug("Drop event completed")
             logger.debug(self.root.format_tree())
@@ -553,3 +603,52 @@ class ObjectTreeWidget(QTreeWidget):
             logger.debug(f"Node {node.name} deleted")
         else:
             logger.debug(f"Deletion of {node.name} cancelled by user")
+
+    def keyPressEvent(self, event):
+        """Handle keyboard events for navigation and visibility control"""
+        # Check if we have Ctrl+Up or Ctrl+Down
+        if event.modifiers() == Qt.ControlModifier and (event.key() == Qt.Key_Up or event.key() == Qt.Key_Down):
+            self.disable_updates()
+            # Get the currently selected item
+            current_item = self.currentItem()
+            if not current_item:
+                super().keyPressEvent(event)
+                return
+
+            # 1. Set current item visibility to false
+            self._set_item_visibility(current_item, False)
+
+            # 2. Let Qt handle the navigation
+            super().keyPressEvent(event)
+
+            # 3. Set new item visibility to true
+            new_item = self.currentItem()
+
+            if new_item:
+                self._set_item_visibility(new_item, True)
+                self._current_selected_uuid = new_item.data(0, Qt.UserRole)
+                logger.debug(
+                    f"New item: {new_item.text(0)} ({new_item.data(0, Qt.UserRole)})")
+            else:
+                logger.debug("No new item selected after navigation")
+
+            self.enable_updates()
+            self.update_tree()
+        else:
+            # For all other keypresses, use the default behavior
+            super().keyPressEvent(event)
+
+    def _set_item_visibility(self, item, visible):
+        """Set the visibility of an item"""
+        uuid = item.data(0, Qt.UserRole)
+        if uuid:
+            node = self.root.get_object_by_uuid(uuid)
+            if node:
+                logger.debug(f"Setting visibility of {node.name} to {visible}")
+                node.visible = visible
+            else:
+                logger.debug(
+                    f"Node not found for UUID {uuid} when setting visibility")
+        else:
+            logger.debug(
+                f"No UUID found for item {item.text(0)} when setting visibility")
