@@ -507,8 +507,15 @@ class TreeNode(Generic[T]):
         """Iterate over all visible nodes in the tree"""
         if self.visible:
             yield self
-            for child in self.children:
-                yield from child.iter_visible()
+        for child in self.children:
+            yield from child.iter_visible()
+
+    def iter_invisible(self) -> Iterator['TreeNode']:
+        """Iterate over all invisible nodes in the tree"""
+        if not self.visible:
+            yield self
+        for child in self.children:
+            yield from child.iter_invisible()
 
     def format_tree(self, include_details: bool = True) -> str:
         """Create a string representation of the tree"""
