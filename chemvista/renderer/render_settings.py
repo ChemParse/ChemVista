@@ -22,11 +22,11 @@ class MoleculeRenderSettings(RenderSettings):
 @dataclass
 class ScalarFieldRenderSettings(RenderSettings):
     visible: bool = True
-    isosurface_value: float = 0.1
+    isosurface_values: tuple = (-0.1, 0.1,)
+    opacity: float = 0.3
+    colors: tuple = ('blue', 'red')
     show_grid_surface: bool = False
     show_grid_points: bool = False
-    opacity: float = 0.3
-    color: str = 'blue'
     grid_surface_color: str = 'blue'
     grid_points_color: str = 'red'
     grid_points_size: int = 5
