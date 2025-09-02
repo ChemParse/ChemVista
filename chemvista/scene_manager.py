@@ -67,8 +67,8 @@ class SceneManager():
         """Get all root level objects"""
         return self.root.children
 
-    def load_xyz(self, filepath: Union[str, pathlib.Path]) -> str:
-        """Load molecule or trajectory from XYZ file and return UUID"""
+    def load_xyz(self, filepath: Union[str, pathlib.Path]) -> Union[MoleculeObject, TrajectoryObject]:
+        """Load molecule or trajectory from XYZ file and return object"""
         filepath = pathlib.Path(filepath)
         if not filepath.exists():
             raise FileNotFoundError(f"File {filepath} not found")
@@ -87,7 +87,7 @@ class SceneManager():
                 raise RuntimeError(
                     "Failed to add molecule to scene: " + message)
             logger.info(f"Loaded molecule from {filepath}")
-            return mol_obj.uuid
+            return mol_obj
 
         # If there are multiple frames, create a trajectory object
         logger.info(
@@ -104,9 +104,9 @@ class SceneManager():
             logger.error("Failed to add trajectory to scene: " + message)
             raise RuntimeError("Failed to add trajectory to scene: " + message)
 
-        return traj_obj.uuid
+        return traj_obj
 
-    def load_molecule_from_cube(self, filepath: Union[str, pathlib.Path]) -> str:
+    def load_molecule_from_cube(self, filepath: Union[str, pathlib.Path]) -> MoleculeObject:
         """Load both molecule and its scalar field from cube file"""
         filepath = pathlib.Path(filepath)
         logger.info(f"Loading molecule with scalar field from {filepath}")
@@ -127,9 +127,9 @@ class SceneManager():
             raise RuntimeError("Failed to add molecule to scene: " + message)
 
         # Collect all UUIDs (molecule and scalar fields)
-        return mol_obj.uuid
+        return mol_obj
 
-    def load_scalar_field_from_cube(self, filepath: Union[str, pathlib.Path]) -> str:
+    def load_scalar_field_from_cube(self, filepath: Union[str, pathlib.Path]) -> ScalarFieldObject:
         """Load scalar field from cube file"""
         filepath = pathlib.Path(filepath)
 
@@ -141,9 +141,9 @@ class SceneManager():
             raise RuntimeError(
                 "Failed to add scalar field to scene: " + message)
 
-        return field_obj.uuid
+        return field_obj
 
-    def create_trajectory(self, name: str, parent_uuid: Optional[str] = None) -> str:
+    def create_trajectory(self, name: str, parent_uuid: Optional[str] = None) -> TrajectoryObject:
         """Create an empty trajectory container"""
         parent = self.root if parent_uuid is None else self.get_object_by_uuid(
             parent_uuid)
@@ -156,7 +156,7 @@ class SceneManager():
         if not success:
             raise RuntimeError("Failed to add trajectory to scene: " + message)
 
-        return traj_obj.uuid
+        return traj_obj
 
     def get_object_by_uuid(self, uuid: str) -> Union[TreeNode, SceneObject]:
         """Get object by UUID"""
@@ -251,7 +251,7 @@ class SceneManager():
         logger.info(
             f"Moved object with UUID {uuid} to new parent {new_parent_uuid}")
 
-    def add_molecule(self, molecule: Molecule, name: str) -> str:
+    def add_molecule(self, molecule: Molecule, name: str) -> MoleculeObject:
         """Add a molecule object to the scene"""
 
         mol_obj = MoleculeObject.from_molecule(
@@ -262,9 +262,9 @@ class SceneManager():
         if not success:
             raise RuntimeError("Failed to add molecule to scene: " + message)
 
-        return mol_obj.uuid
+        return mol_obj
 
-    def add_scalar_field(self, scalar_field: ScalarField, name: str) -> str:
+    def add_scalar_field(self, scalar_field: ScalarField, name: str) -> ScalarFieldObject:
         """Add a scalar field object to the scene"""
 
         field_obj = ScalarFieldObject(
@@ -276,9 +276,9 @@ class SceneManager():
             raise RuntimeError(
                 "Failed to add scalar field to scene: " + message)
 
-        return field_obj.uuid
+        return field_obj
 
-    def add_trajectory(self, trajectory: Trajectory, name: str) -> str:
+    def add_trajectory(self, trajectory: Trajectory, name: str) -> TrajectoryObject:
         """Add a trajectory object to the scene"""
 
         traj_obj = TrajectoryObject.from_trajectory(
@@ -289,9 +289,9 @@ class SceneManager():
         if not success:
             raise RuntimeError("Failed to add trajectory to scene: " + message)
 
-        return traj_obj.uuid
+        return traj_obj
 
-    def add(self, nx_object: Union[Molecule, ScalarField, Trajectory], name: str) -> str:
+    def add(self, nx_object: Union[Molecule, ScalarField, Trajectory], name: str) -> SceneObject:
         """Add a new object to the scene"""
         if isinstance(nx_object, Molecule):
             return self.add_molecule(nx_object, name)

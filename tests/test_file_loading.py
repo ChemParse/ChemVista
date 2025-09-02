@@ -30,9 +30,8 @@ def chem_vista_app():
 def test_load_xyz(chem_vista_app, test_files):
     """Test loading an XYZ file"""
 
-    uuid = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
+    obj = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
     assert len(chem_vista_app.scene_manager.root.children) == 1
-    obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert obj is not None
     assert hasattr(obj, 'molecule')
     assert len(obj.molecule.positions) > 0
@@ -40,21 +39,19 @@ def test_load_xyz(chem_vista_app, test_files):
 
 def test_load_cube_as_scalar_field(chem_vista_app, test_files):
     """Test loading a cube file as scalar field only"""
-    uuid = chem_vista_app.scene_manager.load_scalar_field_from_cube(
+    obj = chem_vista_app.scene_manager.load_scalar_field_from_cube(
         test_files['cube'])
     assert len(chem_vista_app.scene_manager.root.children) == 1
-    obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert hasattr(obj, 'scalar_field')
     assert obj.scalar_field is not None
 
 
 def test_load_cube_as_molecule(chem_vista_app, test_files):
     """Test loading a cube file as molecule with field"""
-    uuid = chem_vista_app.scene_manager.load_molecule_from_cube(
+    molecule_obj = chem_vista_app.scene_manager.load_molecule_from_cube(
         test_files['cube'])
 
     assert len(chem_vista_app.scene_manager.root.children) == 1
-    molecule_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert hasattr(molecule_obj, 'molecule')
     children = molecule_obj.children
     assert len(children) == 1
@@ -69,10 +66,9 @@ def test_load_trajectory(chem_vista_app, test_files):
     if not test_files['trajectory'].exists():
         pytest.skip(f"Trajectory file not found: {test_files['trajectory']}")
 
-    uuid = chem_vista_app.scene_manager.load_xyz(
+    trajectory_obj = chem_vista_app.scene_manager.load_xyz(
         test_files['trajectory'])
 
-    trajectory_obj = chem_vista_app.scene_manager.get_object_by_uuid(uuid)
     assert trajectory_obj is not None
     assert hasattr(trajectory_obj, 'trajectory')
     assert len(trajectory_obj.trajectory) == 10
@@ -83,7 +79,7 @@ def test_load_trajectory(chem_vista_app, test_files):
 
 def test_load_and_render(chem_vista_app, test_files):
     """Test loading and rendering a file"""
-    uuid = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
+    molecule_obj = chem_vista_app.scene_manager.load_xyz(test_files['xyz'])
 
     # Call the scene_manager render method directly instead of on the app
     chem_vista_app.scene_manager.render()
