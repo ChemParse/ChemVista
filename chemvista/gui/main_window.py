@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QAction, QDialog, QDockWidget, QFileDialog,
-                             QMainWindow, QMessageBox, QToolBar)
+                             QMainWindow, QMessageBox, QToolBar, QColorDialog)
 
 from ..scene_manager import SceneManager
 from ..tree_structure import TreeSignals
@@ -116,6 +116,12 @@ class ChemVistaApp(QMainWindow):
         camera_settings_action.setShortcut("Ctrl+K")
         camera_settings_action.triggered.connect(self.on_camera_settings)
         view_menu.addAction(camera_settings_action)
+
+        # Add background color action
+        background_color_action = QAction("Background Color", self)
+        background_color_action.setShortcut("Ctrl+B")
+        background_color_action.triggered.connect(self.on_background_color)
+        view_menu.addAction(background_color_action)
 
     def create_object_list(self):
         dock = QDockWidget("Objects", self)
@@ -251,3 +257,27 @@ class ChemVistaApp(QMainWindow):
     def on_camera_settings(self):
         """Handle camera settings action"""
         self.scene_widget.show_camera_settings_dialog()
+
+    def on_background_color(self):
+        """Handle background color selection"""
+        try:
+            # Get current background color from the plotter if available
+            current_color = None
+            if hasattr(self.scene_widget.plotter, 'background_color'):
+                current_color = self.scene_widget.plotter.background_color
+            
+            # Open color dialog
+            color = QColorDialog.getColor(
+                parent=self,
+                title="Choose Background Color"
+            )
+            
+            if color.isValid():
+                # Set the background color
+                self.scene_widget.set_background_color(color.name())
+                logger.info(f"Background color changed to: {color.name()}")
+                
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to change background color: {str(e)}"
+            )
