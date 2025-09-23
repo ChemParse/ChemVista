@@ -1,5 +1,5 @@
 import pytest
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QWidget
 from pytestqt.plugin import QtBot
 import sys
 import pyvista as pv
@@ -7,10 +7,60 @@ import vtk
 import pathlib
 import tempfile
 from chemvista.gui.main_window import ChemVistaApp
+from chemvista.scene_manager import SceneManager
 from nx_ase import Molecule
 from nx_ase import Trajectory
 from nx_ase import ScalarField
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+
+class MockQtInteractor(QWidget):
+    """Mock QtInteractor that behaves like a QWidget but doesn't create VTK render window"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # Mock the plotter methods that might be called
+        self.update = MagicMock()
+        self.clear = MagicMock()
+        self.add_mesh = MagicMock()
+        self.camera = MagicMock()
+        self.show = MagicMock()
+        self.close = MagicMock()
+        self.reset_camera = MagicMock()
+
+
+@pytest.fixture(scope="session")
+def qapp():
+    """Create QApplication instance for the entire test session"""
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+    return app
+
+
+@pytest.fixture
+def qtbot(qapp):
+    """Create a QtBot instance"""
+    return QtBot(qapp)
+
+
+@pytest.fixture(autouse=True)
+def setup_test_env():
+    """Setup test environment for each test"""
+    # Use offscreen rendering for tests
+    pv.OFF_SCREEN = True
+
+    # Create a new VTK output window to suppress errors
+    output_window = vtk.vtkFileOutputWindow()
+    output_window.SetFileName("/dev/null")
+    vtk.vtkOutputWindow.SetInstance(output_window)
+
+    # Use dummy rendering backend for tests
+    plotter = pv.Plotter(off_screen=True)
+    yield plotter
+    try:
+        plotter.close()
+    except (AttributeError, RuntimeError):
+        pass
 
 
 @pytest.fixture(scope="session")
@@ -75,15 +125,21 @@ def test_files():
 
 @pytest.fixture
 def chem_vista_app(qapp):
-    """Create ChemVistaApp instance for testing"""
-    app = ChemVistaApp()
-    yield app
-    # Clean up
-    try:
-        if app.scene_manager.plotter is not None:
-            app.scene_manager.plotter.close()
-    except (AttributeError, RuntimeError):
-        pass
+    """Create ChemVistaApp instance for testing with mocked GUI components"""
+    # Mock the QtInteractor to avoid X11 issues
+    with patch('chemvista.gui.scene.QtInteractor', MockQtInteractor):
+        # Create the app - this will use the mocked QtInteractor
+        app = ChemVistaApp()
+        
+        yield app
+        
+        # Clean up
+        try:
+            if hasattr(app, 'scene_manager') and app.scene_manager.plotter is not None:
+                # Don't try to close the mock plotter
+                pass
+        except (AttributeError, RuntimeError):
+            pass
 
 
 @pytest.fixture

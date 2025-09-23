@@ -18,15 +18,35 @@ def test_files():
 
 @pytest.fixture
 def app(qapp):
-    """Create ChemVistaApp instance for testing"""
-    app = ChemVistaApp()
-    yield app
-    # Cleanup after test
-    try:
-        if hasattr(app, 'scene_manager') and app.scene_manager.plotter is not None:
-            app.scene_manager.plotter.close()
-    except (AttributeError, RuntimeError):
-        pass
+    """Create ChemVistaApp instance for testing with mocked GUI components"""
+    # Use the same mock approach as chem_vista_app
+    from unittest.mock import patch
+    from PyQt5.QtWidgets import QWidget
+    from unittest.mock import MagicMock
+    
+    class MockQtInteractor(QWidget):
+        """Mock QtInteractor that behaves like a QWidget but doesn't create VTK render window"""
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            # Mock the plotter methods that might be called
+            self.update = MagicMock()
+            self.clear = MagicMock()
+            self.add_mesh = MagicMock()
+            self.camera = MagicMock()
+            self.show = MagicMock()
+            self.close = MagicMock()
+            self.reset_camera = MagicMock()
+    
+    with patch('chemvista.gui.scene.QtInteractor', MockQtInteractor):
+        app = ChemVistaApp()
+        yield app
+        # Cleanup after test
+        try:
+            if hasattr(app, 'scene_manager') and app.scene_manager.plotter is not None:
+                # Don't try to close the mock plotter
+                pass
+        except (AttributeError, RuntimeError):
+            pass
 
 
 def test_app_creation(app):

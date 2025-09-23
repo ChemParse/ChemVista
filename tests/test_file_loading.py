@@ -1,14 +1,7 @@
 import pytest
 import pathlib
-from PyQt5.QtWidgets import QApplication
-import sys
-from chemvista.gui.main_window import ChemVistaApp
 from nx_ase import Molecule, ScalarField
 import numpy as np
-
-# Create QApplication instance for testing
-app = QApplication(sys.argv)
-
 
 @pytest.fixture
 def test_files():
@@ -18,13 +11,6 @@ def test_files():
         'cube': base_path / 'C2H4.eldens.cube',
         'trajectory': base_path / 'mpf_motor_trajectory.xyz'
     }
-
-
-@pytest.fixture
-def chem_vista_app():
-    app = ChemVistaApp()
-    yield app
-    app.close()
 
 
 def test_load_xyz(chem_vista_app, test_files):
