@@ -31,20 +31,18 @@ def scene(test_plotter, signals):
 
 def test_load_molecule(scene: SceneManager, test_files):
     """Test loading molecule from XYZ file"""
-    uuid = scene.load_xyz(test_files['molecule_1'])
+    obj = scene.load_xyz(test_files['molecule_1'])
     assert len(scene.root_objects) == 1
-    obj = scene.get_object_by_uuid(uuid)
     assert isinstance(obj, MoleculeObject)
     assert len(obj.molecule.positions) > 0
 
 
 def test_load_cube_as_molecule(scene: SceneManager, test_files):
     """Test loading cube file as molecule with field"""
-    uuid = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
+    mol_obj = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
     assert len(scene.root_objects) == 1  # Only one root object (molecule)
 
     # Check molecule
-    mol_obj = scene.get_object_by_uuid(uuid)
     assert isinstance(mol_obj, MoleculeObject)
 
     # Check field (should be a child of the molecule)
@@ -56,24 +54,22 @@ def test_load_cube_as_molecule(scene: SceneManager, test_files):
 
 def test_load_cube_as_field(scene: SceneManager, test_files):
     """Test loading cube file as scalar field only"""
-    uuid = scene.load_scalar_field_from_cube(test_files['scalar_filed_cube'])
+    obj = scene.load_scalar_field_from_cube(test_files['scalar_filed_cube'])
     assert len(scene.root_objects) == 1
-    obj = scene.get_object_by_uuid(uuid)
     assert isinstance(obj, ScalarFieldObject)
 
 
 def test_visibility_control(scene: SceneManager, test_files):
     """Test object visibility control"""
-    uuid = scene.load_xyz(test_files['molecule_1'])
-    obj = scene.get_object_by_uuid(uuid)
+    obj = scene.load_xyz(test_files['molecule_1'])
     assert obj.visible  # Should be visible by default
 
     # Directly update visibility in the object without using the plotter
-    success = scene.root.set_visibility(uuid, False)
+    success = scene.root.set_visibility(obj.uuid, False)
     assert success
     assert not obj.visible
 
-    scene.root.set_visibility(uuid, True)
+    scene.root.set_visibility(obj.uuid, True)
     assert obj.visible
 
 
@@ -95,8 +91,7 @@ def test_render_scalar_field(scene: SceneManager, test_files, test_plotter):
 
 def test_settings_update(scene: SceneManager, test_files):
     """Test updating render settings"""
-    uuid = scene.load_xyz(test_files['molecule_1'])
-    obj = scene.get_object_by_uuid(uuid)
+    obj = scene.load_xyz(test_files['molecule_1'])
 
     # Modify settings
     obj.render_settings.show_hydrogens = False
@@ -128,16 +123,16 @@ def test_signals_emission(scene: SceneManager, signals, test_files):
         lambda x, v: visibility_signals.append((x, v)))
 
     # Load molecule should emit node_added
-    uuid = scene.load_xyz(test_files['molecule_1'])
+    obj = scene.load_xyz(test_files['molecule_1'])
     assert len(added_signals) >= 1
-    assert uuid in added_signals
+    assert obj.uuid in added_signals
 
     # Toggle visibility should emit visibility_changed
     # Instead of using scene.set_visibility which tries to update the plotter,
     # use the root's set_visibility method directly
-    scene.root.set_visibility(uuid, False)
+    scene.root.set_visibility(obj.uuid, False)
     assert len(visibility_signals) >= 1
-    assert (uuid, False) in visibility_signals
+    assert (obj.uuid, False) in visibility_signals
 
 
 class TestSceneManager:
@@ -169,9 +164,8 @@ class TestSceneManager:
 
     def test_load_xyz(self, scene, test_files):
         """Test loading XYZ file"""
-        uuid = scene.load_xyz(test_files['molecule_1'])
+        obj = scene.load_xyz(test_files['molecule_1'])
 
-        obj = scene.get_object_by_uuid(uuid)
         assert isinstance(obj, MoleculeObject)
         assert obj.name == pathlib.Path(test_files['molecule_1']).stem
         assert len(scene.root_objects) == 1
@@ -182,10 +176,7 @@ class TestSceneManager:
         if 'trajectory' not in test_files:
             pytest.skip("No trajectory test file available")
 
-        uuid = scene.load_xyz(test_files['trajectory'])
-
-        # Get the loaded object
-        obj = scene.get_object_by_uuid(uuid)
+        obj = scene.load_xyz(test_files['trajectory'])
 
         # Check if it's a trajectory object
         if isinstance(obj, TrajectoryObject):
@@ -202,9 +193,8 @@ class TestSceneManager:
         """Test loading molecule from cube file"""
         cube_file = test_files['scalar_filed_cube']
 
-        uuid = scene.load_molecule_from_cube(cube_file)
+        mol_obj = scene.load_molecule_from_cube(cube_file)
 
-        mol_obj = scene.get_object_by_uuid(uuid)
         assert isinstance(mol_obj, MoleculeObject)
         assert mol_obj.name == pathlib.Path(cube_file).stem
 
@@ -232,10 +222,7 @@ def test_load_trajectory(scene: SceneManager, test_files):
     if 'trajectory' not in test_files:
         pytest.skip("No trajectory test file available")
 
-    uuid = scene.load_xyz(test_files['trajectory'])
-
-    # Get the loaded object
-    obj = scene.get_object_by_uuid(uuid)
+    obj = scene.load_xyz(test_files['trajectory'])
 
     # If it's a trajectory, check its children
     if isinstance(obj, TrajectoryObject):
@@ -255,8 +242,7 @@ def test_directory_creation_removed(scene):
 
 def test_object_settings_update(scene: SceneManager, signals, test_files):
     """Test updating object settings"""
-    uuid = scene.load_xyz(test_files['molecule_1'])
-    obj = scene.get_object_by_uuid(uuid)
+    obj = scene.load_xyz(test_files['molecule_1'])
 
     # Capture signal
     settings_changed = []
@@ -264,21 +250,20 @@ def test_object_settings_update(scene: SceneManager, signals, test_files):
 
     # Update settings
     new_settings = MoleculeRenderSettings(alpha=0.5)
-    scene.update_settings(uuid, new_settings)
+    scene.update_settings(obj.uuid, new_settings)
 
     # Check signal was emitted
     assert len(settings_changed) > 0
-    assert settings_changed[0] == uuid
+    assert settings_changed[0] == obj.uuid
 
     # Check settings were updated
-    obj = scene.get_object_by_uuid(uuid)
     assert obj.render_settings.alpha == 0.5
 
 
 def test_tree_formatting(scene: SceneManager, test_files):
     """Test tree formatting function"""
     # Load a molecule
-    mol_uuid = scene.load_xyz(test_files['molecule_1'])
+    mol_obj = scene.load_xyz(test_files['molecule_1'])
 
     # Get tree representation
     tree_str = scene.root.format_tree()
@@ -286,7 +271,7 @@ def test_tree_formatting(scene: SceneManager, test_files):
     # Basic checks
     assert "Tree Structure:" in tree_str
     assert "Scene" in tree_str
-    assert scene.get_object_by_uuid(mol_uuid).name in tree_str
+    assert mol_obj.name in tree_str
 
 
 def test_log_tree_changes(scene: SceneManager, test_files, caplog):
@@ -308,8 +293,7 @@ def test_log_tree_changes(scene: SceneManager, test_files, caplog):
 def test_node_path_operations(scene: SceneManager, test_files):
     """Test node path operations"""
     # Load a molecule with a scalar field
-    mol_uuid = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
-    mol_obj = scene.get_object_by_uuid(mol_uuid)
+    mol_obj = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
     field_obj = mol_obj.children[0]
 
     # Check paths
@@ -323,8 +307,7 @@ def test_node_path_operations(scene: SceneManager, test_files):
 def test_find_by_path(scene: SceneManager, test_files):
     """Test finding nodes by path"""
     # Load a molecule with a scalar field
-    mol_uuid = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
-    mol_obj = scene.get_object_by_uuid(mol_uuid)
+    mol_obj = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
     field_obj = mol_obj.children[0]
 
     # Find by path

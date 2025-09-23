@@ -8,16 +8,13 @@ def scene_with_objects(test_plotter, test_files):
     """Create a scene with molecule and scalar field objects"""
     scene = SceneManager()
     scene.plotter = test_plotter
-    mol_uuid = scene.load_xyz(test_files['molecule_1'])
-    field_uuid = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
-    return scene, mol_uuid, field_uuid
+    mol_obj = scene.load_xyz(test_files['molecule_1'])
+    field_obj = scene.load_molecule_from_cube(test_files['scalar_filed_cube'])
+    return scene, mol_obj, field_obj
 
 
 def test_molecule_settings_update(scene_with_objects):
-    scene, mol_uuid, _ = scene_with_objects
-
-    # Get molecule object
-    mol_obj = scene.get_object_by_uuid(mol_uuid)
+    scene, mol_obj, _ = scene_with_objects
 
     # Create new settings
     settings = MoleculeRenderSettings()
@@ -25,7 +22,7 @@ def test_molecule_settings_update(scene_with_objects):
     settings.show_numbers = True
 
     # Update settings
-    scene.update_settings(mol_uuid, settings)
+    scene.update_settings(mol_obj.uuid, settings)
 
     # Verify settings were applied
     assert not mol_obj.render_settings.show_hydrogens
@@ -33,9 +30,11 @@ def test_molecule_settings_update(scene_with_objects):
 
 
 def test_scalar_field_settings_update(scene_with_objects):
-    scene, _, field_uuid = scene_with_objects
-    # Get scalar field object
-    field_obj = scene.get_object_by_uuid(field_uuid)
+    scene, _, field_obj = scene_with_objects
+    
+    # The field_obj from the fixture is actually a MoleculeObject with ScalarFieldObject children
+    # Get the actual scalar field object (the child)
+    field_obj = field_obj.children[0]
 
     # Create new settings
     settings = ScalarFieldRenderSettings()
@@ -44,7 +43,7 @@ def test_scalar_field_settings_update(scene_with_objects):
     settings.color = 'red'
 
     # Update settings
-    scene.update_settings(field_uuid, settings)
+    scene.update_settings(field_obj.uuid, settings)
 
     # Verify settings were applied
     assert field_obj.render_settings.opacity == 0.7
