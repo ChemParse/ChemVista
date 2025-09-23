@@ -12,6 +12,14 @@ from nx_ase import Molecule
 from nx_ase import Trajectory
 from nx_ase import ScalarField
 from unittest.mock import MagicMock, patch
+import os
+
+# Configure Qt for headless environments (CI)
+if not os.environ.get('DISPLAY') and (os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS')):
+    os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+
+# Configure PyVista for headless testing
+pv.OFF_SCREEN = True
 
 
 class MockQtInteractor(QWidget):
@@ -61,15 +69,6 @@ def setup_test_env():
         plotter.close()
     except (AttributeError, RuntimeError):
         pass
-
-
-@pytest.fixture(scope="session")
-def qapp():
-    """Create QApplication instance for the entire test session"""
-    app = QApplication.instance()
-    if app is None:
-        app = QApplication(sys.argv)
-    return app
 
 
 @pytest.fixture
