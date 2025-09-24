@@ -1,12 +1,11 @@
 import argparse
 import pathlib
 from typing import Dict, List
-
 import sys
+
 from PyQt5.QtWidgets import QApplication
 from chemvista import SceneManager
-from chemvista.gui.main_window import ChemVistaApp
-import pathlib
+from chemvista.gui import ChemVistaApp, setup_qt_environment
 
 
 def main():
@@ -43,6 +42,7 @@ def main():
 
     if args.interactive:
         # Mode 1: Full PyQt GUI application
+        setup_qt_environment()
         app = QApplication(sys.argv)
         window = ChemVistaApp(scene_manager)
         sys.exit(app.exec_())

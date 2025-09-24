@@ -36,6 +36,7 @@ def app(qapp):
             self.show = MagicMock()
             self.close = MagicMock()
             self.reset_camera = MagicMock()
+            self.set_background = MagicMock()
     
     with patch('chemvista.gui.scene.QtInteractor', MockQtInteractor):
         app = ChemVistaApp()

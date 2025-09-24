@@ -1,9 +1,10 @@
 # Log the visibility change
+import json
 import logging
 from typing import Optional
 
 from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtWidgets import QFrame, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QFrame, QVBoxLayout, QWidget, QApplication, QMessageBox
 from pyvistaqt import QtInteractor
 
 from ..tree_structure import TreeSignals
@@ -96,6 +97,8 @@ class SceneWidget(QWidget):
 
         # Create the plotter - this is the PyVista QtInteractor
         self.plotter = QtInteractor(frame)
+        # Set default background color to grey
+        self.plotter.set_background('grey')
         frame_layout.addWidget(self.plotter)
 
         # Add the frame to the main layout
@@ -301,7 +304,19 @@ class SceneWidget(QWidget):
 
         layout.addLayout(form_layout)
 
-        # Add buttons
+        # Add custom buttons layout
+        custom_buttons_layout = QHBoxLayout()
+        
+        copy_button = QPushButton("Copy to Clipboard")
+        paste_button = QPushButton("Paste from Clipboard")
+        
+        custom_buttons_layout.addWidget(copy_button)
+        custom_buttons_layout.addWidget(paste_button)
+        custom_buttons_layout.addStretch()  # Add stretch to push buttons to the left
+        
+        layout.addLayout(custom_buttons_layout)
+        
+        # Add standard buttons
         button_box = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Apply | QDialogButtonBox.Reset)
         layout.addWidget(button_box)
@@ -311,6 +326,80 @@ class SceneWidget(QWidget):
         button_box.rejected.connect(dialog.reject)
         apply_button = button_box.button(QDialogButtonBox.Apply)
         reset_button = button_box.button(QDialogButtonBox.Reset)
+
+        def get_current_settings():
+            """Get current camera settings from the dialog"""
+            return {
+                "position": [pos_x.value(), pos_y.value(), pos_z.value()],
+                "focal_point": [focal_x.value(), focal_y.value(), focal_z.value()],
+                "view_up": [up_x.value(), up_y.value(), up_z.value()],
+                "view_angle": view_angle_spin.value(),
+                "clipping_range": [clip_near.value(), clip_far.value()]
+            }
+
+        def set_settings_from_dict(settings_dict):
+            """Set dialog values from a settings dictionary"""
+            try:
+                if "position" in settings_dict:
+                    pos = settings_dict["position"]
+                    pos_x.setValue(pos[0])
+                    pos_y.setValue(pos[1])
+                    pos_z.setValue(pos[2])
+                
+                if "focal_point" in settings_dict:
+                    focal = settings_dict["focal_point"]
+                    focal_x.setValue(focal[0])
+                    focal_y.setValue(focal[1])
+                    focal_z.setValue(focal[2])
+                
+                if "view_up" in settings_dict:
+                    up = settings_dict["view_up"]
+                    up_x.setValue(up[0])
+                    up_y.setValue(up[1])
+                    up_z.setValue(up[2])
+                
+                if "view_angle" in settings_dict:
+                    view_angle_spin.setValue(settings_dict["view_angle"])
+                
+                if "clipping_range" in settings_dict:
+                    clip_range = settings_dict["clipping_range"]
+                    clip_near.setValue(clip_range[0])
+                    clip_far.setValue(clip_range[1])
+                    
+            except (KeyError, IndexError, TypeError) as e:
+                QMessageBox.warning(dialog, "Invalid Settings", 
+                                  f"Could not parse camera settings: {str(e)}")
+
+        def copy_to_clipboard():
+            """Copy current camera settings to clipboard as JSON"""
+            try:
+                settings = get_current_settings()
+                json_str = json.dumps(settings, indent=2)
+                clipboard = QApplication.clipboard()
+                clipboard.setText(json_str)
+                QMessageBox.information(dialog, "Copied", "Camera settings copied to clipboard!")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to copy settings: {str(e)}")
+
+        def paste_from_clipboard():
+            """Paste camera settings from clipboard JSON"""
+            try:
+                clipboard = QApplication.clipboard()
+                json_str = clipboard.text()
+                
+                if not json_str.strip():
+                    QMessageBox.warning(dialog, "Empty Clipboard", "Clipboard is empty or contains no text.")
+                    return
+                
+                settings = json.loads(json_str)
+                set_settings_from_dict(settings)
+                QMessageBox.information(dialog, "Pasted", "Camera settings loaded from clipboard!")
+                
+            except json.JSONDecodeError as e:
+                QMessageBox.warning(dialog, "Invalid JSON", 
+                                  f"Clipboard does not contain valid JSON: {str(e)}")
+            except Exception as e:
+                QMessageBox.critical(dialog, "Error", f"Failed to paste settings: {str(e)}")
 
         def apply_settings():
             # Update camera with current dialog values
@@ -353,6 +442,8 @@ class SceneWidget(QWidget):
 
         apply_button.clicked.connect(apply_settings)
         reset_button.clicked.connect(reset_camera_view)
+        copy_button.clicked.connect(copy_to_clipboard)
+        paste_button.clicked.connect(paste_from_clipboard)
 
         # Handle dialog result
         if dialog.exec_():

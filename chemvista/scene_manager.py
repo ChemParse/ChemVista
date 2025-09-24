@@ -60,6 +60,8 @@ class SceneManager():
         """Create a new plotter or return existing one"""
         if self.plotter is None:
             self.plotter = pv.Plotter(off_screen=off_screen)
+            # Set default background color to grey
+            self.plotter.set_background('grey')
         return self.plotter
 
     @property

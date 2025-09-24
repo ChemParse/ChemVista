@@ -7,6 +7,7 @@ import vtk
 import pathlib
 import tempfile
 from chemvista.gui.main_window import ChemVistaApp
+from chemvista.gui import setup_qt_environment
 from chemvista.scene_manager import SceneManager
 from nx_ase import Molecule
 from nx_ase import Trajectory
@@ -14,9 +15,20 @@ from nx_ase import ScalarField
 from unittest.mock import MagicMock, patch
 import os
 
-# Configure Qt for headless environments (CI)
-if not os.environ.get('DISPLAY') and (os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS')):
-    os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+# Always use offscreen rendering for tests to avoid Qt display issues
+os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+
+# Also setup Qt environment for cases where offscreen isn't enough
+setup_qt_environment()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_qt_for_tests():
+    """Ensure Qt environment is set up before any tests run"""
+    # Force offscreen mode for all tests to avoid display issues
+    os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+    # Also ensure Qt environment is properly set up
+    setup_qt_environment()
 
 # Configure PyVista for headless testing
 pv.OFF_SCREEN = True
@@ -34,6 +46,7 @@ class MockQtInteractor(QWidget):
         self.show = MagicMock()
         self.close = MagicMock()
         self.reset_camera = MagicMock()
+        self.set_background = MagicMock()
 
 
 @pytest.fixture(scope="session")
