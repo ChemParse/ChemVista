@@ -156,6 +156,41 @@ class SceneWidget(QWidget):
             return self.plotter.screenshot(filename=filename)
         return None
 
+    def render_high_quality(self, filename, settings):
+        """Perform high-quality off-screen rendering"""
+        import pyvista as pv
+        
+        # Create off-screen plotter for high-quality rendering
+        off_screen_plotter = pv.Plotter(
+            off_screen=True,
+            window_size=(settings['width'], settings['height'])
+        )
+        
+        # Copy camera settings from current plotter
+        off_screen_plotter.camera = self.plotter.camera.copy()
+        
+        # Re-add all objects to the off-screen plotter
+        self.scene_manager.render(off_screen_plotter)
+        
+        # Configure rendering quality
+        if settings.get('anti_aliasing', True):
+            off_screen_plotter.enable_anti_aliasing()
+        
+        if settings.get('shadows', False):
+            off_screen_plotter.enable_shadows()
+        
+        # Set background
+        off_screen_plotter.background_color = self.plotter.background_color
+        
+        # Render and save
+        off_screen_plotter.show(
+            screenshot=filename,
+            return_img=False,
+            auto_close=False
+        )
+        
+        off_screen_plotter.close()
+
     def closeEvent(self, event):
         """Handle widget close event"""
         # Clean up plotter resources

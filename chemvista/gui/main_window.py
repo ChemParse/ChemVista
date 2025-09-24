@@ -3,7 +3,8 @@ from typing import Dict, List, Optional
 
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QAction, QDialog, QDockWidget, QFileDialog,
-                             QMainWindow, QMessageBox, QToolBar, QColorDialog)
+                             QMainWindow, QMessageBox, QToolBar, QColorDialog,
+                             QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton)
 
 from ..scene_manager import SceneManager
 from ..tree_structure import TreeSignals
@@ -95,8 +96,14 @@ class ChemVistaApp(QMainWindow):
         save_action.setShortcut("Ctrl+S")
         save_action.triggered.connect(self.on_screenshot)
 
+        # Add render action
+        render_action = QAction("High Quality Render", self)
+        render_action.setShortcut("Ctrl+Shift+S")
+        render_action.triggered.connect(self.on_render)
+
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
+        file_menu.addAction(render_action)
 
         # View menu
         view_menu = menubar.addMenu("View")
@@ -204,6 +211,41 @@ class ChemVistaApp(QMainWindow):
                 self, "Error", f"Failed to save screenshot: {str(e)}"
             )
 
+    def on_render(self):
+        """Save a high-quality render of the current view"""
+        try:
+            file_name, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Render",
+                "",
+                "PNG Files (*.png);;JPG Files (*.jpg);;TIFF Files (*.tiff);;All Files (*)"
+            )
+
+            if file_name:
+                # Add default extension if none specified
+                if not pathlib.Path(file_name).suffix:
+                    file_name += ".png"
+
+                # Create render settings dialog
+                render_dialog = RenderDialog(parent=self)
+                
+                if render_dialog.exec_() == QDialog.Accepted:
+                    settings = render_dialog.get_settings()
+                    
+                    # Perform high-quality render
+                    self.scene_widget.render_high_quality(file_name, settings)
+                    
+                    QMessageBox.information(
+                        self,
+                        "Render Saved",
+                        f"High-quality render saved to {file_name}"
+                    )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to save render: {str(e)}"
+            )
+
     def refresh_view(self):
         """Update the visualization"""
         logger.info("Refreshing view")
@@ -281,3 +323,59 @@ class ChemVistaApp(QMainWindow):
             QMessageBox.critical(
                 self, "Error", f"Failed to change background color: {str(e)}"
             )
+
+
+
+class RenderDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Render Settings")
+        self.setModal(True)
+        
+        layout = QVBoxLayout()
+        
+        # Resolution settings
+        res_layout = QHBoxLayout()
+        res_layout.addWidget(QLabel("Width:"))
+        self.width_spin = QSpinBox()
+        self.width_spin.setRange(100, 8192)
+        self.width_spin.setValue(1920)
+        res_layout.addWidget(self.width_spin)
+        
+        res_layout.addWidget(QLabel("Height:"))
+        self.height_spin = QSpinBox()
+        self.height_spin.setRange(100, 8192)
+        self.height_spin.setValue(1080)
+        res_layout.addWidget(self.height_spin)
+        
+        layout.addLayout(res_layout)
+        
+        # Quality settings
+        self.anti_aliasing_cb = QCheckBox("Anti-aliasing")
+        self.anti_aliasing_cb.setChecked(True)
+        layout.addWidget(self.anti_aliasing_cb)
+        
+        self.shadows_cb = QCheckBox("Shadows")
+        layout.addWidget(self.shadows_cb)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_btn = QPushButton("Render")
+        cancel_btn = QPushButton("Cancel")
+        
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+        
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+    
+    def get_settings(self):
+        return {
+            'width': self.width_spin.value(),
+            'height': self.height_spin.value(),
+            'anti_aliasing': self.anti_aliasing_cb.isChecked(),
+            'shadows': self.shadows_cb.isChecked()
+        }
