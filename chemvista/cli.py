@@ -5,7 +5,8 @@ import sys
 
 from PyQt5.QtWidgets import QApplication
 from chemvista import SceneManager
-from chemvista.gui import ChemVistaApp, setup_qt_environment
+from chemvista.gui import ChemVistaApp
+from chemvista.gui.qt_utils import setup_environment
 
 
 def main():
@@ -42,7 +43,7 @@ def main():
 
     if args.interactive:
         # Mode 1: Full PyQt GUI application
-        setup_qt_environment()
+        setup_environment()  # This will print system info and setup environment
         app = QApplication(sys.argv)
         window = ChemVistaApp(scene_manager)
         sys.exit(app.exec_())
