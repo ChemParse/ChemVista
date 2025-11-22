@@ -20,7 +20,7 @@ def main():
     parser.add_argument('--cube-field', nargs='*', type=pathlib.Path, default=[],
                         help='List of cube files to load as scalar fields only')
 
-    # Define mutually exclusive group for the three modes
+    # Define mutually exclusive group for the modes
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument('-i', '--interactive', action='store_true',
                             help='Start the GUI in interactive mode')
@@ -28,6 +28,8 @@ def main():
                             help='Render the scene with PyVista viewer')
     mode_group.add_argument('-s', '--screenshot', type=pathlib.Path,
                             help='Save a screenshot to the specified file path')
+    mode_group.add_argument('-g', '--glb', type=pathlib.Path,
+                            help='Export scene to GLB file for PowerPoint 3D')
 
     args = parser.parse_args()
 
@@ -52,6 +54,10 @@ def main():
         plotter = scene_manager.render(off_screen=True)
         plotter.screenshot(str(args.screenshot))
         print(f"Screenshot saved to: {args.screenshot}")
+    elif args.glb:
+        # Mode 4: Export scene to GLB file
+        scene_manager.export_to_glb(args.glb)
+        print(f"Scene exported to GLB: {args.glb}")
     else:
         # Mode 2: Just render with PyVista (default mode)
         plotter = scene_manager.render()

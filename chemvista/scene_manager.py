@@ -303,3 +303,30 @@ class SceneManager():
             return self.add_trajectory(nx_object, name)
         else:
             logger.error(f"Unsupported object type: {type(nx_object)}")
+
+    def export_to_glb(self, output_path: Union[str, pathlib.Path], **kwargs) -> None:
+        """
+        Export the current scene to a GLB file for PowerPoint 3D and other viewers.
+
+        This method creates an Exporter instance and exports all visible objects
+        in the scene to a GLB file with proper vertex colors and transparency.
+
+        Args:
+            output_path: Path where the GLB file will be saved
+            **kwargs: Additional arguments passed to Exporter.export_glb()
+                     (double_sided, alpha_mode, etc.)
+
+        Raises:
+            ValueError: If no visible objects are found in the scene
+            RuntimeError: If export fails
+
+        Example:
+            >>> scene_manager = SceneManager()
+            >>> scene_manager.load_molecule_from_cube("molecule.cube")
+            >>> scene_manager.export_to_glb("output.glb")
+        """
+        from .exporter import Exporter
+
+        exporter = Exporter(self)
+        exporter.export_glb(output_path, **kwargs)
+        logger.info(f"Scene exported to {output_path}")
