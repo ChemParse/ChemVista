@@ -330,3 +330,42 @@ class SceneManager():
         exporter = Exporter(self)
         exporter.export_glb(output_path, **kwargs)
         logger.info(f"Scene exported to {output_path}")
+
+    def export_trajectory_animated_glb(
+        self,
+        trajectory_object,
+        output_path: Union[str, pathlib.Path],
+        fps: int = 10,
+        **kwargs
+    ) -> None:
+        """
+        Export a trajectory as an animated GLB file for PowerPoint.
+
+        This creates a PowerPoint-compatible animated 3D model using skeletal
+        animation, where each atom is a bone that animates through the trajectory.
+
+        Args:
+            trajectory_object: TrajectoryObject to export
+            output_path: Path where the GLB file will be saved
+            fps: Frames per second for animation (default: 10)
+            **kwargs: Additional arguments passed to Exporter
+
+        Raises:
+            ValueError: If trajectory has no frames or inconsistent atom counts
+            RuntimeError: If export fails
+
+        Example:
+            >>> scene_manager = SceneManager()
+            >>> scene_manager.load_trajectory("trajectory.xyz")
+            >>> traj = scene_manager.root.children[0]  # Get trajectory object
+            >>> scene_manager.export_trajectory_animated_glb(traj, "anim.glb", fps=15)
+
+        Note:
+            PowerPoint only plays the first animation in a GLB file.
+            All trajectory frames must have the same number of atoms.
+        """
+        from .exporter import Exporter
+
+        exporter = Exporter(self)
+        exporter.export_trajectory_animated_glb(trajectory_object, output_path, fps=fps, **kwargs)
+        logger.info(f"Animated trajectory exported to {output_path}")

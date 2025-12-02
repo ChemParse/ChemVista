@@ -9,6 +9,7 @@ ChemVista is a chemical visualization tool built with Python, PyQt5, and PyVista
 - **Trajectory Animation**: Load and visualize molecular dynamics trajectories
 - **Interactive GUI**: PyQt5-based interface with scene tree and property editors
 - **Export to GLB**: Export molecules and scalar fields to GLB format for PowerPoint 3D and other 3D viewers
+- **Animated Trajectory Export**: Export molecular trajectories as animated GLB files with skeletal animation for PowerPoint
 - **CLI Support**: Command-line interface for batch processing and scripting
 - **Screenshot Generation**: Save high-quality renders as images
 
@@ -42,6 +43,9 @@ chemvista --xyz molecule.xyz --screenshot output.png
 
 # Export to GLB for PowerPoint 3D
 chemvista --xyz molecule.xyz --glb molecule.glb
+
+# Export trajectory as animated GLB for PowerPoint (skeletal animation)
+chemvista --xyz trajectory.xyz --glb-animated trajectory_anim.glb --fps 15
 
 # Load molecule with electron density from CUBE file
 chemvista --cube-mol density.cube --interactive
@@ -85,10 +89,49 @@ chemvista --cube-mol molecule.cube --glb output.glb
 chemvista --xyz molecule.xyz --glb molecule.glb
 ```
 
-Then in PowerPoint:
+#### Animated Trajectories for PowerPoint
+
+Export molecular dynamics trajectories as animated GLB files that play in PowerPoint using skeletal animation (the only animation type PowerPoint supports):
+
+```bash
+# Export trajectory with default settings (10 fps, resolution=10)
+chemvista --xyz trajectory.xyz --glb-animated output.glb
+
+# Export with custom frame rate (15 fps)
+chemvista --xyz trajectory.xyz --glb-animated output.glb --fps 15
+
+# Export with lower resolution for smaller file size
+chemvista --xyz trajectory.xyz --glb-animated output.glb --resolution 5
+
+# Export with seamless loop (adds reverse frames)
+chemvista --xyz trajectory.xyz --glb-animated output.glb --cycle
+```
+
+**Using Python API:**
+
+```python
+from chemvista import SceneManager
+
+# Load trajectory
+scene = SceneManager()
+traj_obj = scene.load_xyz("trajectory.xyz")
+
+# Export as animated GLB for PowerPoint
+scene.export_trajectory_animated_glb(
+    trajectory_object=traj_obj,
+    output_path="animated_trajectory.glb",
+    fps=15,
+    resolution=10,      # Lower = smaller file (default: 10)
+    cycle_animation=True  # Add reverse frames for seamless loop
+)
+```
+
+**In PowerPoint:**
 1. Insert > 3D Models > From a File...
 2. Select the .glb file
-3. Rotate, scale, and animate the 3D molecule!
+3. The animation will play automatically when presenting!
+
+**Note:** PowerPoint only supports skeletal animations. Each atom becomes a bone in the skeleton, allowing smooth animation playback.
 
 See [examples/export_to_glb.py](examples/export_to_glb.py) for more examples.
 

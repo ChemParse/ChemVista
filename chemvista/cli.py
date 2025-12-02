@@ -30,6 +30,16 @@ def main():
                             help='Save a screenshot to the specified file path')
     mode_group.add_argument('-g', '--glb', type=pathlib.Path,
                             help='Export scene to GLB file for PowerPoint 3D')
+    mode_group.add_argument('--glb-animated', type=pathlib.Path,
+                            help='Export trajectory as animated GLB file for PowerPoint')
+
+    # Animation options (used with --glb-animated)
+    parser.add_argument('--fps', type=int, default=10,
+                        help='Frames per second for animated GLB (default: 10)')
+    parser.add_argument('--resolution', type=int, default=10,
+                        help='Mesh resolution for animated GLB - lower values reduce file size (default: 10)')
+    parser.add_argument('--cycle', action='store_true',
+                        help='Add reverse frames to create a seamless loop animation')
 
     args = parser.parse_args()
 
@@ -58,6 +68,34 @@ def main():
         # Mode 4: Export scene to GLB file
         scene_manager.export_to_glb(args.glb)
         print(f"Scene exported to GLB: {args.glb}")
+    elif args.glb_animated:
+        # Mode 5: Export trajectory as animated GLB
+        from .scene_objects import TrajectoryObject
+
+        # Find first trajectory object in scene
+        trajectory_obj = None
+        for obj in scene_manager.root.children:
+            if isinstance(obj, TrajectoryObject):
+                trajectory_obj = obj
+                break
+
+        if trajectory_obj is None:
+            print("Error: No trajectory found in scene. Load a multi-frame XYZ file first.")
+            sys.exit(1)
+
+        print(f"Exporting trajectory '{trajectory_obj.name}' as animated GLB...")
+        print(f"  Frames: {len(trajectory_obj.children)}")
+        print(f"  FPS: {args.fps}")
+        print(f"  Resolution: {args.resolution}")
+        print(f"  Cycle: {args.cycle}")
+        scene_manager.export_trajectory_animated_glb(
+            trajectory_obj,
+            args.glb_animated,
+            fps=args.fps,
+            resolution=args.resolution,
+            cycle_animation=args.cycle
+        )
+        print(f"✅ Animated trajectory exported to: {args.glb_animated}")
     else:
         # Mode 2: Just render with PyVista (default mode)
         plotter = scene_manager.render()
