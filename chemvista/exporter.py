@@ -930,6 +930,632 @@ class Exporter:
             logger.error(f"Failed to export animated GLB: {e}")
             raise RuntimeError(f"Failed to export animated GLB: {e}")
 
+    def export_animated_glb(
+        self,
+        output_path: Union[str, Path],
+        fps: int = 10,
+        resolution: int = 10,
+        cycle_animation: bool = False,
+        scale: Optional[float] = None,
+        **kwargs
+    ) -> None:
+        """
+        Export the entire visible scene as an animated GLB file using skeletal animation.
+
+        This method exports all visible trajectories and standalone molecules. Each atom
+        becomes a bone in a unified skeleton. Trajectories are animated while standalone
+        molecules remain static (but are included in the export).
+
+        Limitations:
+        - Scalar fields are not yet supported (warning will be shown)
+        - All trajectories must have the same number of frames
+
+        Args:
+            output_path: Path where the GLB file will be saved
+            fps: Frames per second for animation (default: 10)
+            resolution: Mesh resolution for spheres/cylinders (default: 10)
+            cycle_animation: If True, adds reverse frames to create a loop (default: False)
+            scale: Scale factor. Use "auto" to fit in 2-unit box, or a number.
+            **kwargs: Additional options (reserved for future use)
+
+        Raises:
+            ValueError: If no exportable objects found or frame count mismatch
+            RuntimeError: If export fails
+        """
+        import json
+        import struct
+        from .scene_objects import TrajectoryObject, MoleculeObject, ScalarFieldObject
+        from .renderer.molecule import MoleculeRenderer
+        from dataclasses import asdict
+
+        output_path = Path(output_path)
+
+        # Validate file extension
+        if output_path.suffix.lower() not in ['.glb', '.gltf']:
+            raise ValueError(
+                f"Invalid file extension '{output_path.suffix}'. "
+                f"Must be '.glb' or '.gltf'."
+            )
+
+        # Collect all visible objects
+        trajectories = []
+        molecules = []
+        scalar_fields = []
+
+        for obj in self.scene_manager.root.iter_visible():
+            if obj == self.scene_manager.root:
+                continue
+            if isinstance(obj, TrajectoryObject):
+                trajectories.append(obj)
+            elif isinstance(obj, MoleculeObject):
+                # Only add if not part of a trajectory
+                if not isinstance(obj.parent, TrajectoryObject):
+                    molecules.append(obj)
+            elif isinstance(obj, ScalarFieldObject):
+                scalar_fields.append(obj)
+
+        # Warn about scalar fields
+        if scalar_fields:
+            logger.warning(
+                f"⚠️  {len(scalar_fields)} scalar field(s) found but not yet supported "
+                f"in animated export. They will be skipped."
+            )
+            print(f"⚠️  Warning: {len(scalar_fields)} scalar field(s) skipped (not supported in animated export)")
+
+        # Check what we have to export
+        if not trajectories and not molecules:
+            raise ValueError("No molecules or trajectories found in scene to export")
+
+        if not trajectories:
+            # No trajectories - just static molecules, use regular export
+            logger.info("No trajectories found, using static export")
+            self.export_glb(output_path)
+            return
+
+        logger.info(f"Exporting animated scene to GLB: {output_path}")
+        logger.info(f"  Trajectories: {len(trajectories)}")
+        logger.info(f"  Standalone molecules: {len(molecules)}")
+
+        # Determine number of frames from trajectories
+        # All trajectories must have the same frame count
+        frame_counts = [len(t.children) for t in trajectories]
+        if len(set(frame_counts)) > 1:
+            raise ValueError(
+                f"All trajectories must have the same number of frames. "
+                f"Found: {frame_counts}"
+            )
+
+        num_frames = frame_counts[0]
+
+        # Add reverse frames for cycling if requested
+        if cycle_animation and num_frames > 1:
+            original_frames = num_frames
+            num_frames = num_frames + (num_frames - 2)  # Add reverse frames excluding endpoints
+            logger.info(f"  Cycling enabled: {original_frames} -> {num_frames} frames")
+
+        logger.info(f"  Total frames: {num_frames}")
+        logger.info(f"  FPS: {fps}")
+        logger.info(f"  Duration: {num_frames / fps:.2f} seconds")
+        logger.info(f"  Resolution: {resolution}")
+
+        # Initialize renderer
+        renderer = MoleculeRenderer()
+
+        # Collect all atom positions for bounding box calculation
+        all_positions = []
+        for traj in trajectories:
+            for frame in traj.children:
+                all_positions.append(frame.molecule.positions)
+        for mol in molecules:
+            all_positions.append(mol.molecule.positions)
+
+        all_positions = np.vstack(all_positions)
+        bbox_min = all_positions.min(axis=0)
+        bbox_max = all_positions.max(axis=0)
+        bbox_size = bbox_max - bbox_min
+        max_extent = np.max(bbox_size)
+
+        # Handle scale parameter
+        if scale == "auto":
+            target_size = 2.0
+            scale_factor = target_size / max_extent if max_extent > 0 else 1.0
+            logger.info(f"  Auto-scaling: {max_extent:.2f} Å -> {target_size:.2f} units (scale={scale_factor:.4f})")
+        elif scale is not None:
+            scale_factor = float(scale)
+            logger.info(f"  Scale factor: {scale_factor}")
+        else:
+            scale_factor = 1.0
+            logger.info(f"  No scaling (max extent: {max_extent:.2f} Å)")
+
+        # Build combined geometry and animation data
+        # Each "object" (trajectory or molecule) contributes atoms and bonds
+        # Global bone index tracks across all objects
+
+        all_vertices = []
+        all_faces = []
+        all_colors = []
+        all_joints = []
+        all_weights = []
+        bone_positions_per_frame = []  # List of lists: [frame][bone_idx] = position
+
+        # Initialize frame position lists
+        actual_num_frames = frame_counts[0]  # Original frame count before cycling
+        for _ in range(actual_num_frames):
+            bone_positions_per_frame.append([])
+
+        global_bone_idx = 0
+        global_vertex_offset = 0
+        bond_skinning_info = []  # Track bonds for skinning
+
+        # Process each trajectory
+        for traj_idx, traj in enumerate(trajectories):
+            frames = traj.children
+            first_frame = frames[0]
+            molecule = first_frame.molecule
+            settings = first_frame.render_settings
+            settings_dict = asdict(settings) if hasattr(settings, '__dataclass_fields__') else dict(vars(settings))
+            settings_dict['resolution'] = resolution
+
+            num_atoms = len(molecule)
+            traj_start_bone = global_bone_idx
+
+            logger.info(f"  Trajectory '{traj.name}': {num_atoms} atoms, bones {traj_start_bone}-{traj_start_bone + num_atoms - 1}")
+
+            # Create atom spheres for this trajectory (using first frame positions)
+            for atom_idx, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
+                if not settings_dict.get('show_hydrogens', True) and symbol == 'H':
+                    continue
+
+                atom_settings = renderer.atoms_settings.get(symbol, renderer.atoms_settings['Unknown'])
+                scaled_position = position * scale_factor
+                scaled_radius = atom_settings['radius'] * scale_factor
+
+                sphere = pv.Sphere(
+                    radius=scaled_radius,
+                    center=scaled_position,
+                    theta_resolution=settings_dict['resolution'],
+                    phi_resolution=settings_dict['resolution']
+                )
+                sphere = sphere.triangulate()
+
+                # Store vertices
+                all_vertices.append(sphere.points.astype(np.float32))
+
+                # Adjust face indices
+                faces = sphere.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+                faces = faces + global_vertex_offset
+                all_faces.append(faces)
+
+                # Create RGBA colors
+                color = np.array(atom_settings['color'], dtype=np.uint8)
+                alpha_value = int(settings_dict.get('alpha', 1.0) * 255)
+                rgba = np.zeros((sphere.n_points, 4), dtype=np.uint8)
+                rgba[:, :3] = color
+                rgba[:, 3] = alpha_value
+                all_colors.append(rgba)
+
+                # Skinning: all vertices of this sphere belong to this bone
+                joints = np.zeros((sphere.n_points, 4), dtype=np.uint16)
+                weights = np.zeros((sphere.n_points, 4), dtype=np.float32)
+                joints[:, 0] = global_bone_idx
+                weights[:, 0] = 1.0
+                all_joints.append(joints)
+                all_weights.append(weights)
+
+                global_vertex_offset += sphere.n_points
+                global_bone_idx += 1
+
+            # Store atom positions for each frame (for animation)
+            for frame_idx, frame in enumerate(frames):
+                positions = frame.molecule.positions * scale_factor
+                for pos in positions:
+                    bone_positions_per_frame[frame_idx].append(pos.astype(np.float32))
+
+            # Create bonds for this trajectory
+            bond_list = list(molecule.get_all_bonds())
+            for bond in bond_list:
+                if not settings_dict.get('show_hydrogens', True) and 'H' in [molecule.symbols[i] for i in bond]:
+                    continue
+
+                atom_a, atom_b = bond
+                atom_a_pos = molecule.positions[atom_a]
+                atom_b_pos = molecule.positions[atom_b]
+                bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
+
+                cylinders = renderer._create_bond_cylinders(
+                    atom_a_pos, atom_b_pos, bond_type,
+                    settings_dict.get('alpha', 1.0), settings_dict['resolution']
+                )
+
+                bond_vertex_start = global_vertex_offset
+                for cylinder in cylinders:
+                    cylinder = cylinder.triangulate()
+                    scaled_verts = (cylinder.points * scale_factor).astype(np.float32)
+                    all_vertices.append(scaled_verts)
+
+                    faces = cylinder.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+                    faces = faces + global_vertex_offset
+                    all_faces.append(faces)
+
+                    if 'RGBA' in cylinder.array_names:
+                        all_colors.append(cylinder['RGBA'].astype(np.uint8))
+                    else:
+                        all_colors.append(np.full((cylinder.n_points, 4), 200, dtype=np.uint8))
+
+                    # Placeholder skinning (will be set properly below)
+                    joints = np.zeros((cylinder.n_points, 4), dtype=np.uint16)
+                    weights = np.zeros((cylinder.n_points, 4), dtype=np.float32)
+                    all_joints.append(joints)
+                    all_weights.append(weights)
+
+                    global_vertex_offset += cylinder.n_points
+
+                bond_vertex_count = global_vertex_offset - bond_vertex_start
+                bond_skinning_info.append({
+                    'atom_a_bone': traj_start_bone + atom_a,
+                    'atom_b_bone': traj_start_bone + atom_b,
+                    'vertex_start': bond_vertex_start,
+                    'vertex_count': bond_vertex_count,
+                    'pos_a': atom_a_pos * scale_factor,
+                    'pos_b': atom_b_pos * scale_factor
+                })
+
+        # Process standalone molecules (static - same position for all frames)
+        for mol_idx, mol_obj in enumerate(molecules):
+            molecule = mol_obj.molecule
+            settings = mol_obj.render_settings
+            settings_dict = asdict(settings) if hasattr(settings, '__dataclass_fields__') else dict(vars(settings))
+            settings_dict['resolution'] = resolution
+
+            num_atoms = len(molecule)
+            mol_start_bone = global_bone_idx
+
+            logger.info(f"  Molecule '{mol_obj.name}': {num_atoms} atoms (static), bones {mol_start_bone}-{mol_start_bone + num_atoms - 1}")
+
+            # Create atom spheres
+            for atom_idx, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
+                if not settings_dict.get('show_hydrogens', True) and symbol == 'H':
+                    continue
+
+                atom_settings = renderer.atoms_settings.get(symbol, renderer.atoms_settings['Unknown'])
+                scaled_position = position * scale_factor
+                scaled_radius = atom_settings['radius'] * scale_factor
+
+                sphere = pv.Sphere(
+                    radius=scaled_radius,
+                    center=scaled_position,
+                    theta_resolution=settings_dict['resolution'],
+                    phi_resolution=settings_dict['resolution']
+                )
+                sphere = sphere.triangulate()
+
+                all_vertices.append(sphere.points.astype(np.float32))
+
+                faces = sphere.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+                faces = faces + global_vertex_offset
+                all_faces.append(faces)
+
+                color = np.array(atom_settings['color'], dtype=np.uint8)
+                alpha_value = int(settings_dict.get('alpha', 1.0) * 255)
+                rgba = np.zeros((sphere.n_points, 4), dtype=np.uint8)
+                rgba[:, :3] = color
+                rgba[:, 3] = alpha_value
+                all_colors.append(rgba)
+
+                joints = np.zeros((sphere.n_points, 4), dtype=np.uint16)
+                weights = np.zeros((sphere.n_points, 4), dtype=np.float32)
+                joints[:, 0] = global_bone_idx
+                weights[:, 0] = 1.0
+                all_joints.append(joints)
+                all_weights.append(weights)
+
+                global_vertex_offset += sphere.n_points
+                global_bone_idx += 1
+
+            # Static molecule: same position for all frames
+            static_positions = molecule.positions * scale_factor
+            for frame_idx in range(actual_num_frames):
+                for pos in static_positions:
+                    bone_positions_per_frame[frame_idx].append(pos.astype(np.float32))
+
+            # Create bonds for this molecule
+            bond_list = list(molecule.get_all_bonds())
+            for bond in bond_list:
+                if not settings_dict.get('show_hydrogens', True) and 'H' in [molecule.symbols[i] for i in bond]:
+                    continue
+
+                atom_a, atom_b = bond
+                atom_a_pos = molecule.positions[atom_a]
+                atom_b_pos = molecule.positions[atom_b]
+                bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
+
+                cylinders = renderer._create_bond_cylinders(
+                    atom_a_pos, atom_b_pos, bond_type,
+                    settings_dict.get('alpha', 1.0), settings_dict['resolution']
+                )
+
+                bond_vertex_start = global_vertex_offset
+                for cylinder in cylinders:
+                    cylinder = cylinder.triangulate()
+                    scaled_verts = (cylinder.points * scale_factor).astype(np.float32)
+                    all_vertices.append(scaled_verts)
+
+                    faces = cylinder.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+                    faces = faces + global_vertex_offset
+                    all_faces.append(faces)
+
+                    if 'RGBA' in cylinder.array_names:
+                        all_colors.append(cylinder['RGBA'].astype(np.uint8))
+                    else:
+                        all_colors.append(np.full((cylinder.n_points, 4), 200, dtype=np.uint8))
+
+                    joints = np.zeros((cylinder.n_points, 4), dtype=np.uint16)
+                    weights = np.zeros((cylinder.n_points, 4), dtype=np.float32)
+                    all_joints.append(joints)
+                    all_weights.append(weights)
+
+                    global_vertex_offset += cylinder.n_points
+
+                bond_vertex_count = global_vertex_offset - bond_vertex_start
+                bond_skinning_info.append({
+                    'atom_a_bone': mol_start_bone + atom_a,
+                    'atom_b_bone': mol_start_bone + atom_b,
+                    'vertex_start': bond_vertex_start,
+                    'vertex_count': bond_vertex_count,
+                    'pos_a': atom_a_pos * scale_factor,
+                    'pos_b': atom_b_pos * scale_factor
+                })
+
+        # Combine all arrays
+        vertices = np.vstack(all_vertices)
+        faces = np.vstack(all_faces)
+        colors = np.vstack(all_colors)
+        joints = np.vstack(all_joints)
+        weights = np.vstack(all_weights)
+
+        total_bones = global_bone_idx
+        logger.info(f"  Total bones: {total_bones}")
+        logger.info(f"  Total vertices: {len(vertices)}")
+
+        # Apply bond skinning (two-bone weighting for each bond)
+        for bond_info in bond_skinning_info:
+            bone_a = bond_info['atom_a_bone']
+            bone_b = bond_info['atom_b_bone']
+            pos_a = bond_info['pos_a']
+            pos_b = bond_info['pos_b']
+            start = bond_info['vertex_start']
+            count = bond_info['vertex_count']
+
+            bond_vec = pos_b - pos_a
+            bond_length = np.linalg.norm(bond_vec)
+            bond_dir = bond_vec / bond_length if bond_length > 0 else np.array([1, 0, 0])
+
+            for i in range(count):
+                vert_pos = vertices[start + i]
+                rel_pos = vert_pos - pos_a
+                t = np.dot(rel_pos, bond_dir) / bond_length if bond_length > 0 else 0.5
+                t = max(0.0, min(1.0, t))
+
+                joints[start + i, 0] = bone_a
+                joints[start + i, 1] = bone_b
+                weights[start + i, 0] = 1.0 - t
+                weights[start + i, 1] = t
+
+        # Handle cycling - add reverse frames
+        if cycle_animation and actual_num_frames > 1:
+            for frame_idx in range(actual_num_frames - 2, 0, -1):
+                bone_positions_per_frame.append(bone_positions_per_frame[frame_idx])
+
+        # Create animation time keyframes
+        times = np.array([i / fps for i in range(num_frames)], dtype=np.float32)
+
+        # Build binary buffer
+        buffer_data = b''
+
+        def add_to_buffer(data):
+            nonlocal buffer_data
+            padding = (4 - (len(buffer_data) % 4)) % 4
+            buffer_data += b'\x00' * padding
+            offset = len(buffer_data)
+            buffer_data += data
+            return offset, len(data)
+
+        # Add geometry data
+        vertices_offset, vertices_len = add_to_buffer(vertices.tobytes())
+        faces_offset, faces_len = add_to_buffer(faces.tobytes())
+        colors_offset, colors_len = add_to_buffer(colors.tobytes())
+        joints_offset, joints_len = add_to_buffer(joints.tobytes())
+        weights_offset, weights_len = add_to_buffer(weights.tobytes())
+
+        # Add inverse bind matrices
+        inv_bind_matrices = np.zeros((total_bones, 4, 4), dtype=np.float32)
+        first_frame_positions = bone_positions_per_frame[0]
+        for bone_idx in range(total_bones):
+            mat = np.eye(4, dtype=np.float32)
+            mat[0, 3] = -first_frame_positions[bone_idx][0]
+            mat[1, 3] = -first_frame_positions[bone_idx][1]
+            mat[2, 3] = -first_frame_positions[bone_idx][2]
+            inv_bind_matrices[bone_idx] = mat
+
+        # glTF requires matrices in column-major order, but NumPy uses row-major by default
+        # Transpose each matrix to convert to column-major before serializing
+        inv_bind_col_major = inv_bind_matrices.transpose(0, 2, 1).copy()
+        inv_bind_offset, inv_bind_len = add_to_buffer(inv_bind_col_major.tobytes())
+
+        # Add animation timestamps
+        times_offset, times_len = add_to_buffer(times.tobytes())
+
+        # Add per-bone translations for all frames
+        bone_translation_offsets = []
+        for bone_idx in range(total_bones):
+            translations = np.array([
+                bone_positions_per_frame[frame_idx][bone_idx]
+                for frame_idx in range(num_frames)
+            ], dtype=np.float32)
+            offset, length = add_to_buffer(translations.tobytes())
+            bone_translation_offsets.append((offset, length))
+
+        # Build glTF JSON
+        # Create nodes: root + skeleton root + all bone nodes
+        joint_indices = list(range(2, 2 + total_bones))
+
+        # Determine if we need transparency (check if any alpha values < 255)
+        has_transparency = np.any(colors[:, 3] < 255)
+        if has_transparency:
+            avg_alpha = np.mean(colors[:, 3]) / 255.0
+            alpha_mode = "BLEND"
+            logger.info(f"  Transparency detected (avg alpha: {avg_alpha:.2f})")
+        else:
+            avg_alpha = 1.0
+            alpha_mode = "OPAQUE"
+
+        gltf = {
+            "asset": {"version": "2.0", "generator": "ChemVista"},
+            "scene": 0,
+            "scenes": [{"nodes": [0]}],
+            "nodes": [
+                {"name": "Root", "children": [1]},
+                {"name": "Skeleton", "children": joint_indices}
+            ],
+            "meshes": [{
+                "primitives": [{
+                    "attributes": {
+                        "POSITION": 0,
+                        "COLOR_0": 2,
+                        "JOINTS_0": 3,
+                        "WEIGHTS_0": 4
+                    },
+                    "indices": 1,
+                    "material": 0,
+                    "mode": 4
+                }]
+            }],
+            "materials": [{
+                "name": "MoleculeMaterial",
+                "pbrMetallicRoughness": {
+                    "baseColorFactor": [1.0, 1.0, 1.0, avg_alpha]
+                },
+                "alphaMode": alpha_mode,
+                "doubleSided": True
+            }],
+            "skins": [{
+                "joints": joint_indices,
+                "inverseBindMatrices": 5
+            }],
+            "animations": [{
+                "name": "TrajectoryAnimation",
+                "channels": [],
+                "samplers": []
+            }],
+            "accessors": [],
+            "bufferViews": [],
+            "buffers": []
+        }
+
+        # Add bone nodes
+        for bone_idx in range(total_bones):
+            pos = first_frame_positions[bone_idx]
+            gltf["nodes"].append({
+                "name": f"Bone_{bone_idx}",
+                "translation": [float(pos[0]), float(pos[1]), float(pos[2])]
+            })
+
+        # Add mesh node with skin
+        mesh_node_idx = len(gltf["nodes"])
+        gltf["nodes"].append({
+            "name": "SkinnedMesh",
+            "mesh": 0,
+            "skin": 0
+        })
+        gltf["nodes"][0]["children"].append(mesh_node_idx)
+
+        # Add accessors
+        v_min = vertices.min(axis=0).tolist()
+        v_max = vertices.max(axis=0).tolist()
+
+        gltf["accessors"] = [
+            {"bufferView": 0, "componentType": 5126, "count": len(vertices), "type": "VEC3", "min": v_min, "max": v_max},
+            {"bufferView": 5, "componentType": 5125, "count": faces.size, "type": "SCALAR"},
+            {"bufferView": 1, "componentType": 5121, "count": len(colors), "type": "VEC4", "normalized": True},
+            {"bufferView": 2, "componentType": 5123, "count": len(joints), "type": "VEC4"},
+            {"bufferView": 3, "componentType": 5126, "count": len(weights), "type": "VEC4"},
+            {"bufferView": 4, "componentType": 5126, "count": total_bones, "type": "MAT4"},
+            {"bufferView": 6, "componentType": 5126, "count": num_frames, "type": "SCALAR", "min": [float(times.min())], "max": [float(times.max())]}
+        ]
+
+        gltf["bufferViews"] = [
+            {"buffer": 0, "byteOffset": vertices_offset, "byteLength": vertices_len},
+            {"buffer": 0, "byteOffset": colors_offset, "byteLength": colors_len},
+            {"buffer": 0, "byteOffset": joints_offset, "byteLength": joints_len},
+            {"buffer": 0, "byteOffset": weights_offset, "byteLength": weights_len},
+            {"buffer": 0, "byteOffset": inv_bind_offset, "byteLength": inv_bind_len},
+            {"buffer": 0, "byteOffset": faces_offset, "byteLength": faces_len},
+            {"buffer": 0, "byteOffset": times_offset, "byteLength": times_len}
+        ]
+
+        # Add animation channels and samplers for each bone
+        for bone_idx in range(total_bones):
+            node_idx = joint_indices[bone_idx]
+            sampler_idx = bone_idx
+            accessor_idx = 7 + bone_idx
+
+            offset, length = bone_translation_offsets[bone_idx]
+            gltf["accessors"].append({
+                "bufferView": 7 + bone_idx,
+                "componentType": 5126,
+                "count": num_frames,
+                "type": "VEC3"
+            })
+
+            gltf["bufferViews"].append({
+                "buffer": 0,
+                "byteOffset": offset,
+                "byteLength": length
+            })
+
+            gltf["animations"][0]["channels"].append({
+                "sampler": sampler_idx,
+                "target": {"node": node_idx, "path": "translation"}
+            })
+
+            gltf["animations"][0]["samplers"].append({
+                "input": 6,
+                "output": accessor_idx,
+                "interpolation": "LINEAR"
+            })
+
+        # Finalize buffer
+        gltf["buffers"] = [{"byteLength": len(buffer_data)}]
+
+        # Write GLB file
+        json_str = json.dumps(gltf, separators=(',', ':'))
+        json_bytes = json_str.encode('utf-8')
+        json_padding = (4 - (len(json_bytes) % 4)) % 4
+        json_bytes += b' ' * json_padding
+
+        total_length = 12 + 8 + len(json_bytes) + 8 + len(buffer_data)
+
+        try:
+            with open(output_path, 'wb') as f:
+                f.write(b'glTF')
+                f.write(struct.pack('<I', 2))
+                f.write(struct.pack('<I', total_length))
+
+                f.write(struct.pack('<I', len(json_bytes)))
+                f.write(b'JSON')
+                f.write(json_bytes)
+
+                f.write(struct.pack('<I', len(buffer_data)))
+                f.write(b'BIN\x00')
+                f.write(buffer_data)
+
+            logger.info(f"✅ Successfully exported animated scene to {output_path}")
+            logger.info(f"   File size: {total_length / 1024:.1f} KB")
+            logger.info(f"   Animation: {num_frames} frames at {fps} fps = {num_frames/fps:.1f}s")
+        except Exception as e:
+            logger.error(f"Failed to export animated GLB: {e}")
+            raise RuntimeError(f"Failed to export animated GLB: {e}")
+
     def export_scene_to_glb(
         self,
         output_path: Union[str, Path],

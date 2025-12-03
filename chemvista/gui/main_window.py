@@ -4,7 +4,8 @@ from typing import Dict, List, Optional
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (QAction, QDialog, QDockWidget, QFileDialog,
                              QMainWindow, QMessageBox, QToolBar, QColorDialog,
-                             QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QCheckBox, QPushButton)
+                             QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QCheckBox,
+                             QPushButton, QComboBox, QDoubleSpinBox)
 
 from ..scene_manager import SceneManager
 from ..tree_structure import TreeSignals
@@ -101,9 +102,22 @@ class ChemVistaApp(QMainWindow):
         render_action.setShortcut("Ctrl+Shift+S")
         render_action.triggered.connect(self.on_render)
 
+        # Add export actions
+        file_menu.addSeparator()
+        export_glb_action = QAction("Export to GLB (Static)", self)
+        export_glb_action.setShortcut("Ctrl+E")
+        export_glb_action.triggered.connect(self.on_export_glb)
+
+        export_animated_action = QAction("Export to GLB (Animated)", self)
+        export_animated_action.setShortcut("Ctrl+Shift+E")
+        export_animated_action.triggered.connect(self.on_export_animated_glb)
+
         file_menu.addAction(open_action)
         file_menu.addAction(save_action)
         file_menu.addAction(render_action)
+        file_menu.addSeparator()
+        file_menu.addAction(export_glb_action)
+        file_menu.addAction(export_animated_action)
 
         # View menu
         view_menu = menubar.addMenu("View")
@@ -324,6 +338,161 @@ class ChemVistaApp(QMainWindow):
                 self, "Error", f"Failed to change background color: {str(e)}"
             )
 
+    def on_export_glb(self):
+        """Export scene to static GLB file"""
+        try:
+            file_name, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export to GLB",
+                "",
+                "GLB Files (*.glb);;GLTF Files (*.gltf);;All Files (*)"
+            )
+
+            if file_name:
+                # Add default extension if none specified
+                if not pathlib.Path(file_name).suffix:
+                    file_name += ".glb"
+
+                self.scene_manager.export_to_glb(file_name)
+
+                QMessageBox.information(
+                    self,
+                    "Export Complete",
+                    f"Scene exported to {file_name}"
+                )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to export GLB: {str(e)}"
+            )
+
+    def on_export_animated_glb(self):
+        """Export scene to animated GLB file"""
+        try:
+            file_name, _ = QFileDialog.getSaveFileName(
+                self,
+                "Export Animated GLB",
+                "",
+                "GLB Files (*.glb);;GLTF Files (*.gltf);;All Files (*)"
+            )
+
+            if file_name:
+                # Add default extension if none specified
+                if not pathlib.Path(file_name).suffix:
+                    file_name += ".glb"
+
+                # Show export settings dialog
+                export_dialog = AnimatedExportDialog(parent=self)
+
+                if export_dialog.exec_() == QDialog.Accepted:
+                    settings = export_dialog.get_settings()
+
+                    self.scene_manager.export_animated_glb(
+                        file_name,
+                        fps=settings['fps'],
+                        resolution=settings['resolution'],
+                        cycle_animation=settings['cycle'],
+                        scale=settings['scale']
+                    )
+
+                    QMessageBox.information(
+                        self,
+                        "Export Complete",
+                        f"Animated scene exported to {file_name}"
+                    )
+
+        except ValueError as e:
+            QMessageBox.warning(
+                self, "Export Warning", str(e)
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to export animated GLB: {str(e)}"
+            )
+
+
+class AnimatedExportDialog(QDialog):
+    """Dialog for animated GLB export settings"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Animated Export Settings")
+        self.setModal(True)
+
+        layout = QVBoxLayout()
+
+        # FPS setting
+        fps_layout = QHBoxLayout()
+        fps_layout.addWidget(QLabel("Frames per second:"))
+        self.fps_spin = QSpinBox()
+        self.fps_spin.setRange(1, 60)
+        self.fps_spin.setValue(10)
+        fps_layout.addWidget(self.fps_spin)
+        layout.addLayout(fps_layout)
+
+        # Resolution setting
+        res_layout = QHBoxLayout()
+        res_layout.addWidget(QLabel("Mesh resolution:"))
+        self.resolution_spin = QSpinBox()
+        self.resolution_spin.setRange(3, 30)
+        self.resolution_spin.setValue(10)
+        self.resolution_spin.setToolTip("Lower values = smaller file size")
+        res_layout.addWidget(self.resolution_spin)
+        layout.addLayout(res_layout)
+
+        # Cycle animation checkbox
+        self.cycle_cb = QCheckBox("Loop animation (add reverse frames)")
+        layout.addWidget(self.cycle_cb)
+
+        # Scale setting
+        scale_layout = QHBoxLayout()
+        scale_layout.addWidget(QLabel("Scale:"))
+        self.scale_combo = QComboBox()
+        self.scale_combo.addItems(["None (Angstroms)", "Auto (fit to 2 units)", "Custom..."])
+        self.scale_combo.currentIndexChanged.connect(self._on_scale_changed)
+        scale_layout.addWidget(self.scale_combo)
+
+        self.scale_spin = QDoubleSpinBox()
+        self.scale_spin.setRange(0.001, 100.0)
+        self.scale_spin.setValue(0.1)
+        self.scale_spin.setDecimals(4)
+        self.scale_spin.setVisible(False)
+        scale_layout.addWidget(self.scale_spin)
+        layout.addLayout(scale_layout)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_btn = QPushButton("Export")
+        cancel_btn = QPushButton("Cancel")
+
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def _on_scale_changed(self, index):
+        """Show/hide custom scale input"""
+        self.scale_spin.setVisible(index == 2)
+
+    def get_settings(self):
+        scale_index = self.scale_combo.currentIndex()
+        if scale_index == 0:
+            scale = None
+        elif scale_index == 1:
+            scale = "auto"
+        else:
+            scale = self.scale_spin.value()
+
+        return {
+            'fps': self.fps_spin.value(),
+            'resolution': self.resolution_spin.value(),
+            'cycle': self.cycle_cb.isChecked(),
+            'scale': scale
+        }
 
 
 class RenderDialog(QDialog):

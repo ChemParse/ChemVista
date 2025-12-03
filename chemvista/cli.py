@@ -71,20 +71,7 @@ def main():
         scene_manager.export_to_glb(args.glb)
         print(f"Scene exported to GLB: {args.glb}")
     elif args.glb_animated:
-        # Mode 5: Export trajectory as animated GLB
-        from .scene_objects import TrajectoryObject
-
-        # Find first trajectory object in scene
-        trajectory_obj = None
-        for obj in scene_manager.root.children:
-            if isinstance(obj, TrajectoryObject):
-                trajectory_obj = obj
-                break
-
-        if trajectory_obj is None:
-            print("Error: No trajectory found in scene. Load a multi-frame XYZ file first.")
-            sys.exit(1)
-
+        # Mode 5: Export scene as animated GLB
         # Parse scale parameter
         scale_value = args.scale
         if scale_value is not None and scale_value != "auto":
@@ -94,21 +81,24 @@ def main():
                 print(f"Error: Invalid scale value '{args.scale}'. Use 'auto' or a number.")
                 sys.exit(1)
 
-        print(f"Exporting trajectory '{trajectory_obj.name}' as animated GLB...")
-        print(f"  Frames: {len(trajectory_obj.children)}")
+        print(f"Exporting scene as animated GLB...")
         print(f"  FPS: {args.fps}")
         print(f"  Resolution: {args.resolution}")
         print(f"  Cycle: {args.cycle}")
         print(f"  Scale: {scale_value if scale_value else 'none (Angstroms)'}")
-        scene_manager.export_trajectory_animated_glb(
-            trajectory_obj,
-            args.glb_animated,
-            fps=args.fps,
-            resolution=args.resolution,
-            cycle_animation=args.cycle,
-            scale=scale_value
-        )
-        print(f"✅ Animated trajectory exported to: {args.glb_animated}")
+
+        try:
+            scene_manager.export_animated_glb(
+                args.glb_animated,
+                fps=args.fps,
+                resolution=args.resolution,
+                cycle_animation=args.cycle,
+                scale=scale_value
+            )
+            print(f"✅ Animated scene exported to: {args.glb_animated}")
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
     else:
         # Mode 2: Just render with PyVista (default mode)
         plotter = scene_manager.render()

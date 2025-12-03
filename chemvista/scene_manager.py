@@ -331,6 +331,44 @@ class SceneManager():
         exporter.export_glb(output_path, **kwargs)
         logger.info(f"Scene exported to {output_path}")
 
+    def export_animated_glb(
+        self,
+        output_path: Union[str, pathlib.Path],
+        fps: int = 10,
+        **kwargs
+    ) -> None:
+        """
+        Export the scene as an animated GLB file for PowerPoint.
+
+        This creates a PowerPoint-compatible animated 3D model using skeletal
+        animation. Trajectories in the scene will be animated, while static
+        molecules remain fixed.
+
+        Args:
+            output_path: Path where the GLB file will be saved
+            fps: Frames per second for animation (default: 10)
+            **kwargs: Additional arguments (resolution, cycle_animation, scale)
+
+        Raises:
+            ValueError: If no exportable objects found
+            RuntimeError: If export fails
+
+        Example:
+            >>> scene_manager = SceneManager()
+            >>> scene_manager.load_xyz("trajectory.xyz")
+            >>> scene_manager.export_animated_glb("animation.glb", fps=15)
+
+        Note:
+            - Scalar fields are not yet supported (warning will be shown)
+            - If multiple trajectories exist, only the first is animated
+            - PowerPoint only plays the first animation in a GLB file
+        """
+        from .exporter import Exporter
+
+        exporter = Exporter(self)
+        exporter.export_animated_glb(output_path, fps=fps, **kwargs)
+        logger.info(f"Animated scene exported to {output_path}")
+
     def export_trajectory_animated_glb(
         self,
         trajectory_object,
@@ -339,7 +377,7 @@ class SceneManager():
         **kwargs
     ) -> None:
         """
-        Export a trajectory as an animated GLB file for PowerPoint.
+        Export a specific trajectory as an animated GLB file for PowerPoint.
 
         This creates a PowerPoint-compatible animated 3D model using skeletal
         animation, where each atom is a bone that animates through the trajectory.
@@ -356,8 +394,7 @@ class SceneManager():
 
         Example:
             >>> scene_manager = SceneManager()
-            >>> scene_manager.load_trajectory("trajectory.xyz")
-            >>> traj = scene_manager.root.children[0]  # Get trajectory object
+            >>> traj = scene_manager.load_xyz("trajectory.xyz")
             >>> scene_manager.export_trajectory_animated_glb(traj, "anim.glb", fps=15)
 
         Note:
