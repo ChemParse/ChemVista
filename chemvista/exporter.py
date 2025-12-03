@@ -1070,12 +1070,14 @@ class Exporter:
         # Build combined geometry and animation data
         # Each "object" (trajectory or molecule) contributes atoms and bonds
         # Global bone index tracks across all objects
+        # We also track alpha per object to create separate primitives/materials
 
         all_vertices = []
         all_faces = []
         all_colors = []
         all_joints = []
         all_weights = []
+        all_alpha_values = []  # Track alpha for each geometry piece
         bone_positions_per_frame = []  # List of lists: [frame][bone_idx] = position
 
         # Initialize frame position lists
@@ -1098,8 +1100,9 @@ class Exporter:
 
             num_atoms = len(molecule)
             traj_start_bone = global_bone_idx
+            obj_alpha = settings_dict.get('alpha', 1.0)
 
-            logger.info(f"  Trajectory '{traj.name}': {num_atoms} atoms, bones {traj_start_bone}-{traj_start_bone + num_atoms - 1}")
+            logger.info(f"  Trajectory '{traj.name}': {num_atoms} atoms, bones {traj_start_bone}-{traj_start_bone + num_atoms - 1}, alpha={obj_alpha}")
 
             # Create atom spheres for this trajectory (using first frame positions)
             for atom_idx, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
@@ -1128,11 +1131,14 @@ class Exporter:
 
                 # Create RGBA colors
                 color = np.array(atom_settings['color'], dtype=np.uint8)
-                alpha_value = int(settings_dict.get('alpha', 1.0) * 255)
+                alpha_value = int(obj_alpha * 255)
                 rgba = np.zeros((sphere.n_points, 4), dtype=np.uint8)
                 rgba[:, :3] = color
                 rgba[:, 3] = alpha_value
                 all_colors.append(rgba)
+
+                # Track alpha for this geometry
+                all_alpha_values.append(np.full(sphere.n_points, obj_alpha, dtype=np.float32))
 
                 # Skinning: all vertices of this sphere belong to this bone
                 joints = np.zeros((sphere.n_points, 4), dtype=np.uint16)
@@ -1164,7 +1170,7 @@ class Exporter:
 
                 cylinders = renderer._create_bond_cylinders(
                     atom_a_pos, atom_b_pos, bond_type,
-                    settings_dict.get('alpha', 1.0), settings_dict['resolution']
+                    obj_alpha, settings_dict['resolution']
                 )
 
                 bond_vertex_start = global_vertex_offset
@@ -1180,7 +1186,12 @@ class Exporter:
                     if 'RGBA' in cylinder.array_names:
                         all_colors.append(cylinder['RGBA'].astype(np.uint8))
                     else:
-                        all_colors.append(np.full((cylinder.n_points, 4), 200, dtype=np.uint8))
+                        rgba = np.full((cylinder.n_points, 4), 200, dtype=np.uint8)
+                        rgba[:, 3] = int(obj_alpha * 255)
+                        all_colors.append(rgba)
+
+                    # Track alpha for this geometry
+                    all_alpha_values.append(np.full(cylinder.n_points, obj_alpha, dtype=np.float32))
 
                     # Placeholder skinning (will be set properly below)
                     joints = np.zeros((cylinder.n_points, 4), dtype=np.uint16)
@@ -1209,8 +1220,9 @@ class Exporter:
 
             num_atoms = len(molecule)
             mol_start_bone = global_bone_idx
+            obj_alpha = settings_dict.get('alpha', 1.0)
 
-            logger.info(f"  Molecule '{mol_obj.name}': {num_atoms} atoms (static), bones {mol_start_bone}-{mol_start_bone + num_atoms - 1}")
+            logger.info(f"  Molecule '{mol_obj.name}': {num_atoms} atoms (static), bones {mol_start_bone}-{mol_start_bone + num_atoms - 1}, alpha={obj_alpha}")
 
             # Create atom spheres
             for atom_idx, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
@@ -1236,11 +1248,14 @@ class Exporter:
                 all_faces.append(faces)
 
                 color = np.array(atom_settings['color'], dtype=np.uint8)
-                alpha_value = int(settings_dict.get('alpha', 1.0) * 255)
+                alpha_value = int(obj_alpha * 255)
                 rgba = np.zeros((sphere.n_points, 4), dtype=np.uint8)
                 rgba[:, :3] = color
                 rgba[:, 3] = alpha_value
                 all_colors.append(rgba)
+
+                # Track alpha for this geometry
+                all_alpha_values.append(np.full(sphere.n_points, obj_alpha, dtype=np.float32))
 
                 joints = np.zeros((sphere.n_points, 4), dtype=np.uint16)
                 weights = np.zeros((sphere.n_points, 4), dtype=np.float32)
@@ -1271,7 +1286,7 @@ class Exporter:
 
                 cylinders = renderer._create_bond_cylinders(
                     atom_a_pos, atom_b_pos, bond_type,
-                    settings_dict.get('alpha', 1.0), settings_dict['resolution']
+                    obj_alpha, settings_dict['resolution']
                 )
 
                 bond_vertex_start = global_vertex_offset
@@ -1287,7 +1302,12 @@ class Exporter:
                     if 'RGBA' in cylinder.array_names:
                         all_colors.append(cylinder['RGBA'].astype(np.uint8))
                     else:
-                        all_colors.append(np.full((cylinder.n_points, 4), 200, dtype=np.uint8))
+                        rgba = np.full((cylinder.n_points, 4), 200, dtype=np.uint8)
+                        rgba[:, 3] = int(obj_alpha * 255)
+                        all_colors.append(rgba)
+
+                    # Track alpha for this geometry
+                    all_alpha_values.append(np.full(cylinder.n_points, obj_alpha, dtype=np.float32))
 
                     joints = np.zeros((cylinder.n_points, 4), dtype=np.uint16)
                     weights = np.zeros((cylinder.n_points, 4), dtype=np.float32)
@@ -1312,6 +1332,7 @@ class Exporter:
         colors = np.vstack(all_colors)
         joints = np.vstack(all_joints)
         weights = np.vstack(all_weights)
+        alpha_per_vertex = np.concatenate(all_alpha_values)
 
         total_bones = global_bone_idx
         logger.info(f"  Total bones: {total_bones}")
@@ -1395,19 +1416,38 @@ class Exporter:
             offset, length = add_to_buffer(translations.tobytes())
             bone_translation_offsets.append((offset, length))
 
+        # Separate faces into opaque and transparent groups
+        # Each face's alpha is determined by its first vertex
+        face_alphas = alpha_per_vertex[faces[:, 0]]
+
+        opaque_mask = face_alphas >= 1.0
+        transparent_mask = ~opaque_mask
+
+        opaque_faces = faces[opaque_mask]
+        transparent_faces = faces[transparent_mask]
+
+        has_opaque = len(opaque_faces) > 0
+        has_transparent = len(transparent_faces) > 0
+
+        logger.info(f"  Opaque faces: {len(opaque_faces)}, Transparent faces: {len(transparent_faces)}")
+
+        # Add indices to buffer - opaque first, then transparent
+        opaque_indices_offset = None
+        opaque_indices_len = 0
+        transparent_indices_offset = None
+        transparent_indices_len = 0
+
+        if has_opaque:
+            opaque_flat = opaque_faces.flatten().astype(np.uint32)
+            opaque_indices_offset, opaque_indices_len = add_to_buffer(opaque_flat.tobytes())
+
+        if has_transparent:
+            transparent_flat = transparent_faces.flatten().astype(np.uint32)
+            transparent_indices_offset, transparent_indices_len = add_to_buffer(transparent_flat.tobytes())
+
         # Build glTF JSON
         # Create nodes: root + skeleton root + all bone nodes
         joint_indices = list(range(2, 2 + total_bones))
-
-        # Determine if we need transparency (check if any alpha values < 255)
-        has_transparency = np.any(colors[:, 3] < 255)
-        if has_transparency:
-            avg_alpha = np.mean(colors[:, 3]) / 255.0
-            alpha_mode = "BLEND"
-            logger.info(f"  Transparency detected (avg alpha: {avg_alpha:.2f})")
-        else:
-            avg_alpha = 1.0
-            alpha_mode = "OPAQUE"
 
         gltf = {
             "asset": {"version": "2.0", "generator": "ChemVista"},
@@ -1417,30 +1457,11 @@ class Exporter:
                 {"name": "Root", "children": [1]},
                 {"name": "Skeleton", "children": joint_indices}
             ],
-            "meshes": [{
-                "primitives": [{
-                    "attributes": {
-                        "POSITION": 0,
-                        "COLOR_0": 2,
-                        "JOINTS_0": 3,
-                        "WEIGHTS_0": 4
-                    },
-                    "indices": 1,
-                    "material": 0,
-                    "mode": 4
-                }]
-            }],
-            "materials": [{
-                "name": "MoleculeMaterial",
-                "pbrMetallicRoughness": {
-                    "baseColorFactor": [1.0, 1.0, 1.0, avg_alpha]
-                },
-                "alphaMode": alpha_mode,
-                "doubleSided": True
-            }],
+            "meshes": [],
+            "materials": [],
             "skins": [{
                 "joints": joint_indices,
-                "inverseBindMatrices": 5
+                "inverseBindMatrices": None  # Will be set below
             }],
             "animations": [{
                 "name": "TrajectoryAnimation",
@@ -1460,27 +1481,27 @@ class Exporter:
                 "translation": [float(pos[0]), float(pos[1]), float(pos[2])]
             })
 
-        # Add mesh node with skin
-        mesh_node_idx = len(gltf["nodes"])
-        gltf["nodes"].append({
-            "name": "SkinnedMesh",
-            "mesh": 0,
-            "skin": 0
-        })
-        gltf["nodes"][0]["children"].append(mesh_node_idx)
-
-        # Add accessors
+        # Add accessors for shared vertex data
         v_min = vertices.min(axis=0).tolist()
         v_max = vertices.max(axis=0).tolist()
 
+        # Base accessors (shared by all meshes):
+        # 0: POSITION
+        # 1: COLOR_0
+        # 2: JOINTS_0
+        # 3: WEIGHTS_0
+        # 4: inverseBindMatrices
+        # 5: animation times
+        # Then: indices for opaque (if any), indices for transparent (if any)
+        # Then: animation translations per bone
+
         gltf["accessors"] = [
             {"bufferView": 0, "componentType": 5126, "count": len(vertices), "type": "VEC3", "min": v_min, "max": v_max},
-            {"bufferView": 5, "componentType": 5125, "count": faces.size, "type": "SCALAR"},
             {"bufferView": 1, "componentType": 5121, "count": len(colors), "type": "VEC4", "normalized": True},
             {"bufferView": 2, "componentType": 5123, "count": len(joints), "type": "VEC4"},
             {"bufferView": 3, "componentType": 5126, "count": len(weights), "type": "VEC4"},
             {"bufferView": 4, "componentType": 5126, "count": total_bones, "type": "MAT4"},
-            {"bufferView": 6, "componentType": 5126, "count": num_frames, "type": "SCALAR", "min": [float(times.min())], "max": [float(times.max())]}
+            {"bufferView": 5, "componentType": 5126, "count": num_frames, "type": "SCALAR", "min": [float(times.min())], "max": [float(times.max())]}
         ]
 
         gltf["bufferViews"] = [
@@ -1489,19 +1510,126 @@ class Exporter:
             {"buffer": 0, "byteOffset": joints_offset, "byteLength": joints_len},
             {"buffer": 0, "byteOffset": weights_offset, "byteLength": weights_len},
             {"buffer": 0, "byteOffset": inv_bind_offset, "byteLength": inv_bind_len},
-            {"buffer": 0, "byteOffset": faces_offset, "byteLength": faces_len},
             {"buffer": 0, "byteOffset": times_offset, "byteLength": times_len}
         ]
 
-        # Add animation channels and samplers for each bone
+        # Set inverseBindMatrices accessor index
+        gltf["skins"][0]["inverseBindMatrices"] = 4
+
+        # Animation times accessor index
+        times_accessor_idx = 5
+
+        # Add opaque mesh if we have opaque faces
+        if has_opaque:
+            opaque_indices_accessor = len(gltf["accessors"])
+            gltf["accessors"].append({
+                "bufferView": len(gltf["bufferViews"]),
+                "componentType": 5125,
+                "count": len(opaque_flat),
+                "type": "SCALAR"
+            })
+            gltf["bufferViews"].append({
+                "buffer": 0,
+                "byteOffset": opaque_indices_offset,
+                "byteLength": opaque_indices_len
+            })
+
+            opaque_material_idx = len(gltf["materials"])
+            gltf["materials"].append({
+                "name": "OpaqueMaterial",
+                "pbrMetallicRoughness": {
+                    "baseColorFactor": [1.0, 1.0, 1.0, 1.0]
+                },
+                "alphaMode": "OPAQUE",
+                "doubleSided": True
+            })
+
+            opaque_mesh_idx = len(gltf["meshes"])
+            gltf["meshes"].append({
+                "name": "OpaqueMesh",
+                "primitives": [{
+                    "attributes": {
+                        "POSITION": 0,
+                        "COLOR_0": 1,
+                        "JOINTS_0": 2,
+                        "WEIGHTS_0": 3
+                    },
+                    "indices": opaque_indices_accessor,
+                    "material": opaque_material_idx,
+                    "mode": 4
+                }]
+            })
+
+            # Add mesh node with skin
+            opaque_mesh_node_idx = len(gltf["nodes"])
+            gltf["nodes"].append({
+                "name": "OpaqueMeshNode",
+                "mesh": opaque_mesh_idx,
+                "skin": 0
+            })
+            gltf["nodes"][0]["children"].append(opaque_mesh_node_idx)
+
+        # Add transparent mesh if we have transparent faces
+        if has_transparent:
+            transparent_indices_accessor = len(gltf["accessors"])
+            gltf["accessors"].append({
+                "bufferView": len(gltf["bufferViews"]),
+                "componentType": 5125,
+                "count": len(transparent_flat),
+                "type": "SCALAR"
+            })
+            gltf["bufferViews"].append({
+                "buffer": 0,
+                "byteOffset": transparent_indices_offset,
+                "byteLength": transparent_indices_len
+            })
+
+            transparent_material_idx = len(gltf["materials"])
+            gltf["materials"].append({
+                "name": "TransparentMaterial",
+                "pbrMetallicRoughness": {
+                    "baseColorFactor": [1.0, 1.0, 1.0, 1.0]
+                },
+                "alphaMode": "BLEND",
+                "doubleSided": True
+            })
+
+            transparent_mesh_idx = len(gltf["meshes"])
+            gltf["meshes"].append({
+                "name": "TransparentMesh",
+                "primitives": [{
+                    "attributes": {
+                        "POSITION": 0,
+                        "COLOR_0": 1,
+                        "JOINTS_0": 2,
+                        "WEIGHTS_0": 3
+                    },
+                    "indices": transparent_indices_accessor,
+                    "material": transparent_material_idx,
+                    "mode": 4
+                }]
+            })
+
+            # Add mesh node with skin
+            transparent_mesh_node_idx = len(gltf["nodes"])
+            gltf["nodes"].append({
+                "name": "TransparentMeshNode",
+                "mesh": transparent_mesh_idx,
+                "skin": 0
+            })
+            gltf["nodes"][0]["children"].append(transparent_mesh_node_idx)
+
         for bone_idx in range(total_bones):
             node_idx = joint_indices[bone_idx]
             sampler_idx = bone_idx
-            accessor_idx = 7 + bone_idx
+
+            # Get current accessor/bufferView indices
+            accessor_idx = len(gltf["accessors"])
+            buffer_view_idx = len(gltf["bufferViews"])
 
             offset, length = bone_translation_offsets[bone_idx]
             gltf["accessors"].append({
-                "bufferView": 7 + bone_idx,
+                "bufferView": buffer_view_idx,
                 "componentType": 5126,
                 "count": num_frames,
                 "type": "VEC3"
@@ -1519,7 +1647,7 @@ class Exporter:
             })
 
             gltf["animations"][0]["samplers"].append({
-                "input": 6,
+                "input": times_accessor_idx,
                 "output": accessor_idx,
                 "interpolation": "LINEAR"
             })
