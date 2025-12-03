@@ -8,9 +8,11 @@ from PyQt5.QtWidgets import (QAction, QDialog, QDockWidget, QFileDialog,
                              QPushButton, QComboBox, QDoubleSpinBox)
 
 from ..scene_manager import SceneManager
+from ..scene_objects import TrajectoryObject
 from ..tree_structure import TreeSignals
 from .scene import SceneWidget, SceneWidgetSignals
 from .widgets.object_tree import ObjectTreeWidget, TreeWidgetSignals
+from .widgets.trajectory_controls import TrajectoryControlsWidget
 import logging
 from .widgets.settings_dialog import (RenderSettingsDialog,
                                       ScalarFieldSettingsDialog)
@@ -45,6 +47,9 @@ class ChemVistaApp(QMainWindow):
 
         # Create left panel for object list and connect signals to scene widget
         self.create_object_list()
+
+        # Create trajectory controls dock
+        self.create_trajectory_controls()
 
         # Load initial files if provided
         if init_files:
@@ -153,6 +158,54 @@ class ChemVistaApp(QMainWindow):
 
         dock.setWidget(self.object_list_widget)
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+
+        # Connect selection signal to update trajectory controls
+        self.tree_widget_signals.selection_changed.connect(self._on_tree_selection_changed)
+
+    def create_trajectory_controls(self):
+        """Create the trajectory animation controls dock widget"""
+        self.trajectory_dock = QDockWidget("Trajectory Controls", self)
+        self.trajectory_dock.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
+
+        self.trajectory_controls = TrajectoryControlsWidget(self)
+        self.trajectory_controls.frame_changed.connect(self._on_trajectory_frame_changed)
+        self.trajectory_controls.time_changed.connect(self._on_trajectory_time_changed)
+
+        self.trajectory_dock.setWidget(self.trajectory_controls)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.trajectory_dock)
+
+        # Initially hidden until a trajectory is selected
+        self.trajectory_dock.hide()
+
+        # Store current animation time for interpolated rendering
+        self._animation_time = None
+        self._animating_trajectory_uuid = None
+
+    def _on_tree_selection_changed(self, uuid: str):
+        """Handle selection changes in the object tree"""
+        if uuid:
+            obj = self.scene_manager.get_object_by_uuid(uuid)
+            if isinstance(obj, TrajectoryObject):
+                self.trajectory_controls.set_trajectory(obj)
+                self.trajectory_dock.show()
+                logger.debug(f"Trajectory controls enabled for '{obj.name}'")
+                return
+
+        # Not a trajectory, hide controls
+        self.trajectory_controls.clear()
+        self.trajectory_dock.hide()
+
+    def _on_trajectory_frame_changed(self, uuid: str):
+        """Handle discrete frame change from trajectory controls"""
+        self._animation_time = None
+        self._animating_trajectory_uuid = None
+        self.refresh_view()
+
+    def _on_trajectory_time_changed(self, uuid: str, time_value: float):
+        """Handle smooth time change from trajectory controls for interpolated rendering"""
+        self._animation_time = time_value
+        self._animating_trajectory_uuid = uuid
+        self.refresh_interpolated_view()
 
     def create_scene_widget(self):
         """Create the central SceneWidget"""
@@ -264,6 +317,17 @@ class ChemVistaApp(QMainWindow):
         """Update the visualization"""
         logger.info("Refreshing view")
         self.scene_widget.refresh_view()
+
+    def refresh_interpolated_view(self):
+        """Update the visualization with interpolated trajectory positions"""
+        if self._animation_time is not None and self._animating_trajectory_uuid:
+            logger.debug(f"Refreshing interpolated view at time {self._animation_time:.2f}")
+            self.scene_widget.refresh_interpolated_view(
+                self._animating_trajectory_uuid,
+                self._animation_time
+            )
+        else:
+            self.refresh_view()
 
     def reset_camera(self):
         """Reset the camera to show all objects"""

@@ -37,7 +37,10 @@ class ScalarFieldRenderSettings(RenderSettings):
 
 @dataclass
 class TrajectoryRenderSettings(RenderSettings):
-    pass
+    show_hydrogens: bool = True
+    show_numbers: bool = False
+    alpha: float = 1.0
+    resolution: int = 20
 
 
 class GlobalSettings:

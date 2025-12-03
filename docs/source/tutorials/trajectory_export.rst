@@ -6,141 +6,240 @@ This tutorial covers exporting molecular dynamics trajectories as animated GLB f
 Overview
 --------
 
-ChemVista uses **skeletal animation** to create PowerPoint-compatible animated 3D models. Each atom becomes a "bone" in a skeleton, and the bone positions are animated through the trajectory frames. Bonds automatically stretch and compress as atoms move.
+ChemVista uses **skeletal animation** to create PowerPoint-compatible animated 3D models. Each atom becomes a "bone" in a skeleton, and the bone positions are animated through the trajectory frames. Bonds automatically stretch and compress as atoms move using two-bone skinning with linear interpolation along the bond axis.
+
+Key Features
+~~~~~~~~~~~~
+
+* **Skeletal animation** - One bone per atom, bonds skinned to endpoint atoms
+* **Multi-object support** - Export multiple trajectories and molecules together
+* **Per-object transparency** - Different objects can have different alpha values
+* **Automatic scaling** - Fit models to standard viewer sizes
+* **Seamless looping** - Create back-and-forth animations
 
 Basic Export
 ------------
 
-Step 1: Load Trajectory
-~~~~~~~~~~~~~~~~~~~~~~~~
+Using the CLI
+~~~~~~~~~~~~~
+
+The simplest way to export an animated trajectory:
+
+.. code-block:: bash
+
+   # Basic animated export
+   chemvista --xyz trajectory.xyz --glb-animated output.glb
+
+   # With all options
+   chemvista --xyz trajectory.xyz --glb-animated output.glb \
+             --fps 15 \
+             --resolution 8 \
+             --cycle \
+             --scale auto
+
+Using Python API
+~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
    from chemvista.scene_manager import SceneManager
    from chemvista.exporter import Exporter
-   from pathlib import Path
 
    # Create scene manager and load trajectory
    scene_manager = SceneManager()
    trajectory = scene_manager.load_xyz("md_trajectory.xyz")
 
    print(f"Loaded {len(trajectory.children)} frames")
-   print(f"Each frame has {len(trajectory.children[0].molecule)} atoms")
 
-Step 2: Create Exporter
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # Create exporter instance
+   # Create exporter and export
    exporter = Exporter(scene_manager)
-
-Step 3: Export with Default Settings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code-block:: python
-
-   # Export with defaults (resolution=10, fps=10)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="animation.glb"
+   exporter.export_animated_glb(
+       output_path="animation.glb",
+       fps=10,
+       resolution=10
    )
 
-Step 4: Use in PowerPoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using in PowerPoint
+~~~~~~~~~~~~~~~~~~~
 
-1. Open PowerPoint
+1. Open PowerPoint (2019 or later)
 2. Insert → 3D Models → From a File
 3. Select ``animation.glb``
 4. Animation plays automatically!
 
-Advanced Options
-----------------
+Export Options
+--------------
 
-Quality Control
-~~~~~~~~~~~~~~~
+Resolution
+~~~~~~~~~~
 
-Adjust mesh resolution to balance quality vs. file size:
+Controls mesh quality (spheres and cylinders):
 
-.. code-block:: python
+.. code-block:: bash
 
    # High quality (smooth spheres, larger file)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="high_quality.glb",
-       resolution=20  # More triangles
-   )
+   chemvista --xyz trajectory.xyz --glb-animated high.glb --resolution 20
+
+   # Medium quality (default)
+   chemvista --xyz trajectory.xyz --glb-animated medium.glb --resolution 10
 
    # Low quality (smaller file, visible facets)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="low_quality.glb",
-       resolution=5  # Fewer triangles
-   )
+   chemvista --xyz trajectory.xyz --glb-animated low.glb --resolution 5
 
-**File Size Comparison:**
+**File Size Comparison (approximate):**
 
-* resolution=20: ~2000 KB (baseline)
+* resolution=20: ~2000 KB
 * resolution=10: ~600 KB (70% smaller)
 * resolution=5: ~200 KB (90% smaller)
 
-Animation Speed
-~~~~~~~~~~~~~~~
+Frame Rate (FPS)
+~~~~~~~~~~~~~~~~
 
-Control playback speed with FPS parameter:
+Controls animation speed:
 
-.. code-block:: python
+.. code-block:: bash
 
-   # Slow motion (5 fps)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="slow.glb",
-       fps=5
-   )
+   # Slow motion
+   chemvista --xyz trajectory.xyz --glb-animated slow.glb --fps 5
 
-   # Normal speed (10 fps, default)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="normal.glb",
-       fps=10
-   )
+   # Normal speed (default)
+   chemvista --xyz trajectory.xyz --glb-animated normal.glb --fps 10
 
-   # Fast motion (30 fps)
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="fast.glb",
-       fps=30
-   )
+   # Fast motion
+   chemvista --xyz trajectory.xyz --glb-animated fast.glb --fps 30
 
-**Duration Calculation:**
-
-Duration = (Number of frames - 1) / FPS
+**Duration Calculation:** Duration = (Number of frames - 1) / FPS
 
 * 10 frames at 10 fps = 0.9 seconds
 * 50 frames at 10 fps = 4.9 seconds
 
-Looping Animations
-~~~~~~~~~~~~~~~~~~
+Looping (Cycle)
+~~~~~~~~~~~~~~~
 
-Create seamless loops by adding reverse frames:
+Create seamless back-and-forth animations:
 
-.. code-block:: python
+.. code-block:: bash
 
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="looped.glb",
-       cycle_animation=True  # Adds reverse frames
-   )
+   chemvista --xyz trajectory.xyz --glb-animated looped.glb --cycle
 
 **How it works:**
 
 * Original: frames 1, 2, 3, 4, 5
 * Cycled: frames 1, 2, 3, 4, 5, 4, 3, 2
-* Avoids duplicates at loop point
-* Creates smooth back-and-forth motion
+* Avoids duplicates at loop points
+* Creates smooth oscillating motion
 
-Complete Example
-----------------
+Scale
+~~~~~
+
+Normalize model size for viewers:
+
+.. code-block:: bash
+
+   # Auto-scale to fit in 2-unit bounding box
+   chemvista --xyz trajectory.xyz --glb-animated scaled.glb --scale auto
+
+   # Manual scale factor
+   chemvista --xyz trajectory.xyz --glb-animated scaled.glb --scale 0.1
+
+**Why use scaling?**
+
+* Many 3D viewers expect models in a specific size range
+* ``--scale auto`` fits the model into a 2-unit box
+* Useful when coordinates are in Ångströms but viewer expects nanometers
+
+Scene-Based Export
+------------------
+
+The ``export_animated_glb`` method exports the **entire visible scene**, not just a single trajectory. This allows you to:
+
+Multiple Trajectories
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   scene_manager = SceneManager()
+
+   # Load multiple trajectories
+   traj1 = scene_manager.load_xyz("motor.xyz")
+   traj2 = scene_manager.load_xyz("substrate.xyz")
+
+   # Both must have the same number of frames!
+   # Export entire scene
+   exporter = Exporter(scene_manager)
+   exporter.export_animated_glb("combined.glb", fps=15)
+
+**Important:** All trajectories must have the same number of frames.
+
+Trajectories with Static Molecules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   scene_manager = SceneManager()
+
+   # Load animated trajectory
+   motor = scene_manager.load_xyz("motor_trajectory.xyz")
+
+   # Load static molecule (single frame)
+   surface = scene_manager.load_xyz("surface.xyz")
+
+   # Export - motor animates, surface stays static
+   exporter = Exporter(scene_manager)
+   exporter.export_animated_glb("motor_on_surface.glb")
+
+Static molecules are included with the same position for all frames.
+
+Transparency Support
+--------------------
+
+Each object can have its own transparency (alpha) value:
+
+.. code-block:: python
+
+   scene_manager = SceneManager()
+
+   # Load objects
+   molecule1 = scene_manager.load_xyz("main.xyz")
+   molecule2 = scene_manager.load_xyz("background.xyz")
+
+   # Set different transparencies
+   molecule1.render_settings.alpha = 1.0  # Fully opaque
+   molecule2.render_settings.alpha = 0.5  # Semi-transparent
+
+   # Export - transparency is preserved
+   exporter = Exporter(scene_manager)
+   exporter.export_animated_glb("with_transparency.glb")
+
+**How it works:**
+
+The exporter creates two separate meshes sharing the same skeleton:
+
+1. **Opaque mesh** - All geometry with alpha=1.0, uses ``alphaMode: OPAQUE``
+2. **Transparent mesh** - All geometry with alpha<1.0, uses ``alphaMode: BLEND``
+
+This ensures opaque objects render correctly while transparent objects show proper transparency.
+
+GUI Export
+----------
+
+Export animated GLB files from the GUI:
+
+1. Load your trajectory/molecules
+2. Adjust render settings (transparency, etc.) as desired
+3. **File → Export to GLB (Animated)** or press ``Ctrl+Shift+E``
+4. Configure export settings in the dialog:
+
+   * FPS (frames per second)
+   * Resolution (mesh quality)
+   * Cycle animation (loop)
+   * Scale factor
+
+5. Choose output file location
+6. Click Export
+
+Complete Python Example
+-----------------------
 
 .. code-block:: python
 
@@ -157,8 +256,8 @@ Complete Example
        trajectory = scene_manager.load_xyz(xyz_file)
 
        # Check if valid trajectory
-       if not hasattr(trajectory, 'children'):
-           raise ValueError("File does not contain a trajectory")
+       if not hasattr(trajectory, 'children') or len(trajectory.children) < 2:
+           raise ValueError("File does not contain a multi-frame trajectory")
 
        num_frames = len(trajectory.children)
        num_atoms = len(trajectory.children[0].molecule)
@@ -175,12 +274,12 @@ Complete Example
 
        # Export
        exporter = Exporter(scene_manager)
-       exporter.export_trajectory_animated_glb(
-           trajectory_object=trajectory,
+       exporter.export_animated_glb(
            output_path=output_file,
            fps=10,
            resolution=resolution,
-           cycle_animation=True  # Enable looping
+           cycle_animation=True,
+           scale="auto"
        )
 
        # Report file size
@@ -197,129 +296,125 @@ Complete Example
        quality='medium'
    )
 
+Static GLB Export
+-----------------
+
+For non-animated exports (single frame or current view):
+
+.. code-block:: bash
+
+   # CLI
+   chemvista --xyz molecule.xyz --glb output.glb
+
+.. code-block:: python
+
+   # Python
+   exporter.export_glb("static.glb")
+
+Static exports also support multiple molecules and transparency.
+
 Optimization Tips
 -----------------
 
-For Large Molecules
-~~~~~~~~~~~~~~~~~~~
+For Large Molecules (>100 atoms)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When exporting large molecules (>100 atoms):
+.. code-block:: bash
 
-.. code-block:: python
+   chemvista --xyz large.xyz --glb-animated output.glb --resolution 5
 
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="large_molecule.glb",
-       resolution=5,  # Lower resolution
-       fps=10
-   )
+Lower resolution dramatically reduces file size.
 
-**Why:** Fewer triangles = smaller file, faster loading
+For Many Frames (>50)
+~~~~~~~~~~~~~~~~~~~~~
 
-For Many Frames
-~~~~~~~~~~~~~~~
+Options:
 
-When exporting long trajectories (>50 frames):
+1. **Higher FPS** - Faster playback, shorter duration
+2. **Don't cycle** - Halves the effective frame count
+3. **Lower resolution** - Smaller per-frame geometry
 
-.. code-block:: python
+.. code-block:: bash
 
-   # Option 1: Subsample frames
-   trajectory_subset = trajectory.children[::2]  # Every 2nd frame
-
-   # Option 2: Lower FPS
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="long_trajectory.glb",
-       fps=20,  # Higher FPS = shorter duration
-       resolution=5
-   )
+   chemvista --xyz long.xyz --glb-animated output.glb \
+             --fps 20 --resolution 5
 
 For PowerPoint
 ~~~~~~~~~~~~~~
 
-Optimize for PowerPoint presentations:
+Optimal settings for presentations:
 
-.. code-block:: python
+.. code-block:: bash
 
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="powerpoint.glb",
-       fps=10,  # Smooth but not too fast
-       resolution=8,  # Good balance
-       cycle_animation=True  # Loop seamlessly
-   )
+   chemvista --xyz trajectory.xyz --glb-animated presentation.glb \
+             --fps 10 \
+             --resolution 8 \
+             --cycle \
+             --scale auto
 
 Troubleshooting
 ---------------
 
 Animation Not Playing in PowerPoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Possible causes:**
 
 1. PowerPoint version too old (need 2019 or later)
-2. File corruption
-3. GLB file > 100 MB (PowerPoint limit)
+2. File too large (>100 MB limit)
+3. File corruption
 
 **Solutions:**
 
-* Use ``resolution=5`` to reduce file size
-* Subsample frames
-* Update PowerPoint
+* Update PowerPoint to latest version
+* Use ``--resolution 5`` to reduce file size
+* Try opening in another GLB viewer first to verify file
 
-Bonds Look Wrong
-~~~~~~~~~~~~~~~~
+Transparent Objects Not Rendering Correctly
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Symptom:** Bonds don't stretch correctly, or appear disconnected
+**Symptom:** All objects appear transparent or all appear opaque
 
-**Solution:** This should not happen with the current implementation, but if it does:
+**Solution:** Ensure you're using the latest version of ChemVista which creates separate meshes for opaque and transparent geometry.
 
-.. code-block:: python
+Bonds Don't Move with Atoms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   # Check trajectory frame consistency
-   for i, frame in enumerate(trajectory.children):
-       print(f"Frame {i}: {len(frame.molecule)} atoms")
+**Symptom:** Bonds stay in place while atoms move
 
-Atoms are the wrong positions in frames are too slow
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Solution:** Adjust frame rate:
-
-.. code-block:: python
-
-   # Increase FPS for faster motion
-   exporter.export_trajectory_animated_glb(
-       trajectory_object=trajectory,
-       output_path="output.glb",
-       fps=20  # Faster
-   )
+**Solution:** This was fixed in a recent update. Bonds now use two-bone skinning and move correctly with their endpoint atoms.
 
 File Too Large
 ~~~~~~~~~~~~~~
 
 **Solutions (in order of impact):**
 
-1. Lower resolution: ``resolution=5`` (biggest impact)
-2. Subsample frames: ``trajectory.children[::2]``
-3. Increase FPS: ``fps=20`` (shorter duration)
-4. Don't cycle: ``cycle_animation=False``
+1. Lower resolution: ``--resolution 5`` (biggest impact)
+2. Don't cycle: remove ``--cycle``
+3. Increase FPS: ``--fps 20`` (shorter duration)
+4. Subsample frames before loading
 
-Command Line Usage
-------------------
+Multiple Trajectories with Different Frame Counts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Export from command line:
+**Error:** "All trajectories must have the same number of frames"
 
-.. code-block:: bash
+**Solution:** Ensure all trajectories have the same number of frames, or export them separately.
 
-   # Basic export
-   chemvista --xyz trajectory.xyz --export output.glb
+Command Line Reference
+----------------------
 
-   # With options
-   chemvista --xyz trajectory.xyz \\
-             --export output.glb \\
-             --fps 15 \\
-             --resolution 8 \\
-             --cycle
+.. code-block:: text
+
+   chemvista --xyz FILE [--glb-animated OUTPUT] [OPTIONS]
+
+   Options:
+     --glb-animated FILE   Export animated GLB to FILE
+     --glb FILE            Export static GLB to FILE
+     --fps N               Frames per second (default: 10)
+     --resolution N        Mesh resolution (default: 10)
+     --cycle               Add reverse frames for looping
+     --scale VALUE         Scale factor: "auto" or number
 
 Next Steps
 ----------

@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QCheckBox,
                              QListWidgetItem, QWidget, QPushButton, QMessageBox)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from ...renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings
+from ...renderer.render_settings import MoleculeRenderSettings, ScalarFieldRenderSettings, TrajectoryRenderSettings
+from typing import Union
 import logging
 
 logger = logging.getLogger("chemvista.ui.widgets.settings_dialog")
@@ -311,7 +312,7 @@ class ScalarFieldSettingsDialog(QDialog):
 
 
 class RenderSettingsDialog(QDialog):
-    def __init__(self, settings: MoleculeRenderSettings, parent=None):
+    def __init__(self, settings: Union[MoleculeRenderSettings, TrajectoryRenderSettings], parent=None):
         super().__init__(parent)
         self.settings = settings.copy()
         self.setWindowTitle("Render Settings")
@@ -365,7 +366,7 @@ class RenderSettingsDialog(QDialog):
 
         self.setLayout(layout)
 
-    def get_settings(self) -> MoleculeRenderSettings:
+    def get_settings(self) -> Union[MoleculeRenderSettings, TrajectoryRenderSettings]:
         if self.result() == QDialog.Accepted:
             self.settings.show_hydrogens = self.show_hydrogens.isChecked()
             self.settings.show_numbers = self.show_numbers.isChecked()

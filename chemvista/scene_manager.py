@@ -221,6 +221,59 @@ class SceneManager():
         plotter.reset_camera()
         return plotter
 
+    def render_interpolated(self, plotter: pv.Plotter, trajectory_uuid: str, time_value: float) -> pv.Plotter:
+        """
+        Render scene with interpolated trajectory positions for smooth animation.
+
+        Args:
+            plotter: PyVista plotter to render to
+            trajectory_uuid: UUID of the trajectory to interpolate
+            time_value: Continuous time value for interpolation (0.0 to num_frames-1)
+
+        Returns:
+            The plotter with rendered scene
+        """
+        trajectory_obj = self.get_object_by_uuid(trajectory_uuid)
+
+        # Render all visible objects, with special handling for the animating trajectory
+        for obj in self.root.iter_visible():
+            # Skip root node
+            if obj == self.root:
+                continue
+
+            # Handle the animating trajectory specially
+            if obj == trajectory_obj and isinstance(obj, TrajectoryObject):
+                # Get interpolated molecule and render it
+                interp_molecule = obj.get_frame_molecule_at_time(time_value)
+                if interp_molecule is not None:
+                    self.molecule_renderer.render(
+                        molecule=interp_molecule,
+                        plotter=plotter,
+                        settings=vars(obj.render_settings)
+                    )
+                continue
+
+            # Skip trajectory's child molecules (we rendered the interpolated one above)
+            if isinstance(obj, MoleculeObject) and obj.parent == trajectory_obj:
+                continue
+
+            # Render other objects normally
+            if isinstance(obj, MoleculeObject):
+                self.molecule_renderer.render(
+                    molecule=obj.molecule,
+                    plotter=plotter,
+                    settings=vars(obj.render_settings)
+                )
+            elif isinstance(obj, ScalarFieldObject):
+                self.scalar_field_renderer.render(
+                    field=obj.scalar_field,
+                    plotter=plotter,
+                    settings=vars(obj.render_settings)
+                )
+
+        plotter.reset_camera()
+        return plotter
+
     def log_tree_changes(self, message: str = ""):
         """Log the current tree structure"""
         if message:

@@ -45,18 +45,18 @@ Menu Bar
 File Menu
 ~~~~~~~~~
 
-* **Open XYZ**: Load molecular structure or trajectory
-* **Open CUBE (Molecule)**: Load CUBE file with molecule
+* **Open XYZ** (``Ctrl+O``): Load molecular structure or trajectory
+* **Open CUBE (Molecule)**: Load CUBE file with molecule and scalar field
 * **Open CUBE (Field)**: Load CUBE file with scalar field only
-* **Export GLB**: Export scene to GLB format
-* **Export Animated GLB**: Export trajectory with skeletal animation
-* **Exit**: Close application
+* **Export to GLB (Static)** (``Ctrl+E``): Export scene to static GLB format
+* **Export to GLB (Animated)** (``Ctrl+Shift+E``): Export trajectory with skeletal animation
+* **Exit** (``Ctrl+Q``): Close application
 
 View Menu
 ~~~~~~~~~
 
-* **Reset Camera**: Reset view to default
-* **Toggle Axes**: Show/hide coordinate axes
+* **Reset Camera** (``R``): Reset view to default
+* **Toggle Axes** (``A``): Show/hide coordinate axes
 * **Background Color**: Change background color
 * **Rendering Quality**: Adjust mesh resolution
 
@@ -145,26 +145,72 @@ Trajectory Settings
 * **Frame Rate**: Frames per second
 * **Loop**: Repeat animation
 
-Export Dialog
--------------
-
-When exporting, a dialog provides options:
+Export Dialogs
+--------------
 
 Static Export (GLB)
 ~~~~~~~~~~~~~~~~~~~
 
-* **Output Path**: Destination file
-* **Include Transparency**: Preserve alpha values
-* **Combine Meshes**: Merge all objects
+Access via **File → Export to GLB (Static)** or ``Ctrl+E``.
+
+Exports the current scene as a static GLB file suitable for:
+
+* Single molecules
+* Molecules with scalar field isosurfaces
+* Non-animated 3D content
+
+**Options:**
+
+* **Output Path**: Destination file (.glb)
+* **Include Transparency**: Preserve alpha values from render settings
 
 Animated Export (GLB)
 ~~~~~~~~~~~~~~~~~~~~~
 
-* **Output Path**: Destination file
+Access via **File → Export to GLB (Animated)** or ``Ctrl+Shift+E``.
+
+Exports trajectories as animated GLB files with skeletal animation:
+
+**Options:**
+
+* **Output Path**: Destination file (.glb)
 * **FPS**: Frames per second (default: 10)
-* **Resolution**: Mesh quality (1-20, default: 10)
-* **Cycle Animation**: Add reverse frames for looping
-* **Include Bonds**: Export bond cylinders
+
+  * Lower = slower playback, longer duration
+  * Higher = faster playback, shorter duration
+
+* **Resolution**: Mesh quality 1-20 (default: 10)
+
+  * Higher = smoother spheres/cylinders, larger file
+  * Lower = visible facets, smaller file
+  * **File size impact:** resolution 5 is ~70% smaller than resolution 10
+
+* **Cycle Animation**: Add reverse frames for seamless looping
+
+  * Creates back-and-forth oscillation
+  * Nearly doubles animation duration
+
+* **Scale**: Model size normalization
+
+  * **Auto**: Fit in 2-unit bounding box (recommended for PowerPoint)
+  * **Number**: Manual scale factor
+  * **None**: Keep original Angstrom coordinates
+
+**Transparency Support:**
+
+Each object's alpha value is preserved in the export:
+
+* Objects with alpha=1.0 are rendered as opaque
+* Objects with alpha<1.0 are rendered with transparency
+* Separate meshes ensure correct rendering of mixed scenes
+
+**Multi-Object Export:**
+
+The animated export captures the entire visible scene:
+
+* Multiple trajectories animate together (must have same frame count)
+* Static molecules are included with fixed positions
+* Each object maintains its own transparency setting
 
 Keyboard Shortcuts
 ------------------
@@ -172,8 +218,9 @@ Keyboard Shortcuts
 Global
 ~~~~~~
 
-* **Ctrl+O**: Open file
-* **Ctrl+S**: Export scene
+* **Ctrl+O**: Open XYZ file
+* **Ctrl+E**: Export to GLB (static)
+* **Ctrl+Shift+E**: Export to GLB (animated)
 * **Ctrl+Q**: Quit application
 
 View
@@ -198,9 +245,10 @@ Tips and Tricks
 Performance
 ~~~~~~~~~~~
 
-* Lower resolution for large molecules
+* Lower resolution for large molecules (>100 atoms)
 * Hide objects not currently needed
 * Use "Show Hydrogens: False" for cleaner view
+* For trajectories with many frames, consider using --cycle sparingly
 
 Quality
 ~~~~~~~
@@ -208,12 +256,55 @@ Quality
 * Increase resolution for publication-quality renders
 * Use anti-aliasing for smoother edges
 * Adjust lighting for better depth perception
+* Resolution 8-10 is usually sufficient for presentations
 
 Workflow
 ~~~~~~~~
 
 1. Load your molecular data
 2. Adjust visualization settings in property panel
-3. Arrange view with mouse controls
-4. Take screenshot or export to GLB
-5. Import GLB into PowerPoint or other tools
+3. Set transparency for different objects if needed
+4. Arrange view with mouse controls
+5. Take screenshot or export to GLB
+6. Import GLB into PowerPoint or other 3D viewers
+
+PowerPoint Integration
+~~~~~~~~~~~~~~~~~~~~~~
+
+For best results when using exported GLB files in PowerPoint:
+
+1. Use ``--scale auto`` or set Scale to "Auto" in the dialog
+2. Resolution 8-10 provides good balance of quality and file size
+3. Enable "Cycle Animation" for looping presentations
+4. PowerPoint 2019 or later required for 3D model support
+5. Maximum file size ~100 MB
+
+Troubleshooting
+---------------
+
+Animation Not Playing
+~~~~~~~~~~~~~~~~~~~~~
+
+* Ensure PowerPoint 2019 or later
+* Check file size is under 100 MB
+* Verify the GLB file opens in other viewers (e.g., Windows 3D Viewer)
+
+Objects Not Visible After Export
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Check object visibility in the Object Tree before export
+* Hidden objects are not included in exports
+
+Transparency Issues
+~~~~~~~~~~~~~~~~~~~
+
+* Ensure alpha values are set correctly in Molecule Settings
+* The exporter creates separate meshes for opaque and transparent objects
+* Some viewers may not support transparency correctly
+
+See Also
+--------
+
+* :doc:`cli` - Command line interface documentation
+* :doc:`../tutorials/trajectory_export` - Tutorial on exporting animated trajectories
+* :doc:`../api/exporter` - Exporter API reference

@@ -1,7 +1,7 @@
 # Log the visibility change
 import json
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QWidget, QApplication, QMessageBox
@@ -9,6 +9,7 @@ from pyvistaqt import QtInteractor
 
 from ..tree_structure import TreeSignals
 from .. import SceneManager
+from ..renderer import AnimatedMoleculeRenderer
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QDoubleSpinBox, QLabel, QDialogButtonBox
 
 
@@ -51,6 +52,10 @@ class SceneWidget(QWidget):
         self._tree_signals = None
         self.scene_signals = scene_widget_signals
         self.tree_signals = tree_signals
+
+        # Animation state - caches animated renderer for smooth playback
+        self._animated_renderer: Optional[AnimatedMoleculeRenderer] = None
+        self._animated_trajectory_uuid: Optional[str] = None
 
     @property
     def scene_signals(self):
@@ -114,12 +119,118 @@ class SceneWidget(QWidget):
             logger.info("Refreshing view")
             logger.debug(f'Camera position: {camera.position}')
             self.plotter.clear()
+
+            # Clear animation cache when doing full refresh
+            self._clear_animation_cache()
+
             self.scene_manager.render(self.plotter)
             self.plotter.update()
             self.plotter.camera = camera
             self.scene_signals.view_updated.emit()
         except Exception as e:
-            import logging
+            logger.error(f"Error refreshing view: {e}")
+
+    def refresh_interpolated_view(self, trajectory_uuid: str, time_value: float):
+        """
+        Update the 3D visualization with interpolated trajectory positions.
+
+        Uses cached AnimatedMoleculeRenderer for fast in-place mesh updates.
+        """
+        try:
+            from ..scene_objects import TrajectoryObject
+
+            trajectory_obj = self.scene_manager.get_object_by_uuid(trajectory_uuid)
+            if not isinstance(trajectory_obj, TrajectoryObject):
+                logger.warning(f"Object {trajectory_uuid} is not a trajectory")
+                return
+
+            # Check if we need to set up the animated renderer
+            if (self._animated_renderer is None or
+                self._animated_trajectory_uuid != trajectory_uuid or
+                not self._animated_renderer.is_setup):
+
+                logger.debug(f"Setting up animated renderer for trajectory {trajectory_uuid}")
+                self._setup_animated_renderer(trajectory_obj)
+
+            # Get interpolated positions and update meshes in-place
+            positions = trajectory_obj.get_interpolated_positions(time_value)
+            if positions is not None:
+                self._animated_renderer.update_positions(positions)
+                self.scene_signals.view_updated.emit()
+
+        except Exception as e:
+            logger.error(f"Error refreshing interpolated view: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _setup_animated_renderer(self, trajectory_obj) -> None:
+        """Set up the animated renderer for a trajectory"""
+        import time
+        start_time = time.time()
+
+        from ..scene_objects import TrajectoryObject, MoleculeObject, ScalarFieldObject
+
+        # Store camera before clearing
+        camera = self.plotter.camera
+
+        # Clear plotter and create fresh animated renderer
+        self.plotter.clear()
+
+        if self._animated_renderer:
+            self._animated_renderer.clear()
+
+        self._animated_renderer = AnimatedMoleculeRenderer()
+        self._animated_trajectory_uuid = trajectory_obj.uuid
+
+        # Get first frame molecule as base for the animated mesh
+        frames = list(trajectory_obj.children)
+        if not frames:
+            logger.warning("Trajectory has no frames")
+            return
+
+        base_molecule = frames[0].molecule
+        settings = vars(trajectory_obj.render_settings)
+
+        # Setup animated renderer for the trajectory
+        self._animated_renderer.setup(base_molecule, self.plotter, settings)
+
+        # Also render other visible objects (non-trajectory) using standard renderer
+        for obj in self.scene_manager.root.iter_visible():
+            if obj == self.scene_manager.root:
+                continue
+
+            # Skip the animating trajectory and its children
+            if obj == trajectory_obj:
+                continue
+            if isinstance(obj, MoleculeObject) and obj.parent == trajectory_obj:
+                continue
+
+            # Render other objects normally
+            if isinstance(obj, MoleculeObject):
+                self.scene_manager.molecule_renderer.render(
+                    molecule=obj.molecule,
+                    plotter=self.plotter,
+                    settings=vars(obj.render_settings)
+                )
+            elif isinstance(obj, ScalarFieldObject):
+                self.scene_manager.scalar_field_renderer.render(
+                    field=obj.scalar_field,
+                    plotter=self.plotter,
+                    settings=vars(obj.render_settings)
+                )
+
+        # Restore camera instead of reset (faster)
+        self.plotter.camera = camera
+
+        elapsed = time.time() - start_time
+        logger.info(f"Animated renderer setup complete in {elapsed:.3f}s")
+
+    def _clear_animation_cache(self) -> None:
+        """Clear the animation renderer cache"""
+        if self._animated_renderer:
+            self._animated_renderer.clear()
+        self._animated_renderer = None
+        self._animated_trajectory_uuid = None
 
     def reset_camera(self):
         """Reset the camera to show all objects"""
