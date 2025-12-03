@@ -298,6 +298,7 @@ class Exporter:
         fps: int = 10,
         resolution: int = 10,
         cycle_animation: bool = False,
+        scale: Optional[float] = None,
         **kwargs
     ) -> None:
         """
@@ -313,6 +314,8 @@ class Exporter:
             fps: Frames per second for animation (default: 10)
             resolution: Mesh resolution for spheres/cylinders (default: 10, lower = fewer triangles)
             cycle_animation: If True, adds reverse frames to create a loop (default: False)
+            scale: Scale factor for the model. If None (default), coordinates are in Angstroms.
+                   Use scale=0.1 to convert to nanometers, or scale="auto" to fit in a 2-unit box.
             **kwargs: Additional options (reserved for future use)
 
         Raises:
@@ -374,7 +377,7 @@ class Exporter:
         molecule = first_frame.molecule
         settings = first_frame.render_settings
 
-        # Import renderer
+        # Import renderer for settings and bond creation
         from .renderer.molecule import MoleculeRenderer
         from dataclasses import asdict
         renderer = MoleculeRenderer()
@@ -385,23 +388,80 @@ class Exporter:
         # Override resolution with user-provided value
         settings_dict['resolution'] = resolution
 
-        # Create sphere geometry for each atom (using first frame positions)
-        atoms_mesh = renderer._create_atoms_mesh(molecule, settings_dict)
+        # Calculate scale factor
+        # Collect all positions across all frames to find bounding box
+        all_positions = np.vstack([frame.molecule.positions for frame in frames])
+        bbox_min = all_positions.min(axis=0)
+        bbox_max = all_positions.max(axis=0)
+        bbox_size = bbox_max - bbox_min
+        max_extent = np.max(bbox_size)
 
-        # Convert to trimesh
-        atoms_mesh = atoms_mesh.triangulate()
-        atoms_vertices = atoms_mesh.points.astype(np.float32)
-        atoms_faces = atoms_mesh.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
-
-        # Get RGBA colors for atoms
-        if 'RGBA' in atoms_mesh.array_names:
-            atoms_colors = atoms_mesh['RGBA'].astype(np.uint8)
+        # Handle scale parameter
+        if scale == "auto":
+            # Auto-scale to fit in a 2-unit box (reasonable for most viewers)
+            target_size = 2.0
+            scale_factor = target_size / max_extent if max_extent > 0 else 1.0
+            logger.info(f"  Auto-scaling: {max_extent:.2f} Å -> {target_size:.2f} units (scale={scale_factor:.4f})")
+        elif scale is not None:
+            scale_factor = float(scale)
+            logger.info(f"  Scale factor: {scale_factor} (max extent: {max_extent:.2f} Å -> {max_extent * scale_factor:.2f} units)")
         else:
-            # Fallback: white
-            atoms_colors = np.full((len(atoms_vertices), 4), 255, dtype=np.uint8)
+            scale_factor = 1.0
+            logger.info(f"  No scaling (max extent: {max_extent:.2f} Å)")
 
-        # Calculate vertices per atom (assuming spheres have same resolution)
-        vertices_per_atom = len(atoms_vertices) // num_atoms
+        # Create atom spheres manually WITHOUT using merge() to avoid vertex deduplication
+        # This is critical for skeletal animation to work correctly
+        atoms_vertices_list = []
+        atoms_faces_list = []
+        atoms_colors_list = []
+        atom_vertex_offset = 0
+        vertices_per_atom = None
+
+        for atom_idx, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
+            if not settings_dict['show_hydrogens'] and symbol == 'H':
+                continue
+
+            atom_settings = renderer.atoms_settings.get(symbol, renderer.atoms_settings['Unknown'])
+
+            # Apply scale factor to position and radius
+            scaled_position = position * scale_factor
+            scaled_radius = atom_settings['radius'] * scale_factor
+
+            sphere = pv.Sphere(
+                radius=scaled_radius,
+                center=scaled_position,
+                theta_resolution=settings_dict['resolution'],
+                phi_resolution=settings_dict['resolution']
+            )
+            sphere = sphere.triangulate()
+
+            # Track vertices per atom (should be consistent)
+            if vertices_per_atom is None:
+                vertices_per_atom = sphere.n_points
+
+            # Store vertices
+            atoms_vertices_list.append(sphere.points.astype(np.float32))
+
+            # Adjust face indices and store
+            faces = sphere.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+            faces = faces + atom_vertex_offset
+            atoms_faces_list.append(faces)
+
+            # Create RGBA colors
+            color = np.array(atom_settings['color'], dtype=np.uint8)
+            alpha_value = int(settings_dict['alpha'] * 255)
+            rgba = np.zeros((sphere.n_points, 4), dtype=np.uint8)
+            rgba[:, :3] = color
+            rgba[:, 3] = alpha_value
+            atoms_colors_list.append(rgba)
+
+            atom_vertex_offset += sphere.n_points
+
+        # Combine all atom data
+        atoms_vertices = np.vstack(atoms_vertices_list)
+        atoms_faces = np.vstack(atoms_faces_list)
+        atoms_colors = np.vstack(atoms_colors_list)
+
         logger.info(f"  Vertices per atom: {vertices_per_atom}")
         logger.info(f"  Total atom vertices: {len(atoms_vertices)}")
 
@@ -422,42 +482,60 @@ class Exporter:
                 continue
 
             atom_a, atom_b = bond
-            atom_a_pos = molecule.positions[atom_a]
-            atom_b_pos = molecule.positions[atom_b]
+            atom_a_pos = molecule.positions[atom_a] * scale_factor
+            atom_b_pos = molecule.positions[atom_b] * scale_factor
             bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
 
-            # Create cylinders for this bond (same as renderer does)
+            # Create cylinders for this bond with scaled positions
+            # Note: _create_bond_cylinders uses a fixed radius, so we scale the output vertices
             cylinders = renderer._create_bond_cylinders(
-                atom_a_pos, atom_b_pos, bond_type,
+                molecule.positions[atom_a], molecule.positions[atom_b], bond_type,
                 settings_dict['alpha'], settings_dict['resolution']
             )
 
-            # Merge cylinders for this bond
-            bond_mesh = None
+            # Manually concatenate cylinders WITHOUT using merge() to avoid vertex deduplication
+            bond_vertices_parts = []
+            bond_faces_parts = []
+            bond_colors_parts = []
+            local_vertex_offset = 0
+
             for cylinder in cylinders:
-                if bond_mesh is None:
-                    bond_mesh = cylinder
-                else:
-                    bond_mesh = bond_mesh.merge(cylinder)
+                cylinder = cylinder.triangulate()
+                # Apply scale factor to bond vertices
+                scaled_bond_vertices = (cylinder.points * scale_factor).astype(np.float32)
+                bond_vertices_parts.append(scaled_bond_vertices)
 
-            if bond_mesh is not None:
-                bond_mesh = bond_mesh.triangulate()
-                vertex_start = total_bond_vertices
-                vertex_count = bond_mesh.n_points
-
-                # Store vertices and faces
-                bonds_vertices_list.append(bond_mesh.points.astype(np.float32))
-
-                # Adjust face indices
-                faces = bond_mesh.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
-                faces = faces + total_bond_vertices  # Offset by current vertex count
-                bonds_faces_list.append(faces)
+                # Adjust face indices for local offset
+                cyl_faces = cylinder.faces.reshape(-1, 4)[:, 1:].astype(np.uint32)
+                cyl_faces = cyl_faces + local_vertex_offset
+                bond_faces_parts.append(cyl_faces)
 
                 # Get colors
-                if 'RGBA' in bond_mesh.array_names:
-                    bonds_colors_list.append(bond_mesh['RGBA'].astype(np.uint8))
+                if 'RGBA' in cylinder.array_names:
+                    bond_colors_parts.append(cylinder['RGBA'].astype(np.uint8))
                 else:
-                    bonds_colors_list.append(np.full((vertex_count, 4), 200, dtype=np.uint8))
+                    bond_colors_parts.append(np.full((cylinder.n_points, 4), 200, dtype=np.uint8))
+
+                local_vertex_offset += cylinder.n_points
+
+            if bond_vertices_parts:
+                # Combine all parts of this bond
+                bond_verts = np.vstack(bond_vertices_parts)
+                bond_faces = np.vstack(bond_faces_parts)
+                bond_colors = np.vstack(bond_colors_parts)
+
+                vertex_start = total_bond_vertices
+                vertex_count = len(bond_verts)
+
+                # Store vertices and faces
+                bonds_vertices_list.append(bond_verts)
+
+                # Adjust face indices for global offset
+                bond_faces = bond_faces + total_bond_vertices
+                bonds_faces_list.append(bond_faces)
+
+                # Store colors
+                bonds_colors_list.append(bond_colors)
 
                 # Store skinning info
                 bond_skinning_info.append({
@@ -571,10 +649,10 @@ class Exporter:
 
         logger.info(f"  Total vertices (atoms + bonds): {len(vertices)}")
 
-        # Get atom positions for all frames
+        # Get atom positions for all frames (with scale factor applied)
         atom_positions_per_frame = []
         for frame in frames:
-            positions = frame.molecule.positions
+            positions = frame.molecule.positions * scale_factor
             atom_positions_per_frame.append(positions.astype(np.float32))
 
         # Create animation time keyframes

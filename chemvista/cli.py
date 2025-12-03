@@ -40,6 +40,8 @@ def main():
                         help='Mesh resolution for animated GLB - lower values reduce file size (default: 10)')
     parser.add_argument('--cycle', action='store_true',
                         help='Add reverse frames to create a seamless loop animation')
+    parser.add_argument('--scale', type=str, default=None,
+                        help='Scale factor for model size. Use "auto" to fit in 2-unit box, or a number (e.g., 0.1)')
 
     args = parser.parse_args()
 
@@ -83,17 +85,28 @@ def main():
             print("Error: No trajectory found in scene. Load a multi-frame XYZ file first.")
             sys.exit(1)
 
+        # Parse scale parameter
+        scale_value = args.scale
+        if scale_value is not None and scale_value != "auto":
+            try:
+                scale_value = float(scale_value)
+            except ValueError:
+                print(f"Error: Invalid scale value '{args.scale}'. Use 'auto' or a number.")
+                sys.exit(1)
+
         print(f"Exporting trajectory '{trajectory_obj.name}' as animated GLB...")
         print(f"  Frames: {len(trajectory_obj.children)}")
         print(f"  FPS: {args.fps}")
         print(f"  Resolution: {args.resolution}")
         print(f"  Cycle: {args.cycle}")
+        print(f"  Scale: {scale_value if scale_value else 'none (Angstroms)'}")
         scene_manager.export_trajectory_animated_glb(
             trajectory_obj,
             args.glb_animated,
             fps=args.fps,
             resolution=args.resolution,
-            cycle_animation=args.cycle
+            cycle_animation=args.cycle,
+            scale=scale_value
         )
         print(f"✅ Animated trajectory exported to: {args.glb_animated}")
     else:
