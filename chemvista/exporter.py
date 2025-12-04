@@ -478,7 +478,10 @@ class Exporter:
         total_bond_vertices = 0
 
         for bond in bond_list:
-            if not settings_dict['show_hydrogens'] and 'H' in [molecule.symbols[i] for i in bond]:
+            symbol_a = molecule.symbols[bond[0]]
+            symbol_b = molecule.symbols[bond[1]]
+
+            if not settings_dict['show_hydrogens'] and 'H' in [symbol_a, symbol_b]:
                 continue
 
             atom_a, atom_b = bond
@@ -486,11 +489,16 @@ class Exporter:
             atom_b_pos = molecule.positions[atom_b] * scale_factor
             bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
 
+            # Get atom radii to offset bond endpoints to atom surfaces
+            radius_a = renderer.atoms_settings.get(symbol_a, renderer.atoms_settings['Unknown'])['radius']
+            radius_b = renderer.atoms_settings.get(symbol_b, renderer.atoms_settings['Unknown'])['radius']
+
             # Create cylinders for this bond with scaled positions
             # Note: _create_bond_cylinders uses a fixed radius, so we scale the output vertices
             cylinders = renderer._create_bond_cylinders(
                 molecule.positions[atom_a], molecule.positions[atom_b], bond_type,
-                settings_dict['alpha'], settings_dict['resolution']
+                settings_dict['alpha'], settings_dict['resolution'],
+                radius_a, radius_b
             )
 
             # Manually concatenate cylinders WITHOUT using merge() to avoid vertex deduplication
@@ -1160,7 +1168,10 @@ class Exporter:
             # Create bonds for this trajectory
             bond_list = list(molecule.get_all_bonds())
             for bond in bond_list:
-                if not settings_dict.get('show_hydrogens', True) and 'H' in [molecule.symbols[i] for i in bond]:
+                symbol_a = molecule.symbols[bond[0]]
+                symbol_b = molecule.symbols[bond[1]]
+
+                if not settings_dict.get('show_hydrogens', True) and 'H' in [symbol_a, symbol_b]:
                     continue
 
                 atom_a, atom_b = bond
@@ -1168,9 +1179,14 @@ class Exporter:
                 atom_b_pos = molecule.positions[atom_b]
                 bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
 
+                # Get atom radii to offset bond endpoints to atom surfaces
+                radius_a = renderer.atoms_settings.get(symbol_a, renderer.atoms_settings['Unknown'])['radius']
+                radius_b = renderer.atoms_settings.get(symbol_b, renderer.atoms_settings['Unknown'])['radius']
+
                 cylinders = renderer._create_bond_cylinders(
                     atom_a_pos, atom_b_pos, bond_type,
-                    obj_alpha, settings_dict['resolution']
+                    obj_alpha, settings_dict['resolution'],
+                    radius_a, radius_b
                 )
 
                 bond_vertex_start = global_vertex_offset
@@ -1276,7 +1292,10 @@ class Exporter:
             # Create bonds for this molecule
             bond_list = list(molecule.get_all_bonds())
             for bond in bond_list:
-                if not settings_dict.get('show_hydrogens', True) and 'H' in [molecule.symbols[i] for i in bond]:
+                symbol_a = molecule.symbols[bond[0]]
+                symbol_b = molecule.symbols[bond[1]]
+
+                if not settings_dict.get('show_hydrogens', True) and 'H' in [symbol_a, symbol_b]:
                     continue
 
                 atom_a, atom_b = bond
@@ -1284,9 +1303,14 @@ class Exporter:
                 atom_b_pos = molecule.positions[atom_b]
                 bond_type = molecule.G[atom_a][atom_b].get('bond_type', 1)
 
+                # Get atom radii to offset bond endpoints to atom surfaces
+                radius_a = renderer.atoms_settings.get(symbol_a, renderer.atoms_settings['Unknown'])['radius']
+                radius_b = renderer.atoms_settings.get(symbol_b, renderer.atoms_settings['Unknown'])['radius']
+
                 cylinders = renderer._create_bond_cylinders(
                     atom_a_pos, atom_b_pos, bond_type,
-                    obj_alpha, settings_dict['resolution']
+                    obj_alpha, settings_dict['resolution'],
+                    radius_a, radius_b
                 )
 
                 bond_vertex_start = global_vertex_offset

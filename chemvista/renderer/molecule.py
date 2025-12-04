@@ -94,16 +94,24 @@ class MoleculeRenderer(Renderer):
         merged_bonds = None
 
         for bond in molecule.get_all_bonds():
-            if not settings['show_hydrogens'] and 'H' in [molecule.symbols[i] for i in bond]:
+            symbol_a = molecule.symbols[bond[0]]
+            symbol_b = molecule.symbols[bond[1]]
+
+            if not settings['show_hydrogens'] and 'H' in [symbol_a, symbol_b]:
                 continue
 
             atom_a = molecule.positions[bond[0]]
             atom_b = molecule.positions[bond[1]]
             bond_type = molecule.G[bond[0]][bond[1]].get('bond_type', 1)
 
+            # Get atom radii to offset bond endpoints to atom surfaces
+            radius_a = self.atoms_settings.get(symbol_a, self.atoms_settings['Unknown'])['radius']
+            radius_b = self.atoms_settings.get(symbol_b, self.atoms_settings['Unknown'])['radius']
+
             # Create cylinders for bond
             cylinders = self._create_bond_cylinders(
-                atom_a, atom_b, bond_type, settings['alpha'], settings['resolution']
+                atom_a, atom_b, bond_type, settings['alpha'], settings['resolution'],
+                radius_a, radius_b
             )
 
             for cylinder in cylinders:
@@ -115,23 +123,47 @@ class MoleculeRenderer(Renderer):
         return merged_bonds
 
     def _create_bond_cylinders(self, start: np.ndarray, end: np.ndarray,
-                               bond_type: int, alpha: float, resolution: int) -> List[pv.PolyData]:
-        """Create cylinders for a single bond"""
+                               bond_type: int, alpha: float, resolution: int,
+                               radius_a: float = 0.0, radius_b: float = 0.0) -> List[pv.PolyData]:
+        """Create cylinders for a single bond.
+
+        Args:
+            start: Position of first atom
+            end: Position of second atom
+            bond_type: Bond order (1, 2, or 3)
+            alpha: Transparency value
+            resolution: Cylinder resolution
+            radius_a: Radius of first atom (to offset bond start to surface)
+            radius_b: Radius of second atom (to offset bond end to surface)
+        """
         cylinders = []
         bond_vector = end - start
-        unit_vector = bond_vector / np.linalg.norm(bond_vector)
+        bond_length = np.linalg.norm(bond_vector)
+
+        if bond_length < 1e-6:
+            return cylinders
+
+        unit_vector = bond_vector / bond_length
         perp_vector = self._get_perpendicular_vector(unit_vector)
+
+        # Offset start and end points to atom surfaces
+        surface_start = start + radius_a * unit_vector
+        surface_end = end - radius_b * unit_vector
+
+        # Check if bond is too short after offsetting (atoms overlapping)
+        if np.linalg.norm(surface_end - surface_start) < 1e-6:
+            return cylinders
 
         if bond_type == 1:
             cyl = self._create_single_cylinder(
-                start, end, 0.05, alpha, resolution)
+                surface_start, surface_end, 0.05, alpha, resolution)
             cylinders.append(cyl)
         elif bond_type == 2:
             offset = 0.03
             for i in [-1, 1]:
                 offset_vec = i * offset * perp_vector
                 cyl = self._create_single_cylinder(
-                    start + offset_vec, end + offset_vec, 0.025, alpha, resolution
+                    surface_start + offset_vec, surface_end + offset_vec, 0.025, alpha, resolution
                 )
                 cylinders.append(cyl)
         elif bond_type == 3:
@@ -139,7 +171,7 @@ class MoleculeRenderer(Renderer):
             for i in [-1, 0, 1]:
                 offset_vec = i * offset * perp_vector
                 cyl = self._create_single_cylinder(
-                    start + offset_vec, end + offset_vec, 0.02, alpha, resolution
+                    surface_start + offset_vec, surface_end + offset_vec, 0.02, alpha, resolution
                 )
                 cylinders.append(cyl)
 

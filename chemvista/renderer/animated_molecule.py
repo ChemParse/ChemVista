@@ -149,6 +149,10 @@ class AnimatedMoleculeRenderer:
             atom_b = molecule.positions[bond[1]]
             bond_type = molecule.G[bond[0]][bond[1]].get('bond_type', 1)
 
+            # Get atom radii for surface offset
+            atom_radius_a = self.atoms_settings.get(symbols[0], self.atoms_settings['Unknown'])['radius']
+            atom_radius_b = self.atoms_settings.get(symbols[1], self.atoms_settings['Unknown'])['radius']
+
             # Get bond parameters (radius and offset) for this bond type
             bond_params = self._get_bond_params(bond_type)
 
@@ -158,7 +162,8 @@ class AnimatedMoleculeRenderer:
 
                 # Create cylinder and store base points for fast updates
                 cyl, base_points = self._create_cylinder_with_base(
-                    atom_a, atom_b, radius, offset_factor, alpha, resolution
+                    atom_a, atom_b, radius, offset_factor, alpha, resolution,
+                    atom_radius_a, atom_radius_b
                 )
 
                 # Store bond info with base points for transformation
@@ -171,6 +176,8 @@ class AnimatedMoleculeRenderer:
                     'radius': radius,
                     'offset_factor': offset_factor,
                     'base_points': base_points,  # Unit cylinder points for fast transform
+                    'atom_radius_a': atom_radius_a,  # For surface offset during updates
+                    'atom_radius_b': atom_radius_b,
                 })
 
                 vertex_offset += cyl.n_points
@@ -201,8 +208,21 @@ class AnimatedMoleculeRenderer:
 
     def _create_cylinder_with_base(self, start: np.ndarray, end: np.ndarray,
                                     radius: float, offset_factor: float,
-                                    alpha: float, resolution: int) -> Tuple[pv.PolyData, np.ndarray]:
-        """Create a cylinder and return both the mesh and base points for fast updates."""
+                                    alpha: float, resolution: int,
+                                    atom_radius_a: float = 0.0,
+                                    atom_radius_b: float = 0.0) -> Tuple[pv.PolyData, np.ndarray]:
+        """Create a cylinder and return both the mesh and base points for fast updates.
+
+        Args:
+            start: Position of first atom
+            end: Position of second atom
+            radius: Cylinder radius
+            offset_factor: Perpendicular offset for double/triple bonds
+            alpha: Transparency value
+            resolution: Cylinder resolution
+            atom_radius_a: Radius of first atom (to offset bond start to surface)
+            atom_radius_b: Radius of second atom (to offset bond end to surface)
+        """
         bond_vector = end - start
         length = np.linalg.norm(bond_vector)
 
@@ -224,9 +244,9 @@ class AnimatedMoleculeRenderer:
         # Store base points (unit cylinder)
         base_points = unit_cylinder.points.copy()
 
-        # Transform to actual position
+        # Transform to actual position (with surface offset)
         transformed_points = self._transform_cylinder_points(
-            base_points, start, end, offset_factor
+            base_points, start, end, offset_factor, atom_radius_a, atom_radius_b
         )
         unit_cylinder.points = transformed_points
 
@@ -242,27 +262,45 @@ class AnimatedMoleculeRenderer:
 
     def _transform_cylinder_points(self, base_points: np.ndarray,
                                     start: np.ndarray, end: np.ndarray,
-                                    offset_factor: float) -> np.ndarray:
-        """Transform unit cylinder base points to connect start and end positions."""
+                                    offset_factor: float,
+                                    atom_radius_a: float = 0.0,
+                                    atom_radius_b: float = 0.0) -> np.ndarray:
+        """Transform unit cylinder base points to connect start and end positions.
+
+        Args:
+            base_points: Unit cylinder points (height=1, centered at origin)
+            start: Position of first atom
+            end: Position of second atom
+            offset_factor: Perpendicular offset for double/triple bonds
+            atom_radius_a: Radius of first atom (to offset bond start to surface)
+            atom_radius_b: Radius of second atom (to offset bond end to surface)
+        """
         if len(base_points) == 0:
             return base_points
 
         bond_vector = end - start
-        length = np.linalg.norm(bond_vector)
+        full_length = np.linalg.norm(bond_vector)
 
-        if length < 1e-6:
+        if full_length < 1e-6:
             return base_points
 
         # Unit direction
-        direction = bond_vector / length
+        direction = bond_vector / full_length
+
+        # Calculate surface-to-surface length
+        surface_length = full_length - atom_radius_a - atom_radius_b
+
+        if surface_length < 1e-6:
+            # Atoms are overlapping, return empty
+            return np.zeros_like(base_points)
 
         # Build rotation matrix from Z axis to bond direction
         z_axis = np.array([0.0, 0.0, 1.0])
         rotation = self._rotation_matrix_from_vectors(z_axis, direction)
 
-        # Scale z component by length, keep x,y as is (radius already correct)
+        # Scale z component by surface_length (not full length)
         scaled_points = base_points.copy()
-        scaled_points[:, 2] *= length
+        scaled_points[:, 2] *= surface_length
 
         # Rotate
         rotated_points = scaled_points @ rotation.T
@@ -273,8 +311,11 @@ class AnimatedMoleculeRenderer:
             offset_vec = offset_factor * perp
             rotated_points = rotated_points + offset_vec
 
-        # Translate to center of bond
-        center = 0.5 * (start + end)
+        # Translate to center of bond (accounting for surface offset)
+        # Center is between the two surface points, not atom centers
+        surface_start = start + atom_radius_a * direction
+        surface_end = end - atom_radius_b * direction
+        center = 0.5 * (surface_start + surface_end)
         return rotated_points + center
 
     def _rotation_matrix_from_vectors(self, vec1: np.ndarray, vec2: np.ndarray) -> np.ndarray:
@@ -339,11 +380,14 @@ class AnimatedMoleculeRenderer:
                 count = bond_info['vertex_count']
                 base_points = bond_info.get('base_points')
                 offset_factor = bond_info.get('offset_factor', 0.0)
+                atom_radius_a = bond_info.get('atom_radius_a', 0.0)
+                atom_radius_b = bond_info.get('atom_radius_b', 0.0)
 
                 if base_points is not None and len(base_points) == count:
                     # Fast transformation using stored base points
                     new_cyl_points = self._transform_cylinder_points(
-                        base_points, pos_a, pos_b, offset_factor
+                        base_points, pos_a, pos_b, offset_factor,
+                        atom_radius_a, atom_radius_b
                     )
                     self._bonds_mesh.points[start:start + count] = new_cyl_points
 
