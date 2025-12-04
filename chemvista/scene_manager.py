@@ -191,12 +191,18 @@ class SceneManager():
 
         obj.update_settings(settings)
 
-    def render(self, plotter: Optional[pv.Plotter] = None, **kwargs) -> pv.Plotter:
-        """Render all visible objects"""
+    def render(self, plotter: Optional[pv.Plotter] = None, **kwargs) -> Tuple[pv.Plotter, Dict[str, List]]:
+        """Render all visible objects and return actor mappings.
+
+        Returns:
+            Tuple of (plotter, actor_map) where actor_map maps object UUIDs to their actors.
+        """
         if plotter is None:
             if self.plotter is not None:
                 self.plotter.clear()
             plotter = self.plotter or self.create_plotter(**kwargs)
+
+        actor_map: Dict[str, List] = {}
 
         # Use the TreeNode's iter_visible to efficiently render only visible nodes
         for obj in self.root.iter_visible():
@@ -204,22 +210,24 @@ class SceneManager():
             if obj == self.root:
                 continue
 
-            # Render based on object type
+            # Render based on object type and track actors
             if isinstance(obj, MoleculeObject):
-                self.molecule_renderer.render(
+                actors = self.molecule_renderer.render(
                     molecule=obj.molecule,
                     plotter=plotter,
                     settings=vars(obj.render_settings)
                 )
+                actor_map[obj.uuid] = actors
             elif isinstance(obj, ScalarFieldObject):
-                self.scalar_field_renderer.render(
+                actors = self.scalar_field_renderer.render(
                     field=obj.scalar_field,
                     plotter=plotter,
                     settings=vars(obj.render_settings)
                 )
+                actor_map[obj.uuid] = actors
 
         plotter.reset_camera()
-        return plotter
+        return plotter, actor_map
 
     def render_interpolated(self, plotter: pv.Plotter, trajectory_uuid: str, time_value: float) -> pv.Plotter:
         """
@@ -273,6 +281,62 @@ class SceneManager():
 
         plotter.reset_camera()
         return plotter
+
+    def render_single_object(self, obj: SceneObject, plotter: pv.Plotter, visible: bool = True) -> List:
+        """Render a single object to the plotter and return its actors.
+
+        This is useful for preloading or incremental rendering.
+
+        Args:
+            obj: The scene object to render
+            plotter: The plotter to render to
+            visible: Whether actors should be visible after creation (default: True)
+                    Set to False for background preloading to avoid flash.
+
+        Returns:
+            List of VTK actors that were added
+        """
+        actors = []
+
+        # Suppress rendering during mesh creation to prevent flash
+        # This prevents the brief visibility of actors before SetVisibility(False)
+        suppress_rendering = not visible
+        vtk_iren = None
+        if suppress_rendering:
+            # Access VTK's interactor through PyVista's wrapper
+            if hasattr(plotter, 'iren') and plotter.iren is not None:
+                pv_iren = plotter.iren
+                # PyVista's iren wraps VTK's interactor
+                if hasattr(pv_iren, 'interactor') and pv_iren.interactor is not None:
+                    vtk_iren = pv_iren.interactor
+                    if hasattr(vtk_iren, 'EnableRenderOff'):
+                        vtk_iren.EnableRenderOff()
+
+        try:
+            if isinstance(obj, MoleculeObject):
+                actors = self.molecule_renderer.render(
+                    molecule=obj.molecule,
+                    plotter=plotter,
+                    settings=vars(obj.render_settings)
+                )
+            elif isinstance(obj, ScalarFieldObject):
+                actors = self.scalar_field_renderer.render(
+                    field=obj.scalar_field,
+                    plotter=plotter,
+                    settings=vars(obj.render_settings)
+                )
+
+            # Set visibility immediately after creation to prevent flash
+            if not visible:
+                for actor in actors:
+                    if hasattr(actor, 'SetVisibility'):
+                        actor.SetVisibility(False)
+        finally:
+            # Re-enable rendering
+            if vtk_iren is not None and hasattr(vtk_iren, 'EnableRenderOn'):
+                vtk_iren.EnableRenderOn()
+
+        return actors
 
     def log_tree_changes(self, message: str = ""):
         """Log the current tree structure"""

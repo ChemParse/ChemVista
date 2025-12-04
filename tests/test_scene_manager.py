@@ -209,11 +209,14 @@ class TestSceneManager:
         # Load an object
         scene.load_xyz(test_files['molecule_1'])
 
-        # Render it
-        plotter = scene.render(test_plotter)
+        # Render it - now returns (plotter, actor_map) tuple
+        plotter, actor_map = scene.render(test_plotter)
 
         # Check that something was rendered
         assert plotter.renderer.GetActors().GetNumberOfItems() > 0
+
+        # Also verify actor_map is populated
+        assert len(actor_map) > 0
 
 
 def test_load_trajectory(scene: SceneManager, test_files):

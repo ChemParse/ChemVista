@@ -1,5 +1,6 @@
 import numpy as np
 import pyvista as pv
+from typing import List
 from nx_ase.scalar_field import ScalarField
 from .base import Renderer
 
@@ -30,9 +31,16 @@ class ScalarFieldRenderer(Renderer):
         }
         return all(key in settings for key in required)
 
-    def render(self, field: ScalarField, plotter: pv.Plotter, settings: dict) -> None:
+    def render(self, field: ScalarField, plotter: pv.Plotter, settings: dict) -> List:
+        """Render scalar field to plotter and return list of actors.
+
+        Returns:
+            List of VTK actors that were added to the plotter.
+        """
         if not self.validate_settings(settings):
             raise ValueError("Invalid settings for scalar field rendering")
+
+        actors = []
 
         # Create structured grid using the field coordinates
         grid = pv.StructuredGrid(
@@ -81,12 +89,13 @@ class ScalarFieldRenderer(Renderer):
                         # Use the corresponding color for this isosurface
                         color = colors[i].strip() if isinstance(
                             colors[i], str) else colors[i]
-                        plotter.add_mesh(
+                        actor = plotter.add_mesh(
                             contour,
                             color=color,
                             opacity=settings['opacity'],
                             show_scalar_bar=False
                         )
+                        actors.append(actor)
                         print(
                             f'Contour with isovalue {iso_value} and color {color} created')
                     else:
@@ -107,21 +116,23 @@ class ScalarFieldRenderer(Renderer):
 
         # Show grid surface if requested
         if settings['show_grid_surface']:
-            plotter.add_mesh(
+            actor = plotter.add_mesh(
                 grid.outline(),
                 color=settings['grid_surface_color'],
                 opacity=0.1
             )
+            actors.append(actor)
 
         # Show grid points if requested
         if settings['show_grid_points']:
-            plotter.add_mesh(
+            actor = plotter.add_mesh(
                 grid,
                 style='points',
                 point_size=settings['grid_points_size'],
                 color=settings['grid_points_color'],
                 render_points_as_spheres=True
             )
+            actors.append(actor)
 
         # Show filtered points if requested
         if settings['show_filtered_points']:
@@ -134,11 +145,14 @@ class ScalarFieldRenderer(Renderer):
             selected_points = points_flat[mask]
 
             if len(selected_points) > 0:
-                plotter.add_points(
+                actor = plotter.add_points(
                     selected_points,
                     color=settings['grid_points_color'],
                     point_size=settings['grid_points_size'],
                     render_points_as_spheres=True
                 )
+                actors.append(actor)
             else:
                 print(f"No points found in range {value_range}")
+
+        return actors

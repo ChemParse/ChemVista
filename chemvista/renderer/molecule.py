@@ -26,22 +26,35 @@ class MoleculeRenderer(Renderer):
         required = {'show_hydrogens', 'show_numbers', 'alpha', 'resolution'}
         return all(key in settings for key in required)
 
-    def render(self, molecule: Molecule, plotter: pv.Plotter, settings: dict) -> None:
+    def render(self, molecule: Molecule, plotter: pv.Plotter, settings: dict) -> List:
+        """Render molecule to plotter and return list of actors.
+
+        Returns:
+            List of VTK actors that were added to the plotter.
+        """
         if not self.validate_settings(settings):
             raise ValueError("Invalid settings for molecule rendering")
+
+        actors = []
 
         atoms_mesh = self._create_atoms_mesh(molecule, settings)
         bonds_mesh = self._create_bonds_mesh(molecule, settings)
 
         if atoms_mesh is not None:
-            plotter.add_mesh(atoms_mesh, scalars='RGBA',
-                             rgb=True, smooth_shading=True)
+            actor = plotter.add_mesh(atoms_mesh, scalars='RGBA',
+                                     rgb=True, smooth_shading=True)
+            actors.append(actor)
         if bonds_mesh is not None:
-            plotter.add_mesh(bonds_mesh, scalars='RGBA',
-                             rgb=True, smooth_shading=True)
+            actor = plotter.add_mesh(bonds_mesh, scalars='RGBA',
+                                     rgb=True, smooth_shading=True)
+            actors.append(actor)
 
         if settings['show_numbers']:
-            self._add_atom_numbers(molecule, plotter)
+            label_actor = self._add_atom_numbers(molecule, plotter)
+            if label_actor is not None:
+                actors.append(label_actor)
+
+        return actors
 
     def _create_atoms_mesh(self, molecule: Molecule, settings: dict) -> Optional[pv.PolyData]:
         """Create a single mesh containing all atoms"""
@@ -161,8 +174,13 @@ class MoleculeRenderer(Renderer):
         perp = np.cross(vector, basis_vectors[smallest])
         return perp / np.linalg.norm(perp)
 
-    def _add_atom_numbers(self, molecule: Molecule, plotter: pv.Plotter) -> None:
-        """Add atom numbers to the visualization"""
+    def _add_atom_numbers(self, molecule: Molecule, plotter: pv.Plotter):
+        """Add atom numbers to the visualization.
+
+        Returns:
+            The actor for the labels, or None.
+        """
         poly = pv.PolyData(molecule.positions)
         poly["Labels"] = [str(i) for i in range(len(molecule))]
-        plotter.add_point_labels(poly, "Labels", point_size=20, font_size=36)
+        actor = plotter.add_point_labels(poly, "Labels", point_size=20, font_size=36)
+        return actor

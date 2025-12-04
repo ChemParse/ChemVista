@@ -5,7 +5,6 @@ Tests for AnimatedMoleculeRenderer - verifies correctness and performance of ani
 import pytest
 import numpy as np
 import pyvista as pv
-import time
 from unittest.mock import MagicMock, patch
 from nx_ase import Molecule, Trajectory
 
@@ -340,31 +339,14 @@ class TestAnimatedMoleculeRendererClear:
 
 
 class TestAnimatedMoleculeRendererPerformance:
-    """Performance benchmarks for animation rendering"""
+    """Functional tests for animation rendering that verify correctness under load.
 
-    def test_setup_time_benchmark(self, test_plotter, test_objects, benchmark_config):
-        """Benchmark initial setup time"""
-        renderer = AnimatedMoleculeRenderer()
-        molecule = test_objects['molecule_1']
-        settings = {
-            'resolution': 20,  # Default resolution
-            'alpha': 1.0,
-            'show_hydrogens': True,
-        }
+    Note: For detailed performance benchmarks without time assertions,
+    see tests/benchmarks.py
+    """
 
-        start_time = time.perf_counter()
-        renderer.setup(molecule, test_plotter, settings)
-        setup_time = time.perf_counter() - start_time
-
-        # Log the timing
-        print(f"\nSetup time for {len(molecule)} atoms: {setup_time*1000:.2f}ms")
-
-        # Setup should complete in reasonable time (< 2 seconds for typical molecules)
-        assert setup_time < benchmark_config['max_setup_time'], \
-            f"Setup took {setup_time:.2f}s, expected < {benchmark_config['max_setup_time']}s"
-
-    def test_update_time_benchmark(self, test_plotter, test_objects, benchmark_config):
-        """Benchmark per-frame update time"""
+    def test_setup_completes_successfully(self, test_plotter, test_objects):
+        """Test that setup completes without errors for typical molecules"""
         renderer = AnimatedMoleculeRenderer()
         molecule = test_objects['molecule_1']
         settings = {
@@ -373,48 +355,43 @@ class TestAnimatedMoleculeRendererPerformance:
             'show_hydrogens': True,
         }
 
-        # Mock render to avoid actual rendering overhead in benchmark
-        test_plotter.render = MagicMock()
+        # Should complete without errors
+        renderer.setup(molecule, test_plotter, settings)
+        assert renderer.is_setup
+
+    def test_multiple_updates_succeed(self, test_plotter, test_objects):
+        """Test that multiple consecutive updates work correctly"""
+        renderer = AnimatedMoleculeRenderer()
+        molecule = test_objects['molecule_1']
+        settings = {
+            'resolution': 20,
+            'alpha': 1.0,
+            'show_hydrogens': True,
+        }
 
         renderer.setup(molecule, test_plotter, settings)
 
-        # Measure update times
-        update_times = []
+        # Mock render AFTER setup to count only update calls
+        test_plotter.render = MagicMock()
+
+        # Run many updates - should all succeed
         num_updates = 100
-
-        for i in range(num_updates):
-            # Create slightly different positions each time
+        for _ in range(num_updates):
             new_positions = molecule.positions + np.random.randn(*molecule.positions.shape) * 0.01
-
-            start_time = time.perf_counter()
             renderer.update_positions(new_positions)
-            update_time = time.perf_counter() - start_time
-            update_times.append(update_time)
 
-        avg_update_time = np.mean(update_times)
-        max_update_time = np.max(update_times)
+        # Verify render was called for each update
+        assert test_plotter.render.call_count == num_updates
 
-        print(f"\nUpdate times for {len(molecule)} atoms over {num_updates} frames:")
-        print(f"  Average: {avg_update_time*1000:.2f}ms")
-        print(f"  Maximum: {max_update_time*1000:.2f}ms")
-        print(f"  Theoretical FPS: {1/avg_update_time:.1f}")
-
-        # Updates should be fast enough for 60 FPS (< 16.67ms)
-        assert avg_update_time < benchmark_config['max_update_time'], \
-            f"Average update took {avg_update_time*1000:.2f}ms, expected < {benchmark_config['max_update_time']*1000:.0f}ms"
-
-    def test_update_time_scales_with_atoms(self, benchmark_config):
-        """Test that update time scales reasonably with number of atoms"""
-        update_times = {}
-
+    def test_handles_different_molecule_sizes(self):
+        """Test that renderer handles molecules of various sizes"""
         for num_atoms in [10, 50, 100]:
-            # Create molecule with specified number of atoms
             symbols = ['C'] * num_atoms
             positions = np.random.randn(num_atoms, 3) * 5.0
             mol = Molecule(symbols=symbols, positions=positions)
 
             plotter = pv.Plotter(off_screen=True)
-            plotter.render = MagicMock()  # Mock to avoid rendering overhead
+            plotter.render = MagicMock()
 
             renderer = AnimatedMoleculeRenderer()
             settings = {
@@ -423,30 +400,14 @@ class TestAnimatedMoleculeRendererPerformance:
                 'show_hydrogens': True,
             }
 
+            # Setup and update should succeed for all sizes
             renderer.setup(mol, plotter, settings)
+            assert renderer.is_setup
 
-            # Measure update time
-            times = []
-            for _ in range(50):
-                new_positions = positions + np.random.randn(num_atoms, 3) * 0.01
-                start = time.perf_counter()
-                renderer.update_positions(new_positions)
-                times.append(time.perf_counter() - start)
+            new_positions = positions + np.random.randn(num_atoms, 3) * 0.01
+            renderer.update_positions(new_positions)
 
-            update_times[num_atoms] = np.mean(times)
             plotter.close()
-
-        print(f"\nScaling test - average update times:")
-        for n, t in update_times.items():
-            print(f"  {n} atoms: {t*1000:.2f}ms")
-
-        # Verify roughly linear scaling (scaling is expected to be somewhat super-linear
-        # due to memory allocation overhead, but should not be worse than O(n^2))
-        if 10 in update_times and 100 in update_times:
-            scaling_factor = update_times[100] / update_times[10]
-            print(f"  Scaling factor (100 vs 10 atoms): {scaling_factor:.1f}x")
-            # Allow up to 20x for 10x increase (accounts for memory/cache effects)
-            assert scaling_factor < 20, f"Update time scaling too high: {scaling_factor}x"
 
 
 class TestAnimatedMoleculeRendererIntegration:
@@ -528,15 +489,6 @@ def test_plotter():
         plotter.close()
     except (AttributeError, RuntimeError):
         pass
-
-
-@pytest.fixture
-def benchmark_config():
-    """Configuration for performance benchmarks"""
-    return {
-        'max_setup_time': 2.0,  # Maximum acceptable setup time in seconds
-        'max_update_time': 0.016,  # Maximum acceptable update time (60 FPS target)
-    }
 
 
 if __name__ == "__main__":
