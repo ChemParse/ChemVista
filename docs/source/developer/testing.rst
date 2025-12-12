@@ -251,9 +251,35 @@ CI/CD Integration
 
 Tests run automatically on GitHub Actions for:
 
-* Python 3.10 and 3.12
+* Python 3.10 and 3.11
 * Ubuntu and macOS
 * All pull requests and main branch pushes
+
+Screenshot Tests in CI
+~~~~~~~~~~~~~~~~~~~~~~
+
+PNG screenshot tests require actual OpenGL rendering, which is not available in
+headless CI environments (GitHub Actions). These tests are automatically skipped
+when running in CI.
+
+Tests marked with ``@pytest.mark.screenshot`` are skipped when the ``CI`` or
+``GITHUB_ACTIONS`` environment variable is set to ``true``.
+
+To run screenshot tests locally:
+
+.. code-block:: bash
+
+   # Run all tests including screenshots
+   poetry run pytest -v
+
+   # Run only screenshot tests
+   poetry run pytest -m screenshot -v
+
+To simulate CI environment locally (skip screenshot tests):
+
+.. code-block:: bash
+
+   CI=true poetry run pytest -v
 
 See Also
 --------

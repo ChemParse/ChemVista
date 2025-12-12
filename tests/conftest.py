@@ -16,6 +16,29 @@ from unittest.mock import MagicMock, patch
 import os
 
 
+# Detect CI environment
+IS_CI = os.environ.get('CI', 'false').lower() == 'true' or \
+        os.environ.get('GITHUB_ACTIONS', 'false').lower() == 'true'
+
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers", "screenshot: mark test as requiring screenshot/rendering capabilities"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip screenshot tests in CI environment."""
+    if IS_CI:
+        skip_screenshot = pytest.mark.skip(
+            reason="Screenshot tests are skipped in CI (no GPU/display support)"
+        )
+        for item in items:
+            if "screenshot" in item.keywords:
+                item.add_marker(skip_screenshot)
+
+
 def pytest_addoption(parser):
     """Add custom command line options."""
     parser.addoption(

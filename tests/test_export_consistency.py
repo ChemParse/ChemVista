@@ -859,6 +859,7 @@ class TestExportDeterminism:
         matches, diffs = fp1.matches(fp2)
         assert matches, f"Animated export not deterministic: {diffs}"
 
+    @pytest.mark.screenshot
     def test_png_screenshot_deterministic(self, scene_manager_factory, test_files, temp_png_pair):
         """Taking the same screenshot twice should produce identical images."""
         path1, path2 = temp_png_pair
@@ -890,6 +891,7 @@ class TestExportDeterminism:
 # Test: PNG Screenshot exports
 # ============================================================================
 
+@pytest.mark.screenshot
 class TestPNGExport:
     """Test PNG screenshot export functionality."""
 
@@ -1683,6 +1685,7 @@ class TestSaveExportSamples:
     # PNG Screenshot samples
     # -------------------------------------------------------------------------
 
+    @pytest.mark.screenshot
     def test_save_sample_png_molecule_default(self, scene_manager_factory, test_files):
         """Save PNG screenshot with default palette."""
         sm = scene_manager_factory()
@@ -1700,6 +1703,7 @@ class TestSaveExportSamples:
         print(f"  Size: {fp.width}x{fp.height}")
         print(f"  Unique colors: {fp.unique_color_count}")
 
+    @pytest.mark.screenshot
     def test_save_sample_png_molecule_powerpoint(self, scene_manager_factory, test_files):
         """Save PNG screenshot with PowerPoint palette."""
         sm = scene_manager_factory()
@@ -1718,6 +1722,7 @@ class TestSaveExportSamples:
         print(f"  Size: {fp.width}x{fp.height}")
         print(f"  Unique colors: {fp.unique_color_count}")
 
+    @pytest.mark.screenshot
     def test_save_sample_png_transparent(self, scene_manager_factory, test_files):
         """Save PNG screenshot with transparent background."""
         sm = scene_manager_factory()
@@ -1737,6 +1742,7 @@ class TestSaveExportSamples:
         print(f"  Has transparency: {fp.has_transparency}")
         print(f"  Transparent ratio: {fp.transparent_pixel_ratio:.2%}")
 
+    @pytest.mark.screenshot
     def test_save_sample_png_benzene(self, scene_manager_factory, test_files):
         """Save PNG screenshot of benzene."""
         sm = scene_manager_factory()
@@ -1754,6 +1760,7 @@ class TestSaveExportSamples:
         print(f"  Size: {fp.width}x{fp.height}")
         print(f"  Unique colors: {fp.unique_color_count}")
 
+    @pytest.mark.screenshot
     def test_save_sample_png_all_palettes(self, scene_manager_factory, test_files):
         """Save PNG screenshots with all available palettes."""
         from chemvista.renderer.palettes import get_available_palettes
