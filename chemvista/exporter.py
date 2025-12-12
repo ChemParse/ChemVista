@@ -377,10 +377,9 @@ class Exporter:
         molecule = first_frame.molecule
         settings = first_frame.render_settings
 
-        # Import renderer for settings and bond creation
-        from .renderer.molecule import MoleculeRenderer
+        # Use the scene manager's renderer to respect custom palettes
         from dataclasses import asdict
-        renderer = MoleculeRenderer()
+        renderer = self.scene_manager.molecule_renderer
 
         # Convert settings to dict (renderer expects dict)
         settings_dict = asdict(settings) if hasattr(settings, '__dataclass_fields__') else settings
@@ -973,7 +972,6 @@ class Exporter:
         import json
         import struct
         from .scene_objects import TrajectoryObject, MoleculeObject, ScalarFieldObject
-        from .renderer.molecule import MoleculeRenderer
         from dataclasses import asdict
 
         output_path = Path(output_path)
@@ -1046,8 +1044,8 @@ class Exporter:
         logger.info(f"  Duration: {num_frames / fps:.2f} seconds")
         logger.info(f"  Resolution: {resolution}")
 
-        # Initialize renderer
-        renderer = MoleculeRenderer()
+        # Use the scene manager's renderer to respect custom palettes
+        renderer = self.scene_manager.molecule_renderer
 
         # Collect all atom positions for bounding box calculation
         all_positions = []

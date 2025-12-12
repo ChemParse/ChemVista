@@ -9,9 +9,10 @@ import numpy as np
 import pyvista as pv
 import json
 import pathlib
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Any
 from nx_ase.molecule import Molecule
 import logging
+from .palettes import load_palette, load_default_settings
 
 logger = logging.getLogger("chemvista.renderer.animated_molecule")
 
@@ -24,10 +25,18 @@ class AnimatedMoleculeRenderer:
     in-place for smooth animation without re-adding meshes to the plotter.
     """
 
+    # Default bond settings (used if not present in palette)
+    DEFAULT_BOND_SETTINGS = {
+        "color": [211, 211, 211],  # Light gray
+        "single": {"radius": 0.05},
+        "double": {"radius": 0.025, "offset": 0.03},
+        "triple": {"radius": 0.02, "offset": 0.05}
+    }
+
     def __init__(self):
-        settings_path = pathlib.Path(__file__).parent / 'molecule_renderer_settings.json'
-        with open(settings_path) as f:
-            self.atoms_settings = json.load(f)
+        settings = load_default_settings()
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        self.bond_settings = settings.get('bonds', self.DEFAULT_BOND_SETTINGS.copy())
 
         # Single merged mesh for all atoms
         self._atoms_mesh: Optional[pv.PolyData] = None
@@ -41,6 +50,33 @@ class AnimatedMoleculeRenderer:
         self._base_molecule: Optional[Molecule] = None
         self._plotter: Optional[pv.Plotter] = None
         self._settings: Optional[Dict] = None
+
+    def set_atom_settings(self, settings: Dict[str, Any]) -> None:
+        """
+        Set custom atom settings (colors and radii).
+
+        Args:
+            settings: Dictionary mapping element symbols to their settings.
+                     Each entry should have 'color' (RGB list) and 'radius' (float).
+                     Can also include 'bonds' key with bond rendering settings.
+        """
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
+
+    def set_palette(self, name_or_path: str, radius_scale: float = 1.0) -> None:
+        """
+        Set atom colors/radii from a named palette or custom file.
+
+        Args:
+            name_or_path: Built-in palette name ('chemvista', 'cpk', 'jmol')
+                         or path to a custom JSON palette file.
+            radius_scale: Scale factor for atom radii (default: 1.0)
+        """
+        settings = load_palette(name_or_path, radius_scale)
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
 
     def setup(self, molecule: Molecule, plotter: pv.Plotter, settings: dict) -> None:
         """
@@ -190,21 +226,29 @@ class AnimatedMoleculeRenderer:
         return merged
 
     def _get_bond_params(self, bond_type: int) -> List[Dict]:
-        """Get cylinder parameters for each bond type."""
+        """Get cylinder parameters for each bond type from bond_settings."""
+        single_settings = self.bond_settings.get('single', {'radius': 0.05})
+        double_settings = self.bond_settings.get('double', {'radius': 0.025, 'offset': 0.03})
+        triple_settings = self.bond_settings.get('triple', {'radius': 0.02, 'offset': 0.05})
+
         if bond_type == 1:
-            return [{'radius': 0.05, 'offset_factor': 0.0}]
+            return [{'radius': single_settings['radius'], 'offset_factor': 0.0}]
         elif bond_type == 2:
+            offset = double_settings.get('offset', 0.03)
+            radius = double_settings['radius']
             return [
-                {'radius': 0.025, 'offset_factor': -0.03},
-                {'radius': 0.025, 'offset_factor': 0.03},
+                {'radius': radius, 'offset_factor': -offset},
+                {'radius': radius, 'offset_factor': offset},
             ]
         elif bond_type == 3:
+            offset = triple_settings.get('offset', 0.05)
+            radius = triple_settings['radius']
             return [
-                {'radius': 0.02, 'offset_factor': -0.05},
-                {'radius': 0.02, 'offset_factor': 0.0},
-                {'radius': 0.02, 'offset_factor': 0.05},
+                {'radius': radius, 'offset_factor': -offset},
+                {'radius': radius, 'offset_factor': 0.0},
+                {'radius': radius, 'offset_factor': offset},
             ]
-        return [{'radius': 0.05, 'offset_factor': 0.0}]
+        return [{'radius': single_settings['radius'], 'offset_factor': 0.0}]
 
     def _create_cylinder_with_base(self, start: np.ndarray, end: np.ndarray,
                                     radius: float, offset_factor: float,
@@ -250,8 +294,9 @@ class AnimatedMoleculeRenderer:
         )
         unit_cylinder.points = transformed_points
 
-        # Set bond color to light gray with alpha
-        color = np.array([211, 211, 211], dtype=np.uint8)
+        # Get bond color from settings
+        bond_color = self.bond_settings.get('color', [211, 211, 211])
+        color = np.array(bond_color, dtype=np.uint8)
         alpha_value = int(alpha * 255)
         rgba_array = np.zeros((unit_cylinder.n_points, 4), dtype=np.uint8)
         rgba_array[:, :3] = color

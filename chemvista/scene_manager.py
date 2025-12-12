@@ -7,7 +7,7 @@ import numpy as np
 import pyvista as pv
 from nx_ase import Molecule, ScalarField, Trajectory
 
-from .renderer import MoleculeRenderer, ScalarFieldRenderer
+from .renderer import MoleculeRenderer, ScalarFieldRenderer, load_palette
 from .renderer.render_settings import (MoleculeRenderSettings,
                                        ScalarFieldRenderSettings)
 from .scene_objects import (MoleculeObject, ScalarFieldObject, SceneObject,
@@ -46,6 +46,27 @@ class SceneManager():
         for node_path, tree_node in self.root.iter_tree():
             logger.debug(f"Setting signals for {tree_node.name}")
             tree_node.signals = value
+
+    def set_palette(self, name_or_path: str, radius_scale: float = 1.0) -> None:
+        """
+        Set the color palette for molecule rendering.
+
+        This affects all molecule renderers (static and animated) and
+        exports. Changes take effect on the next render/export.
+
+        Args:
+            name_or_path: Built-in palette name ('chemvista', 'cpk', 'jmol')
+                         or path to a custom JSON palette file.
+            radius_scale: Scale factor for atom radii (default: 1.0)
+
+        Example:
+            >>> scene_manager.set_palette("cpk")
+            >>> scene_manager.set_palette("jmol", radius_scale=0.8)
+            >>> scene_manager.set_palette("/path/to/custom_palette.json")
+        """
+        settings = load_palette(name_or_path, radius_scale)
+        self.molecule_renderer.set_atom_settings(settings)
+        logger.info(f"Palette set to: {name_or_path} (radius_scale={radius_scale})")
 
     def __del__(self):
         """Cleanup resources"""

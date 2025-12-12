@@ -79,7 +79,11 @@ def test_cli_interactive_mode(mock_app_class, mock_qapp, mock_parse_args):
         cube_field=[],
         interactive=True,
         render=False,
-        screenshot=None
+        screenshot=None,
+        glb=None,
+        glb_animated=None,
+        palette=None,
+        radius_scale=1.0
     )
     mock_parse_args.return_value = args
 
@@ -113,14 +117,19 @@ def test_cli_screenshot_mode(mock_scene_manager, mock_parse_args):
         cube_field=[],
         interactive=False,
         render=False,
-        screenshot=screenshot_path
+        screenshot=screenshot_path,
+        glb=None,
+        glb_animated=None,
+        palette=None,
+        radius_scale=1.0
     )
     mock_parse_args.return_value = args
 
     # Setup mock scene manager and plotter
     mock_manager = MagicMock()
     mock_plotter = MagicMock()
-    mock_manager.render.return_value = mock_plotter
+    # render() returns (plotter, actor_map) tuple
+    mock_manager.render.return_value = (mock_plotter, {})
     mock_scene_manager.return_value = mock_manager
 
     # Call the main function with mocked dependencies
@@ -130,3 +139,37 @@ def test_cli_screenshot_mode(mock_scene_manager, mock_parse_args):
     # Verify screenshot was taken
     mock_manager.render.assert_called_once_with(off_screen=True)
     mock_plotter.screenshot.assert_called_once_with(str(screenshot_path))
+
+
+@patch('argparse.ArgumentParser.parse_args')
+@patch('chemvista.cli.SceneManager')
+def test_cli_palette_option(mock_scene_manager, mock_parse_args):
+    """Test CLI palette option"""
+    screenshot_path = pathlib.Path('screenshot.png')
+    args = argparse.Namespace(
+        xyz=[],
+        cube_mol=[],
+        cube_field=[],
+        interactive=False,
+        render=False,
+        screenshot=screenshot_path,
+        glb=None,
+        glb_animated=None,
+        palette='cpk',
+        radius_scale=0.8
+    )
+    mock_parse_args.return_value = args
+
+    # Setup mock scene manager and plotter
+    mock_manager = MagicMock()
+    mock_plotter = MagicMock()
+    # render() returns (plotter, actor_map) tuple
+    mock_manager.render.return_value = (mock_plotter, {})
+    mock_scene_manager.return_value = mock_manager
+
+    # Call the main function with mocked dependencies
+    with patch.object(sys, 'argv', ['chemvista']):
+        main()
+
+    # Verify palette was set
+    mock_manager.set_palette.assert_called_once_with('cpk', radius_scale=0.8)

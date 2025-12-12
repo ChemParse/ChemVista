@@ -15,6 +15,16 @@ from nx_ase import ScalarField
 from unittest.mock import MagicMock, patch
 import os
 
+
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    parser.addoption(
+        "--generate-fingerprints",
+        action="store_true",
+        default=False,
+        help="Regenerate reference fingerprints for export consistency tests"
+    )
+
 # Always use offscreen rendering for tests to avoid Qt display issues
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 

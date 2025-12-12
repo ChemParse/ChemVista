@@ -196,6 +196,9 @@ class SceneWidget(QWidget):
             self._animated_renderer.clear()
 
         self._animated_renderer = AnimatedMoleculeRenderer()
+        # Copy palette settings from molecule_renderer to animated renderer
+        self._animated_renderer.atoms_settings = self.scene_manager.molecule_renderer.atoms_settings.copy()
+        self._animated_renderer.bond_settings = self.scene_manager.molecule_renderer.bond_settings.copy()
         self._animated_trajectory_uuid = trajectory_obj.uuid
 
         # Get first frame molecule as base for the animated mesh

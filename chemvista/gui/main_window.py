@@ -16,6 +16,7 @@ from .widgets.trajectory_controls import TrajectoryControlsWidget
 import logging
 from .widgets.settings_dialog import (RenderSettingsDialog,
                                       ScalarFieldSettingsDialog)
+from .widgets.palette_dialog import PaletteSettingsDialog
 
 # Set up logger
 logger = logging.getLogger("chemvista.gui.main_window")
@@ -148,6 +149,14 @@ class ChemVistaApp(QMainWindow):
         background_color_action.setShortcut("Ctrl+B")
         background_color_action.triggered.connect(self.on_background_color)
         view_menu.addAction(background_color_action)
+
+        view_menu.addSeparator()
+
+        # Add palette settings action
+        palette_action = QAction("Atom Palette Settings...", self)
+        palette_action.setShortcut("Ctrl+P")
+        palette_action.triggered.connect(self.on_palette_settings)
+        view_menu.addAction(palette_action)
 
     def create_object_list(self):
         dock = QDockWidget("Objects", self)
@@ -472,6 +481,33 @@ class ChemVistaApp(QMainWindow):
         except Exception as e:
             QMessageBox.critical(
                 self, "Error", f"Failed to export animated GLB: {str(e)}"
+            )
+
+    def on_palette_settings(self):
+        """Open the atom palette settings dialog."""
+        try:
+            # Get current palette settings from the molecule renderer
+            # Include both atom settings and bond settings
+            current_settings = self.scene_manager.molecule_renderer.atoms_settings.copy()
+            current_settings['bonds'] = self.scene_manager.molecule_renderer.bond_settings.copy()
+
+            # Create and show the dialog
+            dialog = PaletteSettingsDialog(current_settings, parent=self)
+
+            if dialog.exec_() == QDialog.Accepted:
+                new_settings = dialog.get_settings()
+
+                # Apply the new settings to the renderer
+                self.scene_manager.molecule_renderer.set_atom_settings(new_settings)
+
+                logger.info("Palette settings updated")
+
+                # Refresh the view to show the changes
+                self.refresh_view()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to update palette settings: {str(e)}"
             )
 
 

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication
 from chemvista import SceneManager
 from chemvista.gui import ChemVistaApp
 from chemvista.gui.qt_utils import setup_environment
+from chemvista.renderer import get_available_palettes
 
 
 def main():
@@ -43,6 +44,14 @@ def main():
     parser.add_argument('--scale', type=str, default=None,
                         help='Scale factor for model size. Use "auto" to fit in 2-unit box, or a number (e.g., 0.1)')
 
+    # Color palette options
+    available_palettes = get_available_palettes()
+    parser.add_argument('--palette', type=str, default=None,
+                        help=f'Color palette for atoms. Built-in: {", ".join(available_palettes)}. '
+                             'Or provide path to custom JSON file.')
+    parser.add_argument('--radius-scale', type=float, default=1.0,
+                        help='Scale factor for atom radii (default: 1.0)')
+
     args = parser.parse_args()
 
     scene_manager = SceneManager()
@@ -55,6 +64,19 @@ def main():
     for cube_file in args.cube_field:
         scene_manager.load_scalar_field_from_cube(cube_file)
 
+    # Apply palette if specified
+    if args.palette:
+        try:
+            scene_manager.set_palette(args.palette, radius_scale=args.radius_scale)
+            print(f"Using palette: {args.palette} (radius scale: {args.radius_scale})")
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+    elif args.radius_scale != 1.0:
+        # Apply radius scale to default palette
+        scene_manager.set_palette("chemvista", radius_scale=args.radius_scale)
+        print(f"Using default palette with radius scale: {args.radius_scale}")
+
     if args.interactive:
         # Mode 1: Full PyQt GUI application
         setup_environment()  # This will print system info and setup environment
@@ -63,7 +85,7 @@ def main():
         sys.exit(app.exec_())
     elif args.screenshot:
         # Mode 3: Save a screenshot to the specified file
-        plotter = scene_manager.render(off_screen=True)
+        plotter, _ = scene_manager.render(off_screen=True)
         plotter.screenshot(str(args.screenshot))
         print(f"Screenshot saved to: {args.screenshot}")
     elif args.glb:
@@ -101,7 +123,7 @@ def main():
             sys.exit(1)
     else:
         # Mode 2: Just render with PyVista (default mode)
-        plotter = scene_manager.render()
+        plotter, _ = scene_manager.render()
         plotter.show()
 
 

@@ -2,17 +2,65 @@ import numpy as np
 import pyvista as pv
 import json
 import pathlib
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Union
 from nx_ase.molecule import Molecule
 from .base import Renderer
+from .palettes import load_palette, load_default_settings
 
 
 class MoleculeRenderer(Renderer):
+    # Default bond settings (used if not present in palette)
+    DEFAULT_BOND_SETTINGS = {
+        "color": [211, 211, 211],  # Light gray
+        "single": {"radius": 0.05},
+        "double": {"radius": 0.025, "offset": 0.03},
+        "triple": {"radius": 0.02, "offset": 0.05}
+    }
+
     def __init__(self):
-        settings_path = pathlib.Path(
-            __file__).parent / 'molecule_renderer_settings.json'
-        with open(settings_path) as f:
-            self.atoms_settings = json.load(f)
+        settings = load_default_settings()
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        self.bond_settings = settings.get('bonds', self.DEFAULT_BOND_SETTINGS.copy())
+
+    def set_atom_settings(self, settings: Dict[str, Any]) -> None:
+        """
+        Set custom atom settings (colors and radii).
+
+        Args:
+            settings: Dictionary mapping element symbols to their settings.
+                     Each entry should have 'color' (RGB list) and 'radius' (float).
+                     Can also include 'bonds' key with bond rendering settings.
+
+        Example:
+            >>> renderer.set_atom_settings({
+            ...     "C": {"color": [50, 50, 50], "radius": 0.2},
+            ...     "H": {"color": [255, 255, 255], "radius": 0.1},
+            ...     "bonds": {"color": [200, 200, 200], ...}
+            ... })
+        """
+        # Separate atom settings from bond settings
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
+
+    def set_palette(self, name_or_path: str, radius_scale: float = 1.0) -> None:
+        """
+        Set atom colors/radii from a named palette or custom file.
+
+        Args:
+            name_or_path: Built-in palette name ('chemvista', 'cpk', 'jmol')
+                         or path to a custom JSON palette file.
+            radius_scale: Scale factor for atom radii (default: 1.0)
+
+        Example:
+            >>> renderer.set_palette("cpk")
+            >>> renderer.set_palette("jmol", radius_scale=0.8)
+            >>> renderer.set_palette("/path/to/custom_palette.json")
+        """
+        settings = load_palette(name_or_path, radius_scale)
+        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
 
     def get_default_settings(self) -> dict:
         return {
@@ -154,24 +202,31 @@ class MoleculeRenderer(Renderer):
         if np.linalg.norm(surface_end - surface_start) < 1e-6:
             return cylinders
 
+        # Get bond settings
+        single_settings = self.bond_settings.get('single', {'radius': 0.05})
+        double_settings = self.bond_settings.get('double', {'radius': 0.025, 'offset': 0.03})
+        triple_settings = self.bond_settings.get('triple', {'radius': 0.02, 'offset': 0.05})
+
         if bond_type == 1:
             cyl = self._create_single_cylinder(
-                surface_start, surface_end, 0.05, alpha, resolution)
+                surface_start, surface_end, single_settings['radius'], alpha, resolution)
             cylinders.append(cyl)
         elif bond_type == 2:
-            offset = 0.03
+            offset = double_settings.get('offset', 0.03)
+            radius = double_settings['radius']
             for i in [-1, 1]:
                 offset_vec = i * offset * perp_vector
                 cyl = self._create_single_cylinder(
-                    surface_start + offset_vec, surface_end + offset_vec, 0.025, alpha, resolution
+                    surface_start + offset_vec, surface_end + offset_vec, radius, alpha, resolution
                 )
                 cylinders.append(cyl)
         elif bond_type == 3:
-            offset = 0.05
+            offset = triple_settings.get('offset', 0.05)
+            radius = triple_settings['radius']
             for i in [-1, 0, 1]:
                 offset_vec = i * offset * perp_vector
                 cyl = self._create_single_cylinder(
-                    surface_start + offset_vec, surface_end + offset_vec, 0.02, alpha, resolution
+                    surface_start + offset_vec, surface_end + offset_vec, radius, alpha, resolution
                 )
                 cylinders.append(cyl)
 
@@ -189,8 +244,9 @@ class MoleculeRenderer(Renderer):
             capping=False
         )
 
-        # Set bond color to light gray with alpha
-        color = np.array([211, 211, 211], dtype=np.uint8)
+        # Get bond color from settings
+        bond_color = self.bond_settings.get('color', [211, 211, 211])
+        color = np.array(bond_color, dtype=np.uint8)
         alpha_value = int(alpha * 255)
         rgba_array = np.zeros((cylinder.n_points, 4), dtype=np.uint8)
         rgba_array[:, :3] = color
