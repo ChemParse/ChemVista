@@ -20,6 +20,7 @@ Quick Reference
    chemvista [--xyz FILE...] [--cube-mol FILE...] [--cube-field FILE...]
              [-i | -r | -s FILE | -g FILE | --glb-animated FILE]
              [--fps N] [--resolution N] [--cycle] [--scale VALUE]
+             [--palette NAME]
 
 File Loading Options
 --------------------
@@ -213,6 +214,32 @@ Scale factor for model size:
 * ``auto``: Automatically fit model in 2-unit box
 * Number (e.g., ``0.1``): Multiply all coordinates by this factor
 * Omit: Keep original coordinates (Angstroms)
+
+Rendering Options
+-----------------
+
+--palette
+~~~~~~~~~
+
+Set the color palette for atom coloring:
+
+.. code-block:: bash
+
+   # Use PowerPoint palette (darker colors for presentations)
+   chemvista --xyz molecule.xyz --palette powerpoint --glb molecule.glb
+
+   # Use classic CPK coloring
+   chemvista --xyz molecule.xyz --palette cpk --interactive
+
+**Available palettes:**
+
+* ``chemvista``: Default palette with vibrant colors (default)
+* ``cpk``: Classic CPK coloring (Corey-Pauling-Koltun)
+* ``jmol``: Jmol color scheme
+* ``powerpoint``: Darker colors optimized for PowerPoint 3D (no shadows)
+
+**Use case:** The PowerPoint palette uses darker colors because PowerPoint's 3D viewer
+doesn't support shadows, making standard bright colors appear washed out.
 
 Examples
 --------

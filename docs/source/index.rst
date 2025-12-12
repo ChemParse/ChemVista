@@ -90,6 +90,7 @@ Contents
    user_guide/installation
    user_guide/cli
    user_guide/gui
+   user_guide/palettes
    user_guide/file_formats
 
 .. toctree::

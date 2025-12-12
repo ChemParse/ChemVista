@@ -1,17 +1,38 @@
-# ChemVista
+<p align="center">
+  <img src="image/README/logo.png" alt="ChemVista Logo" width="200"/>
+</p>
+
+<h1 align="center">ChemVista</h1>
+
+<p align="center">
+  <strong>A powerful chemical visualization tool for 3D molecular rendering</strong>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python Version"/>
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License"/>
+  <img src="https://img.shields.io/badge/VTK-9.5+-orange.svg" alt="VTK Version"/>
+</p>
+
+---
 
 ChemVista is a chemical visualization tool built with Python, PyQt5, and PyVista for 3D molecular rendering. It provides both a CLI and GUI for visualizing molecules, trajectories, and scalar fields from computational chemistry files (XYZ and CUBE formats).
+
+<p align="center">
+  <img src="image/README/gui.png" alt="ChemVista GUI" width="800"/>
+</p>
 
 ## Features
 
 - **3D Molecular Visualization**: Render molecules with atoms, bonds, and multiple bond types
 - **Scalar Field Visualization**: Display electron density and other scalar fields as isosurfaces
-- **Trajectory Animation**: Load and visualize molecular dynamics trajectories
-- **Interactive GUI**: PyQt5-based interface with scene tree and property editors
+- **Trajectory Animation**: Load and visualize molecular dynamics trajectories with smooth interpolation
+- **Interactive GUI**: PyQt5-based interface with scene tree, property editors, and trajectory controls
+- **Multiple Color Palettes**: CPK, Jmol, ChemVista default, and PowerPoint-optimized palettes
 - **Export to GLB**: Export molecules and scalar fields to GLB format for PowerPoint 3D and other 3D viewers
-- **Animated Trajectory Export**: Export molecular trajectories as animated GLB files with skeletal animation for PowerPoint
+- **Animated Trajectory Export**: Export molecular trajectories as animated GLB files with skeletal animation
 - **CLI Support**: Command-line interface for batch processing and scripting
-- **Screenshot Generation**: Save high-quality renders as images
+- **Screenshot Generation**: Save high-quality renders as PNG images with optional transparency
 
 ## Installation
 
@@ -74,6 +95,41 @@ plotter = scene.render()
 plotter.show()
 
 # Export to GLB for PowerPoint
+scene.export_to_glb("molecule.glb")
+```
+
+### Color Palettes
+
+ChemVista supports multiple color palettes for atom coloring:
+
+| Palette | Description |
+|---------|-------------|
+| `chemvista` | Default palette with vibrant colors (default) |
+| `cpk` | Classic CPK coloring (Corey-Pauling-Koltun) |
+| `jmol` | Jmol color scheme |
+| `powerpoint` | Darker colors optimized for PowerPoint 3D (no shadows) |
+
+**Using palettes via CLI:**
+
+```bash
+# Use PowerPoint palette (darker colors for no-shadow viewing)
+chemvista --xyz molecule.xyz --palette powerpoint --glb molecule.glb
+```
+
+**Using palettes via Python API:**
+
+```python
+from chemvista import SceneManager
+
+scene = SceneManager()
+scene.load_xyz("molecule.xyz")
+
+# Set palette globally
+scene.set_palette("powerpoint")
+
+# Or set per-object
+mol_obj.render_settings.palette = "cpk"
+
 scene.export_to_glb("molecule.glb")
 ```
 
@@ -170,11 +226,13 @@ poetry run pytest tests/test_exporter.py -v
 ## Dependencies
 
 - Python >=3.10
+- VTK >=9.5.0: 3D rendering backend
 - PyVista: 3D visualization
 - PyQt5: GUI framework
 - nx_ase: Molecular data structures
 - trimesh: 3D model export
-- ASE, NetworkX, NumPy, and more (see pyproject.toml)
+- Pillow: Image processing
+- ASE, NetworkX, NumPy, SciPy (see pyproject.toml for full list)
 
 ## Third-Party Assets
 
