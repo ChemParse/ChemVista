@@ -172,13 +172,27 @@ from chemvista import SceneManager
 scene = SceneManager()
 traj_obj = scene.load_xyz("trajectory.xyz")
 
-# Export as animated GLB for PowerPoint
+# Export single trajectory as animated GLB
 scene.export_trajectory_animated_glb(
     trajectory_object=traj_obj,
     output_path="animated_trajectory.glb",
     fps=15,
     resolution=10,      # Lower = smaller file (default: 10)
     cycle_animation=True  # Add reverse frames for seamless loop
+)
+
+# Export multiple trajectories as separate animations in ONE file
+phase1 = scene.load_xyz("phase1.xyz")
+phase2 = scene.load_xyz("phase2.xyz")
+phase3 = scene.load_xyz("phase3.xyz")
+
+scene.export_multi_trajectory_animated_glb(
+    trajectory_objects=[phase1, phase2, phase3],
+    output_path="multi_animation.glb",
+    animation_names=["Phase 1", "Phase 2", "Phase 3"],
+    fps=10,
+    resolution=10,
+    scale="auto"  # Auto-scale to fit viewer
 )
 ```
 
@@ -187,7 +201,15 @@ scene.export_trajectory_animated_glb(
 2. Select the .glb file
 3. The animation will play automatically when presenting!
 
-**Note:** PowerPoint only supports skeletal animations. Each atom becomes a bone in the skeleton, allowing smooth animation playback.
+**In Windows 3D Viewer or online viewers:**
+- Open the GLB file
+- Use the animation dropdown to select which animation to play
+- Perfect for comparing different simulation phases!
+
+**Note:** 
+- PowerPoint only supports skeletal animations. Each atom becomes a bone in the skeleton, allowing smooth animation playback.
+- PowerPoint may only play the first animation by default, but other viewers can select from multiple animations.
+- Multi-animation GLB files save space: 4 animations in one file (725 KB) vs 4 separate files (2.7 MB)
 
 See [examples/export_to_glb.py](examples/export_to_glb.py) for more examples.
 

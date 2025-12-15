@@ -544,3 +544,105 @@ class SceneManager():
         exporter = Exporter(self)
         exporter.export_trajectory_animated_glb(trajectory_object, output_path, fps=fps, **kwargs)
         logger.info(f"Animated trajectory exported to {output_path}")
+
+    def export_multi_trajectory_animated_glb(
+        self,
+        trajectory_objects: List[TrajectoryObject],
+        output_path: Union[str, pathlib.Path],
+        animation_names: Optional[List[str]] = None,
+        fps: int = 10,
+        **kwargs
+    ) -> None:
+        """
+        Export multiple trajectories as separate animations in a single GLB file.
+
+        This creates a 3D model with multiple named animations that can be selected
+        in compatible viewers. All trajectories share the same mesh and skeleton
+        but have different keyframe data. Perfect for exporting related simulations
+        (e.g., different phases of a molecular motor).
+
+        Args:
+            trajectory_objects: List of TrajectoryObject instances to export
+            output_path: Path where the GLB file will be saved
+            animation_names: Optional list of names for each animation. If None, uses trajectory names
+            fps: Frames per second for all animations (default: 10)
+            **kwargs: Additional arguments (resolution, scale, etc.)
+
+        Raises:
+            ValueError: If no trajectories provided or inconsistent atom counts
+            RuntimeError: If export fails
+
+        Example:
+            >>> scene_manager = SceneManager()
+            >>> phase1 = scene_manager.load_xyz("phase1.xyz")
+            >>> phase2 = scene_manager.load_xyz("phase2.xyz")
+            >>> scene_manager.export_multi_trajectory_animated_glb(
+            ...     [phase1, phase2], "motor_phases.glb",
+            ...     animation_names=["Phase 1", "Phase 2"], fps=15)
+
+        Note:
+            - All trajectories must have the same number and type of atoms
+            - PowerPoint may only play the first animation by default
+            - Other viewers (like Windows 3D Viewer) can select animations
+            - Similar to how the T-Rex.glb has multiple animations (run, bite, etc.)
+        """
+        from .exporter import Exporter
+
+        exporter = Exporter(self)
+        exporter.export_multi_trajectory_animated_glb(
+            trajectory_objects, output_path, animation_names=animation_names, fps=fps, **kwargs
+        )
+        logger.info(f"Multi-animation trajectory exported to {output_path}")
+
+    def export_multi_trajectory_animated_glb(
+        self,
+        trajectory_objects: List[TrajectoryObject],
+        output_path: Union[str, pathlib.Path],
+        animation_names: Optional[List[str]] = None,
+        fps: int = 10,
+        **kwargs
+    ) -> None:
+        """
+        Export multiple trajectories as separate animations in a single GLB file.
+
+        This creates a multi-animation 3D model file where each trajectory becomes
+        a named animation that can be selected in compatible viewers. All animations
+        share the same mesh geometry and skeleton structure but have different
+        keyframe data.
+
+        Args:
+            trajectory_objects: List of TrajectoryObject instances to export
+            output_path: Path where the GLB file will be saved
+            animation_names: Optional list of names for each animation. If None, uses trajectory names
+            fps: Frames per second for all animations (default: 10)
+            **kwargs: Additional arguments (resolution, scale, etc.)
+
+        Raises:
+            ValueError: If no trajectories provided or inconsistent atom counts/types
+            RuntimeError: If export fails
+
+        Example:
+            >>> scene_manager = SceneManager()
+            >>> traj1 = scene_manager.load_xyz("phase1.xyz")
+            >>> traj2 = scene_manager.load_xyz("phase2.xyz")
+            >>> traj3 = scene_manager.load_xyz("phase3.xyz")
+            >>> scene_manager.export_multi_trajectory_animated_glb(
+            ...     [traj1, traj2, traj3], "motor_cycle.glb",
+            ...     animation_names=["Phase 1", "Phase 2", "Phase 3"])
+
+        Note:
+            - All trajectories must have the same number and types of atoms
+            - Each trajectory becomes a separate named animation in the file
+            - PowerPoint may only play the first animation by default
+            - Other viewers (Windows 3D Viewer, Babylon.js) support animation selection
+        """
+        from .exporter import Exporter
+
+        exporter = Exporter(self)
+        exporter.export_multi_trajectory_animated_glb(
+            trajectory_objects, output_path, 
+            animation_names=animation_names, 
+            fps=fps, 
+            **kwargs
+        )
+        logger.info(f"Multi-animation GLB exported to {output_path}")
