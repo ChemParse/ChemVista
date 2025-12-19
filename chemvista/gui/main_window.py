@@ -169,16 +169,20 @@ class ChemVistaApp(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
         # Connect selection signal to update trajectory controls
-        self.tree_widget_signals.selection_changed.connect(self._on_tree_selection_changed)
+        self.tree_widget_signals.selection_changed.connect(
+            self._on_tree_selection_changed)
 
     def create_trajectory_controls(self):
         """Create the trajectory animation controls dock widget"""
         self.trajectory_dock = QDockWidget("Trajectory Controls", self)
-        self.trajectory_dock.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
+        self.trajectory_dock.setAllowedAreas(
+            Qt.BottomDockWidgetArea | Qt.TopDockWidgetArea)
 
         self.trajectory_controls = TrajectoryControlsWidget(self)
-        self.trajectory_controls.frame_changed.connect(self._on_trajectory_frame_changed)
-        self.trajectory_controls.time_changed.connect(self._on_trajectory_time_changed)
+        self.trajectory_controls.frame_changed.connect(
+            self._on_trajectory_frame_changed)
+        self.trajectory_controls.time_changed.connect(
+            self._on_trajectory_time_changed)
 
         self.trajectory_dock.setWidget(self.trajectory_controls)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.trajectory_dock)
@@ -304,13 +308,13 @@ class ChemVistaApp(QMainWindow):
 
                 # Create render settings dialog
                 render_dialog = RenderDialog(parent=self)
-                
+
                 if render_dialog.exec_() == QDialog.Accepted:
                     settings = render_dialog.get_settings()
-                    
+
                     # Perform high-quality render
                     self.scene_widget.render_high_quality(file_name, settings)
-                    
+
                     QMessageBox.information(
                         self,
                         "Render Saved",
@@ -330,7 +334,8 @@ class ChemVistaApp(QMainWindow):
     def refresh_interpolated_view(self):
         """Update the visualization with interpolated trajectory positions"""
         if self._animation_time is not None and self._animating_trajectory_uuid:
-            logger.debug(f"Refreshing interpolated view at time {self._animation_time:.2f}")
+            logger.debug(
+                f"Refreshing interpolated view at time {self._animation_time:.2f}")
             self.scene_widget.refresh_interpolated_view(
                 self._animating_trajectory_uuid,
                 self._animation_time
@@ -394,18 +399,18 @@ class ChemVistaApp(QMainWindow):
             current_color = None
             if hasattr(self.scene_widget.plotter, 'background_color'):
                 current_color = self.scene_widget.plotter.background_color
-            
+
             # Open color dialog
             color = QColorDialog.getColor(
                 parent=self,
                 title="Choose Background Color"
             )
-            
+
             if color.isValid():
                 # Set the background color
                 self.scene_widget.set_background_color(color.name())
                 logger.info(f"Background color changed to: {color.name()}")
-                
+
         except Exception as e:
             QMessageBox.critical(
                 self, "Error", f"Failed to change background color: {str(e)}"
@@ -426,13 +431,24 @@ class ChemVistaApp(QMainWindow):
                 if not pathlib.Path(file_name).suffix:
                     file_name += ".glb"
 
-                self.scene_manager.export_to_glb(file_name)
+                # Show export mode dialog
+                export_dialog = StaticExportDialog(parent=self)
 
-                QMessageBox.information(
-                    self,
-                    "Export Complete",
-                    f"Scene exported to {file_name}"
-                )
+                if export_dialog.exec_() == QDialog.Accepted:
+                    settings = export_dialog.get_settings()
+
+                    self.scene_manager.export_to_glb(
+                        file_name,
+                        printing_mode=settings['printing_mode'],
+                        printing_resolution=settings['printing_resolution']
+                    )
+
+                    mode_str = " (3D printing mode)" if settings['printing_mode'] else ""
+                    QMessageBox.information(
+                        self,
+                        "Export Complete",
+                        f"Scene exported to {file_name}{mode_str}"
+                    )
 
         except Exception as e:
             QMessageBox.critical(
@@ -489,7 +505,8 @@ class ChemVistaApp(QMainWindow):
             # Get current palette settings from the molecule renderer
             # Include both atom settings and bond settings
             current_settings = self.scene_manager.molecule_renderer.atoms_settings.copy()
-            current_settings['bonds'] = self.scene_manager.molecule_renderer.bond_settings.copy()
+            current_settings['bonds'] = self.scene_manager.molecule_renderer.bond_settings.copy(
+            )
 
             # Create and show the dialog
             dialog = PaletteSettingsDialog(current_settings, parent=self)
@@ -498,7 +515,8 @@ class ChemVistaApp(QMainWindow):
                 new_settings = dialog.get_settings()
 
                 # Apply the new settings to the renderer
-                self.scene_manager.molecule_renderer.set_atom_settings(new_settings)
+                self.scene_manager.molecule_renderer.set_atom_settings(
+                    new_settings)
 
                 logger.info("Palette settings updated")
 
@@ -509,6 +527,84 @@ class ChemVistaApp(QMainWindow):
             QMessageBox.critical(
                 self, "Error", f"Failed to update palette settings: {str(e)}"
             )
+
+
+class StaticExportDialog(QDialog):
+    """Dialog for static GLB export settings"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("GLB Export Settings")
+        self.setModal(True)
+
+        layout = QVBoxLayout()
+
+        # Export mode selection
+        mode_label = QLabel("<b>Export Mode:</b>")
+        layout.addWidget(mode_label)
+
+        self.viz_radio = QCheckBox(
+            "Visualization (default - with gaps between atoms and bonds)")
+        self.viz_radio.setChecked(True)
+        layout.addWidget(self.viz_radio)
+
+        self.print_radio = QCheckBox(
+            "3D Printing (no gaps, high resolution, solid)")
+        layout.addWidget(self.print_radio)
+
+        # Make them mutually exclusive
+        self.viz_radio.stateChanged.connect(
+            lambda state: self.print_radio.setChecked(not state))
+        self.print_radio.stateChanged.connect(
+            lambda state: self.viz_radio.setChecked(not state))
+
+        layout.addSpacing(10)
+
+        # Resolution setting (only for printing mode)
+        res_layout = QHBoxLayout()
+        res_layout.addWidget(QLabel("3D Printing Resolution:"))
+        self.resolution_spin = QSpinBox()
+        self.resolution_spin.setRange(16, 64)
+        self.resolution_spin.setValue(32)
+        self.resolution_spin.setToolTip(
+            "Higher = smoother surfaces but larger file")
+        self.resolution_spin.setEnabled(False)
+        res_layout.addWidget(self.resolution_spin)
+        layout.addLayout(res_layout)
+
+        # Enable resolution spin only in printing mode
+        self.print_radio.stateChanged.connect(
+            lambda state: self.resolution_spin.setEnabled(state))
+
+        layout.addSpacing(10)
+
+        # Info text
+        info_label = QLabel(
+            "<small><i>3D Printing mode creates watertight meshes with bonds "
+            "connected center-to-center for better printing results.</i></small>"
+        )
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_btn = QPushButton("Export")
+        cancel_btn = QPushButton("Cancel")
+
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+
+        button_layout.addWidget(ok_btn)
+        button_layout.addWidget(cancel_btn)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def get_settings(self):
+        return {
+            'printing_mode': self.print_radio.isChecked(),
+            'printing_resolution': self.resolution_spin.value()
+        }
 
 
 class AnimatedExportDialog(QDialog):
@@ -548,7 +644,8 @@ class AnimatedExportDialog(QDialog):
         scale_layout = QHBoxLayout()
         scale_layout.addWidget(QLabel("Scale:"))
         self.scale_combo = QComboBox()
-        self.scale_combo.addItems(["None (Angstroms)", "Auto (fit to 2 units)", "Custom..."])
+        self.scale_combo.addItems(
+            ["None (Angstroms)", "Auto (fit to 2 units)", "Custom..."])
         self.scale_combo.currentIndexChanged.connect(self._on_scale_changed)
         scale_layout.addWidget(self.scale_combo)
 
@@ -600,9 +697,9 @@ class RenderDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Render Settings")
         self.setModal(True)
-        
+
         layout = QVBoxLayout()
-        
+
         # Resolution settings
         res_layout = QHBoxLayout()
         res_layout.addWidget(QLabel("Width:"))
@@ -610,37 +707,37 @@ class RenderDialog(QDialog):
         self.width_spin.setRange(100, 8192)
         self.width_spin.setValue(1920)
         res_layout.addWidget(self.width_spin)
-        
+
         res_layout.addWidget(QLabel("Height:"))
         self.height_spin = QSpinBox()
         self.height_spin.setRange(100, 8192)
         self.height_spin.setValue(1080)
         res_layout.addWidget(self.height_spin)
-        
+
         layout.addLayout(res_layout)
-        
+
         # Quality settings
         self.anti_aliasing_cb = QCheckBox("Anti-aliasing")
         self.anti_aliasing_cb.setChecked(True)
         layout.addWidget(self.anti_aliasing_cb)
-        
+
         self.shadows_cb = QCheckBox("Shadows")
         layout.addWidget(self.shadows_cb)
-        
+
         # Buttons
         button_layout = QHBoxLayout()
         ok_btn = QPushButton("Render")
         cancel_btn = QPushButton("Cancel")
-        
+
         ok_btn.clicked.connect(self.accept)
         cancel_btn.clicked.connect(self.reject)
-        
+
         button_layout.addWidget(ok_btn)
         button_layout.addWidget(cancel_btn)
         layout.addLayout(button_layout)
-        
+
         self.setLayout(layout)
-    
+
     def get_settings(self):
         return {
             'width': self.width_spin.value(),

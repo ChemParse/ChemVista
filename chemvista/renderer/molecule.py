@@ -19,8 +19,10 @@ class MoleculeRenderer(Renderer):
 
     def __init__(self):
         settings = load_default_settings()
-        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
-        self.bond_settings = settings.get('bonds', self.DEFAULT_BOND_SETTINGS.copy())
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
+        self.bond_settings = settings.get(
+            'bonds', self.DEFAULT_BOND_SETTINGS.copy())
 
     def set_atom_settings(self, settings: Dict[str, Any]) -> None:
         """
@@ -39,7 +41,8 @@ class MoleculeRenderer(Renderer):
             ... })
         """
         # Separate atom settings from bond settings
-        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
         if 'bonds' in settings:
             self.bond_settings = settings['bonds']
 
@@ -58,7 +61,8 @@ class MoleculeRenderer(Renderer):
             >>> renderer.set_palette("/path/to/custom_palette.json")
         """
         settings = load_palette(name_or_path, radius_scale)
-        self.atoms_settings = {k: v for k, v in settings.items() if k != 'bonds'}
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
         if 'bonds' in settings:
             self.bond_settings = settings['bonds']
 
@@ -137,8 +141,14 @@ class MoleculeRenderer(Renderer):
 
         return merged_spheres
 
-    def _create_bonds_mesh(self, molecule: Molecule, settings: dict) -> Optional[pv.PolyData]:
-        """Create a single mesh containing all bonds"""
+    def _create_bonds_mesh(self, molecule: Molecule, settings: dict, center_to_center: bool = False) -> Optional[pv.PolyData]:
+        """Create a single mesh containing all bonds
+
+        Args:
+            molecule: Molecule to render
+            settings: Render settings
+            center_to_center: If True, bonds go center-to-center (for 3D printing)
+        """
         merged_bonds = None
 
         for bond in molecule.get_all_bonds():
@@ -153,13 +163,15 @@ class MoleculeRenderer(Renderer):
             bond_type = molecule.G[bond[0]][bond[1]].get('bond_type', 1)
 
             # Get atom radii to offset bond endpoints to atom surfaces
-            radius_a = self.atoms_settings.get(symbol_a, self.atoms_settings['Unknown'])['radius']
-            radius_b = self.atoms_settings.get(symbol_b, self.atoms_settings['Unknown'])['radius']
+            radius_a = self.atoms_settings.get(
+                symbol_a, self.atoms_settings['Unknown'])['radius']
+            radius_b = self.atoms_settings.get(
+                symbol_b, self.atoms_settings['Unknown'])['radius']
 
-            # Create cylinders for bond
+            # Create cylinders for bond with center_to_center flag
             cylinders = self._create_bond_cylinders(
                 atom_a, atom_b, bond_type, settings['alpha'], settings['resolution'],
-                radius_a, radius_b
+                radius_a, radius_b, center_to_center=center_to_center
             )
 
             for cylinder in cylinders:
@@ -172,7 +184,8 @@ class MoleculeRenderer(Renderer):
 
     def _create_bond_cylinders(self, start: np.ndarray, end: np.ndarray,
                                bond_type: int, alpha: float, resolution: int,
-                               radius_a: float = 0.0, radius_b: float = 0.0) -> List[pv.PolyData]:
+                               radius_a: float = 0.0, radius_b: float = 0.0,
+                               center_to_center: bool = False) -> List[pv.PolyData]:
         """Create cylinders for a single bond.
 
         Args:
@@ -183,6 +196,7 @@ class MoleculeRenderer(Renderer):
             resolution: Cylinder resolution
             radius_a: Radius of first atom (to offset bond start to surface)
             radius_b: Radius of second atom (to offset bond end to surface)
+            center_to_center: If True, bonds go from atom center to center (3D printing mode)
         """
         cylinders = []
         bond_vector = end - start
@@ -194,9 +208,15 @@ class MoleculeRenderer(Renderer):
         unit_vector = bond_vector / bond_length
         perp_vector = self._get_perpendicular_vector(unit_vector)
 
-        # Offset start and end points to atom surfaces
-        surface_start = start + radius_a * unit_vector
-        surface_end = end - radius_b * unit_vector
+        # Offset start and end points to atom surfaces (unless center_to_center mode)
+        if center_to_center:
+            # 3D printing mode: bonds go from center to center
+            surface_start = start
+            surface_end = end
+        else:
+            # Visualization mode: bonds offset to atom surfaces (creates gap)
+            surface_start = start + radius_a * unit_vector
+            surface_end = end - radius_b * unit_vector
 
         # Check if bond is too short after offsetting (atoms overlapping)
         if np.linalg.norm(surface_end - surface_start) < 1e-6:
@@ -204,8 +224,10 @@ class MoleculeRenderer(Renderer):
 
         # Get bond settings
         single_settings = self.bond_settings.get('single', {'radius': 0.05})
-        double_settings = self.bond_settings.get('double', {'radius': 0.025, 'offset': 0.03})
-        triple_settings = self.bond_settings.get('triple', {'radius': 0.02, 'offset': 0.05})
+        double_settings = self.bond_settings.get(
+            'double', {'radius': 0.025, 'offset': 0.03})
+        triple_settings = self.bond_settings.get(
+            'triple', {'radius': 0.02, 'offset': 0.05})
 
         if bond_type == 1:
             cyl = self._create_single_cylinder(
@@ -235,13 +257,14 @@ class MoleculeRenderer(Renderer):
     def _create_single_cylinder(self, start: np.ndarray, end: np.ndarray,
                                 radius: float, alpha: float, resolution: int) -> pv.PolyData:
         """Create a single cylinder with color data"""
+        # Use capping=True so the cylinder is closed at both ends (helps produce watertight solids)
         cylinder = pv.Cylinder(
             center=0.5*(start + end),
             direction=end - start,
             height=np.linalg.norm(end - start),
             radius=radius,
             resolution=resolution,
-            capping=False
+            capping=True
         )
 
         # Get bond color from settings
@@ -270,5 +293,6 @@ class MoleculeRenderer(Renderer):
         """
         poly = pv.PolyData(molecule.positions)
         poly["Labels"] = [str(i) for i in range(len(molecule))]
-        actor = plotter.add_point_labels(poly, "Labels", point_size=20, font_size=36)
+        actor = plotter.add_point_labels(
+            poly, "Labels", point_size=20, font_size=36)
         return actor

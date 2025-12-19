@@ -29,6 +29,8 @@ class ScalarFieldRenderer(Renderer):
             'grid_points_color', 'grid_points_size', 'smooth_surface',
             'show_filtered_points', 'point_value_range'
         }
+        # allow optional keys used for producing solids
+        optional = {'solid_isosurface', 'fill_holes_size'}
         return all(key in settings for key in required)
 
     def render(self, field: ScalarField, plotter: pv.Plotter, settings: dict) -> List:
@@ -78,26 +80,61 @@ class ScalarFieldRenderer(Renderer):
 
                     # Only try to smooth if we have valid triangles
                     if contour.n_points > 0:
+                        # Convert to triangle mesh and clean
                         try:
-                            if settings['smooth_surface']:
-                                contour = contour.subdivide(
-                                    nsub=2, subfilter='loop')
-                                contour = contour.smooth(n_iter=50)
-                        except pv.core.errors.NotAllTrianglesError:
-                            # If smoothing fails, just use the unsmoothed contour
+                            contour = contour.triangulate()
+                        except Exception:
                             pass
+                        try:
+                            contour = contour.clean()
+                        except Exception:
+                            pass
+
+                        # Optionally attempt to fill holes to make mesh watertight (best-effort)
+                        fill_size = settings.get('fill_holes_size', None)
+                        if settings.get('solid_isosurface', False) and fill_size:
+                            try:
+                                # fill_holes radius expects a float; large value closes large openings
+                                contour.fill_holes(fill_size)
+                            except Exception:
+                                # ignore if method not available / fails
+                                pass
+
+                        # Recompute normals (needed for some downstream ops and for extrusions)
+                        try:
+                            contour = contour.compute_normals(
+                                cell_normals=False, point_normals=True, inplace=False)
+                        except Exception:
+                            pass
+
+                        # If the user wants a true volumetric rendering (not a triangle surface),
+                        # allow add_volume for visualization (not for STL export). We still
+                        # produce the closed surface mesh above for exporters.
+                        if settings.get('use_volume_rendering', False):
+                            try:
+                                actor = plotter.add_volume(
+                                    grid, scalars="scalar_field", opacity=settings['opacity'])
+                                actors.append(actor)
+                                print(
+                                    f'Added volumetric rendering for isovalue {iso_value}')
+                                continue
+                            except Exception:
+                                # fallback to surface mesh if volume render fails
+                                pass
+
                         # Use the corresponding color for this isosurface
-                        color = colors[i].strip() if isinstance(
+                        color_str = colors[i].strip() if isinstance(
                             colors[i], str) else colors[i]
                         actor = plotter.add_mesh(
                             contour,
-                            color=color,
+                            color=color_str,
                             opacity=settings['opacity'],
-                            show_scalar_bar=False
+                            show_scalar_bar=False,
+                            smooth_shading=True
                         )
                         actors.append(actor)
                         print(
-                            f'Contour with isovalue {iso_value} and color {color} created')
+                            f'Contour with isovalue {iso_value} and color {color_str} created (solid={settings.get("solid_isosurface", False)})')
                     else:
                         print(
                             f"No isosurface found for value {iso_value}")

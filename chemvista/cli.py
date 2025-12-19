@@ -34,6 +34,12 @@ def main():
     mode_group.add_argument('--glb-animated', type=pathlib.Path,
                             help='Export trajectory as animated GLB file for PowerPoint')
 
+    # 3D printing mode flags
+    parser.add_argument('--printing-mode', action='store_true',
+                        help='Enable 3D printing mode: no gaps between atoms/bonds, higher resolution, solid objects')
+    parser.add_argument('--printing-resolution', type=int, default=32,
+                        help='Mesh resolution for 3D printing mode (default: 32, higher = smoother but larger files)')
+
     # Animation options (used with --glb-animated)
     parser.add_argument('--fps', type=int, default=10,
                         help='Frames per second for animated GLB (default: 10)')
@@ -48,7 +54,7 @@ def main():
     available_palettes = get_available_palettes()
     parser.add_argument('--palette', type=str, default=None,
                         help=f'Color palette for atoms. Built-in: {", ".join(available_palettes)}. '
-                             'Or provide path to custom JSON file.')
+                        'Or provide path to custom JSON file.')
     parser.add_argument('--radius-scale', type=float, default=1.0,
                         help='Scale factor for atom radii (default: 1.0)')
 
@@ -67,8 +73,10 @@ def main():
     # Apply palette if specified
     if args.palette:
         try:
-            scene_manager.set_palette(args.palette, radius_scale=args.radius_scale)
-            print(f"Using palette: {args.palette} (radius scale: {args.radius_scale})")
+            scene_manager.set_palette(
+                args.palette, radius_scale=args.radius_scale)
+            print(
+                f"Using palette: {args.palette} (radius scale: {args.radius_scale})")
         except ValueError as e:
             print(f"Error: {e}")
             sys.exit(1)
@@ -76,6 +84,38 @@ def main():
         # Apply radius scale to default palette
         scene_manager.set_palette("chemvista", radius_scale=args.radius_scale)
         print(f"Using default palette with radius scale: {args.radius_scale}")
+
+    # If user requested 3D printing mode but didn't specify a mode (interactive/render/screenshot/glb),
+    # automatically export a printable GLB next to the first provided XYZ file.
+    no_mode_specified = not (
+        args.interactive or args.render or args.screenshot or args.glb or args.glb_animated
+    )
+    if getattr(args, 'printing_mode', False) and no_mode_specified:
+        if not getattr(args, 'xyz', []):
+            print(
+                "Error: --printing-mode without --glb requires at least one input XYZ file.")
+            sys.exit(1)
+        first_xyz = args.xyz[0]
+        # Default to an STL for 3D printing exports (STL is widely supported by slicers)
+        output_default = pathlib.Path(first_xyz).with_name(
+            f"{pathlib.Path(first_xyz).stem}_printable.stl")
+        print(
+            f"Auto-exporting printable GLB for '{first_xyz}' -> '{output_default}'")
+        try:
+            # Use Exporter.export_stl for STL exports
+            from .exporter import Exporter
+            exporter = Exporter(scene_manager)
+            exporter.export_stl(
+                output_default,
+                printing_mode=True,
+                printing_resolution=getattr(args, 'printing_resolution', 32)
+            )
+            print(
+                f"Scene exported to STL (3D printing mode): {output_default}")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error exporting GLB: {e}")
+            sys.exit(1)
 
     if args.interactive:
         # Mode 1: Full PyQt GUI application
@@ -90,8 +130,19 @@ def main():
         print(f"Screenshot saved to: {args.screenshot}")
     elif args.glb:
         # Mode 4: Export scene to GLB file
-        scene_manager.export_to_glb(args.glb)
-        print(f"Scene exported to GLB: {args.glb}")
+        if args.printing_mode:
+            print(f"Exporting scene to GLB (3D PRINTING MODE)...")
+            print(f"  Resolution: {args.printing_resolution}")
+            print(f"  No gaps between atoms and bonds")
+            print(f"  All objects solid (opaque)")
+
+        scene_manager.export_to_glb(
+            args.glb,
+            printing_mode=args.printing_mode,
+            printing_resolution=args.printing_resolution
+        )
+        mode_str = " (3D printing mode)" if args.printing_mode else ""
+        print(f"Scene exported to GLB{mode_str}: {args.glb}")
     elif args.glb_animated:
         # Mode 5: Export scene as animated GLB
         # Parse scale parameter
@@ -100,7 +151,8 @@ def main():
             try:
                 scale_value = float(scale_value)
             except ValueError:
-                print(f"Error: Invalid scale value '{args.scale}'. Use 'auto' or a number.")
+                print(
+                    f"Error: Invalid scale value '{args.scale}'. Use 'auto' or a number.")
                 sys.exit(1)
 
         print(f"Exporting scene as animated GLB...")

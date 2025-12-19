@@ -17,10 +17,10 @@
       "R240_G240_B240": 7240,
       "R80_G80_B80": 9774
     },
-    "face_count": 35920,
+    "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "f15957ac5aab68de",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -59,7 +59,7 @@
             255
           ]
         ],
-        "faces": 35920,
+        "faces": 37792,
         "vertices": 19094
       }
     },
@@ -106,10 +106,10 @@
       "R208_G208_B208": 2080,
       "R240_G240_B240": 7240
     },
-    "face_count": 35920,
+    "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "f15957ac5aab68de",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -148,7 +148,7 @@
             255
           ]
         ],
-        "faces": 35920,
+        "faces": 37792,
         "vertices": 19094
       }
     },
@@ -195,10 +195,10 @@
       "R32_G32_B32": 9774,
       "R64_G64_B80": 2080
     },
-    "face_count": 35920,
+    "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "f15957ac5aab68de",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -237,7 +237,7 @@
             255
           ]
         ],
-        "faces": 35920,
+        "faces": 37792,
         "vertices": 19094
       }
     },
@@ -282,13 +282,13 @@
     "color_histogram": {
       "R144_G144_B144": 1500,
       "R144_G224_B80": 450,
-      "R208_G208_B208": 976,
+      "R208_G208_B208": 1952,
       "R240_G240_B240": 850
     },
-    "face_count": 6352,
+    "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "4a749177508886b8",
+    "indices_hash": "04c73001f4ac764d",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -333,13 +333,13 @@
             255
           ]
         ],
-        "faces": 6352,
-        "vertices": 3776
+        "faces": 7084,
+        "vertices": 4752
       }
     },
-    "node_count": 59,
-    "positions_hash": "7bc7b66321550fe7",
-    "scene_hierarchy_hash": "84f5dbb8c47eeab1",
+    "node_count": 58,
+    "positions_hash": "8fb9c7021eebcaff",
+    "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [
         144,
@@ -366,7 +366,7 @@
         255
       ]
     ],
-    "vertex_count": 3776
+    "vertex_count": 4752
   },
   "trajectory_powerpoint": {
     "animation_duration": 0.8999999761581421,
@@ -385,12 +385,12 @@
       "R112_G112_B128": 850,
       "R32_G32_B32": 1500,
       "R64_G128_B32": 450,
-      "R64_G64_B80": 976
+      "R64_G64_B80": 1952
     },
-    "face_count": 6352,
+    "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "4a749177508886b8",
+    "indices_hash": "04c73001f4ac764d",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -435,13 +435,13 @@
             255
           ]
         ],
-        "faces": 6352,
-        "vertices": 3776
+        "faces": 7084,
+        "vertices": 4752
       }
     },
-    "node_count": 59,
-    "positions_hash": "7bc7b66321550fe7",
-    "scene_hierarchy_hash": "84f5dbb8c47eeab1",
+    "node_count": 58,
+    "positions_hash": "8fb9c7021eebcaff",
+    "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [
         40,
@@ -468,6 +468,6 @@
         255
       ]
     ],
-    "vertex_count": 3776
+    "vertex_count": 4752
   }
 }

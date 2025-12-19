@@ -18,7 +18,7 @@ import os
 
 # Detect CI environment
 IS_CI = os.environ.get('CI', 'false').lower() == 'true' or \
-        os.environ.get('GITHUB_ACTIONS', 'false').lower() == 'true'
+    os.environ.get('GITHUB_ACTIONS', 'false').lower() == 'true'
 
 
 def pytest_configure(config):
@@ -48,6 +48,7 @@ def pytest_addoption(parser):
         help="Regenerate reference fingerprints for export consistency tests"
     )
 
+
 # Always use offscreen rendering for tests to avoid Qt display issues
 os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 
@@ -63,12 +64,14 @@ def setup_qt_for_tests():
     # Also ensure Qt environment is properly set up
     setup_qt_environment()
 
+
 # Configure PyVista for headless testing
 pv.OFF_SCREEN = True
 
 
 class MockQtInteractor(QWidget):
     """Mock QtInteractor that behaves like a QWidget but doesn't create VTK render window"""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # Mock the plotter methods that might be called
@@ -175,9 +178,9 @@ def chem_vista_app(qapp):
     with patch('chemvista.gui.scene.QtInteractor', MockQtInteractor):
         # Create the app - this will use the mocked QtInteractor
         app = ChemVistaApp()
-        
+
         yield app
-        
+
         # Clean up
         try:
             if hasattr(app, 'scene_manager') and app.scene_manager.plotter is not None:

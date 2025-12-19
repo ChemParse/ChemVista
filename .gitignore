@@ -34,6 +34,7 @@ tests/test_orca.cpython-310-*
 # 3D model exports
 *.glb
 *.gltf
+*.stl
 
 # Logs and other temporary files
 *.log

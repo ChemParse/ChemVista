@@ -66,7 +66,8 @@ class SceneManager():
         """
         settings = load_palette(name_or_path, radius_scale)
         self.molecule_renderer.set_atom_settings(settings)
-        logger.info(f"Palette set to: {name_or_path} (radius_scale={radius_scale})")
+        logger.info(
+            f"Palette set to: {name_or_path} (radius_scale={radius_scale})")
 
     def __del__(self):
         """Cleanup resources"""
@@ -442,7 +443,10 @@ class SceneManager():
         else:
             logger.error(f"Unsupported object type: {type(nx_object)}")
 
-    def export_to_glb(self, output_path: Union[str, pathlib.Path], **kwargs) -> None:
+    def export_to_glb(self, output_path: Union[str, pathlib.Path],
+                      printing_mode: bool = False,
+                      printing_resolution: int = 32,
+                      **kwargs) -> None:
         """
         Export the current scene to a GLB file for PowerPoint 3D and other viewers.
 
@@ -451,6 +455,8 @@ class SceneManager():
 
         Args:
             output_path: Path where the GLB file will be saved
+            printing_mode: If True, optimize for 3D printing (default: False)
+            printing_resolution: Mesh resolution for 3D printing (default: 32)
             **kwargs: Additional arguments passed to Exporter.export_glb()
                      (double_sided, alpha_mode, etc.)
 
@@ -461,13 +467,18 @@ class SceneManager():
         Example:
             >>> scene_manager = SceneManager()
             >>> scene_manager.load_molecule_from_cube("molecule.cube")
+            >>> # For visualization
             >>> scene_manager.export_to_glb("output.glb")
+            >>> # For 3D printing (no gaps, higher resolution, solid)
+            >>> scene_manager.export_to_glb("output_print.glb", printing_mode=True, printing_resolution=64)
         """
         from .exporter import Exporter
 
         exporter = Exporter(self)
-        exporter.export_glb(output_path, **kwargs)
-        logger.info(f"Scene exported to {output_path}")
+        exporter.export_glb(output_path, printing_mode=printing_mode,
+                            printing_resolution=printing_resolution, **kwargs)
+        mode_str = " (3D printing mode)" if printing_mode else ""
+        logger.info(f"Scene exported to {output_path}{mode_str}")
 
     def export_animated_glb(
         self,
@@ -542,7 +553,8 @@ class SceneManager():
         from .exporter import Exporter
 
         exporter = Exporter(self)
-        exporter.export_trajectory_animated_glb(trajectory_object, output_path, fps=fps, **kwargs)
+        exporter.export_trajectory_animated_glb(
+            trajectory_object, output_path, fps=fps, **kwargs)
         logger.info(f"Animated trajectory exported to {output_path}")
 
     def export_multi_trajectory_animated_glb(
@@ -640,9 +652,9 @@ class SceneManager():
 
         exporter = Exporter(self)
         exporter.export_multi_trajectory_animated_glb(
-            trajectory_objects, output_path, 
-            animation_names=animation_names, 
-            fps=fps, 
+            trajectory_objects, output_path,
+            animation_names=animation_names,
+            fps=fps,
             **kwargs
         )
         logger.info(f"Multi-animation GLB exported to {output_path}")
