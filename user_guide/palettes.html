@@ -1,0 +1,737 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Palettes &mdash; ChemVista 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Supported File Formats" href="file_formats.html" />
+    <link rel="prev" title="Graphical User Interface" href="gui.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            ChemVista
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#python-version-compatibility">Python Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#installation-methods">Installation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#using-poetry-recommended">Using Poetry (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#using-pip">Using pip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#development-installation">Development Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#verifying-installation">Verifying Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#qt-platform-plugin-not-found">Qt Platform Plugin Not Found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#vtk-version-conflicts">VTK Version Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#missing-opengl">Missing OpenGL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#uninstallation">Uninstallation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#file-loading-options">File Loading Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#xyz">–xyz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#cube-mol">–cube-mol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#cube-field">–cube-field</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#visualization-modes">Visualization Modes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#i-interactive">-i, –interactive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#r-render">-r, –render</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#s-screenshot">-s, –screenshot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#g-glb">-g, –glb</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#glb-animated">–glb-animated</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#animation-options">Animation Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#fps">–fps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#resolution">–resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#cycle">–cycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#scale">–scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#rendering-options">Rendering Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#palette">–palette</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#single-molecule-visualization">Single Molecule Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#trajectory-export-for-powerpoint">Trajectory Export for PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#scalar-field-visualization">Scalar Field Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#multiple-files">Multiple Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#environment-variables">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="cli.html#qt-qpa-platform">QT_QPA_PLATFORM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#exit-codes">Exit Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#getting-help">Getting Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cli.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gui.html">Graphical User Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#launching-the-gui">Launching the GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#main-window">Main Window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#menu-bar">Menu Bar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#file-menu">File Menu</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#view-menu">View Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#d-viewport">3D Viewport</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#mouse-controls">Mouse Controls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#camera-controls">Camera Controls</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#object-tree">Object Tree</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#tree-structure">Tree Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#interactions">Interactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#context-menu">Context Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#object-properties">Object Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#molecule-settings">Molecule Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#scalar-field-settings">Scalar Field Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#trajectory-settings">Trajectory Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#export-dialogs">Export Dialogs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#static-export-glb">Static Export (GLB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#animated-export-glb">Animated Export (GLB)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#keyboard-shortcuts">Keyboard Shortcuts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#global">Global</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#view">View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#id1">Object Tree</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#tips-and-tricks">Tips and Tricks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#performance">Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#quality">Quality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#workflow">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#powerpoint-integration">PowerPoint Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#animation-not-playing">Animation Not Playing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#objects-not-visible-after-export">Objects Not Visible After Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui.html#transparency-issues">Transparency Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gui.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Color Palettes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#available-palettes">Available Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#chemvista-default">chemvista (Default)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cpk">cpk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#jmol">jmol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#powerpoint">powerpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-palettes">Using Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-line">Command Line</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-api">Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gui">GUI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-custom-palettes">Adding Custom Palettes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#palette-comparison">Palette Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="file_formats.html">Supported File Formats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html#input-formats">Input Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#xyz-files">XYZ Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#cube-files">CUBE Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html#output-formats">Output Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#glb-format">GLB Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#png-jpg-screenshots">PNG/JPG Screenshots</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html#file-format-details">File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#xyz-format-specification">XYZ Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#cube-format-specification">CUBE Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#glb-format-specification">GLB Format Specification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="file_formats.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#choosing-export-format">Choosing Export Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#quality-vs-file-size">Quality vs. File Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_formats.html#animation-tips">Animation Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_visualization.html">Basic Visualization Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/basic_visualization.html#coming-soon">Coming Soon</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/trajectory_export.html">Exporting Animated Trajectories</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#key-features">Key Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#basic-export">Basic Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-the-cli">Using the CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-python-api">Using Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-in-powerpoint">Using in PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#export-options">Export Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#resolution">Resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#frame-rate-fps">Frame Rate (FPS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#looping-cycle">Looping (Cycle)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#scale">Scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#scene-based-export">Scene-Based Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories">Multiple Trajectories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#trajectories-with-static-molecules">Trajectories with Static Molecules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#transparency-support">Transparency Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#gui-export">GUI Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#complete-python-example">Complete Python Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#static-glb-export">Static GLB Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#optimization-tips">Optimization Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-large-molecules-100-atoms">For Large Molecules (&gt;100 atoms)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-many-frames-50">For Many Frames (&gt;50)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-powerpoint">For PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#animation-not-playing-in-powerpoint">Animation Not Playing in PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#transparent-objects-not-rendering-correctly">Transparent Objects Not Rendering Correctly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#bonds-don-t-move-with-atoms">Bonds Don’t Move with Atoms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#file-too-large">File Too Large</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories-with-different-frame-counts">Multiple Trajectories with Different Frame Counts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#command-line-reference">Command Line Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scalar_fields.html">Scalar Fields Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scene_management.html">Scene Management Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/scene_manager.html">Scene Manager API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#scenemanager-class">SceneManager Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager"><code class="docutils literal notranslate"><span class="pre">SceneManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.__init__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id0"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.tree_signals"><code class="docutils literal notranslate"><span class="pre">SceneManager.tree_signals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.set_palette"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_palette()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.__del__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__del__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.create_plotter"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_plotter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.root_objects"><code class="docutils literal notranslate"><span class="pre">SceneManager.root_objects</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_xyz"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_molecule_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_scalar_field_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.create_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_uuid"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_uuid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_name"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.find_objects_by_type"><code class="docutils literal notranslate"><span class="pre">SceneManager.find_objects_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.set_visibility"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_visibility()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.update_settings"><code class="docutils literal notranslate"><span class="pre">SceneManager.update_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render_interpolated"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_interpolated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render_single_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_single_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.log_tree_changes"><code class="docutils literal notranslate"><span class="pre">SceneManager.log_tree_changes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.delete_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.delete_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.move_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.move_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_molecule"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_molecule()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_scalar_field"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_scalar_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add"><code class="docutils literal notranslate"><span class="pre">SceneManager.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_to_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_to_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_multi_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#file-loading-methods">File Loading Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-xyz">load_xyz</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id1"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-molecule-from-cube">load_molecule_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id2"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-scalar-field-from-cube">load_scalar_field_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id3"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#rendering-methods">Rendering Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#render">render</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id4"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#scene-graph-access">Scene Graph Access</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#root">root</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.root"><code class="docutils literal notranslate"><span class="pre">SceneManager.root</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#molecule-renderer">molecule_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.molecule_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.molecule_renderer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#scalar-field-renderer">scalar_field_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.scalar_field_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.scalar_field_renderer</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#object-manipulation">Object Manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#finding-objects">Finding Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#removing-objects">Removing Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#visibility-control">Visibility Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#usage-patterns">Usage Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#multiple-objects">Multiple Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#trajectory-workflow">Trajectory Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/exporter.html">Exporter API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#exporter-class">Exporter Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter"><code class="docutils literal notranslate"><span class="pre">Exporter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.__init__"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id0"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_multi_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_stl"><code class="docutils literal notranslate"><span class="pre">Exporter.export_stl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_scene_to_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#static-export-methods">Static Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-glb">export_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id1"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-scene-to-glb">export_scene_to_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id2"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#animated-export-methods">Animated Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-animated-glb">export_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id3"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-trajectory-animated-glb">export_trajectory_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id4"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#helper-methods">Helper Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#collect-meshes-with-colors">_collect_meshes_with_colors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#pv-to-trimesh">_pv_to_trimesh</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#export-file-format-details">Export File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#static-glb-structure">Static GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#animated-glb-structure">Animated GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#transparency-handling">Transparency Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#scale-parameter">Scale Parameter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#usage-notes">Usage Notes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#file-size-examples">File Size Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#powerpoint-compatibility">PowerPoint Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#cli-integration">CLI Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#gui-integration">GUI Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/renderer.html">Renderer API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/scene_objects.html">Scene Objects API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer/architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#core-design-patterns">Core Design Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#hierarchical-scene-graph">Hierarchical Scene Graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#tree-structure-constraints">Tree Structure Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#component-architecture">Component Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#data-layer">Data Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#rendering-layer">Rendering Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#settings-management">Settings Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#export-layer">Export Layer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#gui-architecture">GUI Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#qt-integration">Qt Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#treesignals-pattern">TreeSignals Pattern</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#testing-architecture">Testing Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#headless-testing">Headless Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#fixtures">Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#module-structure">Module Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#key-algorithms">Key Algorithms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#skeletal-animation-export">Skeletal Animation Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#vertex-concatenation">Vertex Concatenation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#visibility-propagation">Visibility Propagation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#design-decisions">Design Decisions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-scene-graph">Why Scene Graph?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-stateless-renderers">Why Stateless Renderers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-two-export-modes">Why Two Export Modes?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#future-architecture-considerations">Future Architecture Considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#potential-enhancements">Potential Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#scalability-limits">Scalability Limits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#basic-test-execution">Basic Test Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-categories">Test Categories</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#test-configuration">Test Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#export-consistency-tests">Export Consistency Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#fingerprint-based-testing">Fingerprint-Based Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#reference-fingerprints">Reference Fingerprints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-classes">Test Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#sample-output-directory">Sample Output Directory</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#writing-tests">Writing Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-fixtures">Test Fixtures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#example-test">Example Test</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#known-issues">Known Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#vtk-version-compatibility">VTK Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#ci-cd-integration">CI/CD Integration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#screenshot-tests-in-ci">Screenshot Tests in CI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChemVista</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Color Palettes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/palettes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="color-palettes">
+<h1>Color Palettes<a class="headerlink" href="#color-palettes" title="Link to this heading"></a></h1>
+<p>ChemVista supports multiple color palettes for atom coloring, allowing you to customize
+the appearance of your molecular visualizations for different purposes.</p>
+<section id="available-palettes">
+<h2>Available Palettes<a class="headerlink" href="#available-palettes" title="Link to this heading"></a></h2>
+<section id="chemvista-default">
+<h3>chemvista (Default)<a class="headerlink" href="#chemvista-default" title="Link to this heading"></a></h3>
+<p>The default ChemVista palette provides vibrant, distinguishable colors suitable for
+general-purpose visualization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;chemvista&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cpk">
+<h3>cpk<a class="headerlink" href="#cpk" title="Link to this heading"></a></h3>
+<p>The classic CPK (Corey-Pauling-Koltun) coloring scheme, widely used in molecular
+visualization. Based on physical models where:</p>
+<ul class="simple">
+<li><p>Hydrogen: White</p></li>
+<li><p>Carbon: Black/Dark gray</p></li>
+<li><p>Nitrogen: Blue</p></li>
+<li><p>Oxygen: Red</p></li>
+<li><p>Sulfur: Yellow</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;cpk&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="jmol">
+<h3>jmol<a class="headerlink" href="#jmol" title="Link to this heading"></a></h3>
+<p>The Jmol color scheme, commonly used in web-based molecular viewers.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;jmol&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="powerpoint">
+<h3>powerpoint<a class="headerlink" href="#powerpoint" title="Link to this heading"></a></h3>
+<p>A specialized palette with darker colors optimized for PowerPoint 3D presentations.</p>
+<p><strong>Why darker colors?</strong></p>
+<p>PowerPoint’s 3D model viewer does not support real-time shadows. Without shadows,
+standard bright colors appear flat and washed out. The PowerPoint palette uses
+darker, more saturated colors that maintain visual depth even without shadow effects.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;powerpoint&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Recommended for:</strong></p>
+<ul class="simple">
+<li><p>GLB exports intended for PowerPoint presentations</p></li>
+<li><p>Presentations on projectors with limited dynamic range</p></li>
+<li><p>Any 3D viewer without shadow support</p></li>
+</ul>
+</section>
+</section>
+<section id="using-palettes">
+<h2>Using Palettes<a class="headerlink" href="#using-palettes" title="Link to this heading"></a></h2>
+<section id="command-line">
+<h3>Command Line<a class="headerlink" href="#command-line" title="Link to this heading"></a></h3>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">--palette</span></code> option:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use PowerPoint palette for GLB export</span>
+chemvista<span class="w"> </span>--xyz<span class="w"> </span>molecule.xyz<span class="w"> </span>--palette<span class="w"> </span>powerpoint<span class="w"> </span>--glb<span class="w"> </span>molecule.glb
+
+<span class="c1"># Use CPK palette for interactive viewing</span>
+chemvista<span class="w"> </span>--xyz<span class="w"> </span>molecule.xyz<span class="w"> </span>--palette<span class="w"> </span>cpk<span class="w"> </span>--interactive
+
+<span class="c1"># Use default palette (chemvista)</span>
+chemvista<span class="w"> </span>--xyz<span class="w"> </span>molecule.xyz<span class="w"> </span>--glb<span class="w"> </span>molecule.glb
+</pre></div>
+</div>
+</section>
+<section id="python-api">
+<h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h3>
+<p><strong>Global palette (affects all objects):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">chemvista</span><span class="w"> </span><span class="kn">import</span> <span class="n">SceneManager</span>
+
+<span class="n">scene</span> <span class="o">=</span> <span class="n">SceneManager</span><span class="p">()</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">load_xyz</span><span class="p">(</span><span class="s2">&quot;molecule.xyz&quot;</span><span class="p">)</span>
+
+<span class="c1"># Set palette for entire scene</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;powerpoint&quot;</span><span class="p">)</span>
+
+<span class="n">scene</span><span class="o">.</span><span class="n">export_to_glb</span><span class="p">(</span><span class="s2">&quot;molecule.glb&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Per-object palette:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">chemvista</span><span class="w"> </span><span class="kn">import</span> <span class="n">SceneManager</span>
+
+<span class="n">scene</span> <span class="o">=</span> <span class="n">SceneManager</span><span class="p">()</span>
+<span class="n">mol1</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">load_xyz</span><span class="p">(</span><span class="s2">&quot;mol1.xyz&quot;</span><span class="p">)</span>
+<span class="n">mol2</span> <span class="o">=</span> <span class="n">scene</span><span class="o">.</span><span class="n">load_xyz</span><span class="p">(</span><span class="s2">&quot;mol2.xyz&quot;</span><span class="p">)</span>
+
+<span class="c1"># Different palettes for different molecules</span>
+<span class="n">mol1</span><span class="o">.</span><span class="n">render_settings</span><span class="o">.</span><span class="n">palette</span> <span class="o">=</span> <span class="s2">&quot;cpk&quot;</span>
+<span class="n">mol2</span><span class="o">.</span><span class="n">render_settings</span><span class="o">.</span><span class="n">palette</span> <span class="o">=</span> <span class="s2">&quot;jmol&quot;</span>
+
+<span class="n">scene</span><span class="o">.</span><span class="n">export_to_glb</span><span class="p">(</span><span class="s2">&quot;scene.glb&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gui">
+<h3>GUI<a class="headerlink" href="#gui" title="Link to this heading"></a></h3>
+<p>In the interactive GUI:</p>
+<ol class="arabic simple">
+<li><p>Select an object in the scene tree</p></li>
+<li><p>Open the settings dialog (gear icon)</p></li>
+<li><p>Choose a palette from the dropdown menu</p></li>
+<li><p>Click Apply</p></li>
+</ol>
+</section>
+</section>
+<section id="adding-custom-palettes">
+<h2>Adding Custom Palettes<a class="headerlink" href="#adding-custom-palettes" title="Link to this heading"></a></h2>
+<p>You can define custom color palettes by creating a new palette in the palettes module:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">chemvista.renderer.palettes</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_palette</span>
+
+<span class="n">my_palette</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>   <span class="c1"># White</span>
+    <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>   <span class="c1"># Dark gray</span>
+    <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>       <span class="c1"># Blue</span>
+    <span class="s1">&#39;O&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>       <span class="c1"># Red</span>
+    <span class="c1"># ... other elements</span>
+    <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>  <span class="c1"># Fallback color</span>
+<span class="p">}</span>
+
+<span class="n">register_palette</span><span class="p">(</span><span class="s2">&quot;my_custom_palette&quot;</span><span class="p">,</span> <span class="n">my_palette</span><span class="p">)</span>
+
+<span class="c1"># Now use it</span>
+<span class="n">scene</span><span class="o">.</span><span class="n">set_palette</span><span class="p">(</span><span class="s2">&quot;my_custom_palette&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="palette-comparison">
+<h2>Palette Comparison<a class="headerlink" href="#palette-comparison" title="Link to this heading"></a></h2>
+<p>Here’s a quick comparison of how common elements appear in each palette:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Element</p></th>
+<th class="head"><p>ChemVista</p></th>
+<th class="head"><p>CPK</p></th>
+<th class="head"><p>Jmol</p></th>
+<th class="head"><p>PowerPoint</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Carbon (C)</p></td>
+<td><p>Gray</p></td>
+<td><p>Dark Gray</p></td>
+<td><p>Dark Gray</p></td>
+<td><p>Dark Gray (darker)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hydrogen (H)</p></td>
+<td><p>White</p></td>
+<td><p>White</p></td>
+<td><p>White</p></td>
+<td><p>Light Gray</p></td>
+</tr>
+<tr class="row-even"><td><p>Oxygen (O)</p></td>
+<td><p>Red</p></td>
+<td><p>Red</p></td>
+<td><p>Red</p></td>
+<td><p>Dark Red</p></td>
+</tr>
+<tr class="row-odd"><td><p>Nitrogen (N)</p></td>
+<td><p>Blue</p></td>
+<td><p>Blue</p></td>
+<td><p>Blue</p></td>
+<td><p>Dark Blue</p></td>
+</tr>
+<tr class="row-even"><td><p>Sulfur (S)</p></td>
+<td><p>Yellow</p></td>
+<td><p>Yellow</p></td>
+<td><p>Yellow</p></td>
+<td><p>Dark Yellow</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="cli.html"><span class="doc">Command Line Interface</span></a> - Command line options including <code class="docutils literal notranslate"><span class="pre">--palette</span></code></p></li>
+<li><p><a class="reference internal" href="../api/renderer.html"><span class="doc">Renderer API</span></a> - Renderer API for programmatic color control</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gui.html" class="btn btn-neutral float-left" title="Graphical User Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="file_formats.html" class="btn btn-neutral float-right" title="Supported File Formats" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ChemVista Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,915 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture Overview &mdash; ChemVista 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Testing Guide" href="testing.html" />
+    <link rel="prev" title="Scene Objects API" href="../api/scene_objects.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            ChemVista
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#python-version-compatibility">Python Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#installation-methods">Installation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#using-poetry-recommended">Using Poetry (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#using-pip">Using pip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#development-installation">Development Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#verifying-installation">Verifying Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#qt-platform-plugin-not-found">Qt Platform Plugin Not Found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#vtk-version-conflicts">VTK Version Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#missing-opengl">Missing OpenGL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#uninstallation">Uninstallation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/cli.html">Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#file-loading-options">File Loading Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#xyz">–xyz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cube-mol">–cube-mol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cube-field">–cube-field</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#visualization-modes">Visualization Modes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#i-interactive">-i, –interactive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#r-render">-r, –render</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#s-screenshot">-s, –screenshot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#g-glb">-g, –glb</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#glb-animated">–glb-animated</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#animation-options">Animation Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#fps">–fps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#resolution">–resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cycle">–cycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#scale">–scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#rendering-options">Rendering Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#palette">–palette</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#single-molecule-visualization">Single Molecule Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#trajectory-export-for-powerpoint">Trajectory Export for PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#scalar-field-visualization">Scalar Field Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#multiple-files">Multiple Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#environment-variables">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#qt-qpa-platform">QT_QPA_PLATFORM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#exit-codes">Exit Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#getting-help">Getting Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/gui.html">Graphical User Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#launching-the-gui">Launching the GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#main-window">Main Window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#menu-bar">Menu Bar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#file-menu">File Menu</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#view-menu">View Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#d-viewport">3D Viewport</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#mouse-controls">Mouse Controls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#camera-controls">Camera Controls</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#object-tree">Object Tree</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#tree-structure">Tree Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#interactions">Interactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#context-menu">Context Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#object-properties">Object Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#molecule-settings">Molecule Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#scalar-field-settings">Scalar Field Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#trajectory-settings">Trajectory Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#export-dialogs">Export Dialogs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#static-export-glb">Static Export (GLB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#animated-export-glb">Animated Export (GLB)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#keyboard-shortcuts">Keyboard Shortcuts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#global">Global</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#view">View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#id1">Object Tree</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#tips-and-tricks">Tips and Tricks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#performance">Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#quality">Quality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#workflow">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#powerpoint-integration">PowerPoint Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#animation-not-playing">Animation Not Playing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#objects-not-visible-after-export">Objects Not Visible After Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#transparency-issues">Transparency Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/palettes.html">Color Palettes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#available-palettes">Available Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#chemvista-default">chemvista (Default)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#cpk">cpk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#jmol">jmol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#powerpoint">powerpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#using-palettes">Using Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#command-line">Command Line</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#python-api">Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#gui">GUI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#adding-custom-palettes">Adding Custom Palettes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#palette-comparison">Palette Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/file_formats.html">Supported File Formats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#input-formats">Input Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#xyz-files">XYZ Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#cube-files">CUBE Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#output-formats">Output Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#glb-format">GLB Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#png-jpg-screenshots">PNG/JPG Screenshots</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#file-format-details">File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#xyz-format-specification">XYZ Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#cube-format-specification">CUBE Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#glb-format-specification">GLB Format Specification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#choosing-export-format">Choosing Export Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#quality-vs-file-size">Quality vs. File Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#animation-tips">Animation Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_visualization.html">Basic Visualization Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/basic_visualization.html#coming-soon">Coming Soon</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/trajectory_export.html">Exporting Animated Trajectories</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#key-features">Key Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#basic-export">Basic Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-the-cli">Using the CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-python-api">Using Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-in-powerpoint">Using in PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#export-options">Export Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#resolution">Resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#frame-rate-fps">Frame Rate (FPS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#looping-cycle">Looping (Cycle)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#scale">Scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#scene-based-export">Scene-Based Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories">Multiple Trajectories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#trajectories-with-static-molecules">Trajectories with Static Molecules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#transparency-support">Transparency Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#gui-export">GUI Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#complete-python-example">Complete Python Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#static-glb-export">Static GLB Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#optimization-tips">Optimization Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-large-molecules-100-atoms">For Large Molecules (&gt;100 atoms)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-many-frames-50">For Many Frames (&gt;50)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-powerpoint">For PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#animation-not-playing-in-powerpoint">Animation Not Playing in PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#transparent-objects-not-rendering-correctly">Transparent Objects Not Rendering Correctly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#bonds-don-t-move-with-atoms">Bonds Don’t Move with Atoms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#file-too-large">File Too Large</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories-with-different-frame-counts">Multiple Trajectories with Different Frame Counts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#command-line-reference">Command Line Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scalar_fields.html">Scalar Fields Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scene_management.html">Scene Management Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/scene_manager.html">Scene Manager API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#scenemanager-class">SceneManager Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager"><code class="docutils literal notranslate"><span class="pre">SceneManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.__init__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id0"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.tree_signals"><code class="docutils literal notranslate"><span class="pre">SceneManager.tree_signals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.set_palette"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_palette()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.__del__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__del__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.create_plotter"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_plotter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.root_objects"><code class="docutils literal notranslate"><span class="pre">SceneManager.root_objects</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_xyz"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_molecule_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.load_scalar_field_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.create_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_uuid"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_uuid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_name"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.find_objects_by_type"><code class="docutils literal notranslate"><span class="pre">SceneManager.find_objects_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.set_visibility"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_visibility()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.update_settings"><code class="docutils literal notranslate"><span class="pre">SceneManager.update_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render_interpolated"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_interpolated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.render_single_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_single_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.log_tree_changes"><code class="docutils literal notranslate"><span class="pre">SceneManager.log_tree_changes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.delete_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.delete_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.move_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.move_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_molecule"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_molecule()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_scalar_field"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_scalar_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.add"><code class="docutils literal notranslate"><span class="pre">SceneManager.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_to_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_to_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_multi_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#file-loading-methods">File Loading Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-xyz">load_xyz</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id1"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-molecule-from-cube">load_molecule_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id2"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#load-scalar-field-from-cube">load_scalar_field_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id3"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#rendering-methods">Rendering Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#render">render</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#id4"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#scene-graph-access">Scene Graph Access</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#root">root</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.root"><code class="docutils literal notranslate"><span class="pre">SceneManager.root</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#molecule-renderer">molecule_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.molecule_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.molecule_renderer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#scalar-field-renderer">scalar_field_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/scene_manager.html#chemvista.scene_manager.SceneManager.scalar_field_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.scalar_field_renderer</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#object-manipulation">Object Manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#finding-objects">Finding Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#removing-objects">Removing Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#visibility-control">Visibility Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#usage-patterns">Usage Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#multiple-objects">Multiple Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/scene_manager.html#trajectory-workflow">Trajectory Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/scene_manager.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/exporter.html">Exporter API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#exporter-class">Exporter Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter"><code class="docutils literal notranslate"><span class="pre">Exporter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.__init__"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id0"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_multi_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_stl"><code class="docutils literal notranslate"><span class="pre">Exporter.export_stl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#chemvista.exporter.Exporter.export_scene_to_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#static-export-methods">Static Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-glb">export_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id1"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-scene-to-glb">export_scene_to_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id2"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#animated-export-methods">Animated Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-animated-glb">export_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id3"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#export-trajectory-animated-glb">export_trajectory_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/exporter.html#id4"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#helper-methods">Helper Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#collect-meshes-with-colors">_collect_meshes_with_colors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#pv-to-trimesh">_pv_to_trimesh</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#export-file-format-details">Export File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#static-glb-structure">Static GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#animated-glb-structure">Animated GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#transparency-handling">Transparency Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#scale-parameter">Scale Parameter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#usage-notes">Usage Notes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#file-size-examples">File Size Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#powerpoint-compatibility">PowerPoint Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#cli-integration">CLI Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api/exporter.html#gui-integration">GUI Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api/exporter.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/renderer.html">Renderer API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/scene_objects.html">Scene Objects API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#core-design-patterns">Core Design Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hierarchical-scene-graph">Hierarchical Scene Graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tree-structure-constraints">Tree Structure Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#component-architecture">Component Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-layer">Data Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rendering-layer">Rendering Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#settings-management">Settings Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#export-layer">Export Layer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#gui-architecture">GUI Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#qt-integration">Qt Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#treesignals-pattern">TreeSignals Pattern</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-architecture">Testing Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#headless-testing">Headless Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixtures">Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-structure">Module Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#key-algorithms">Key Algorithms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#skeletal-animation-export">Skeletal Animation Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#vertex-concatenation">Vertex Concatenation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#visibility-propagation">Visibility Propagation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#design-decisions">Design Decisions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#why-scene-graph">Why Scene Graph?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-stateless-renderers">Why Stateless Renderers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-two-export-modes">Why Two Export Modes?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#future-architecture-considerations">Future Architecture Considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#potential-enhancements">Potential Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scalability-limits">Scalability Limits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#basic-test-execution">Basic Test Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#test-categories">Test Categories</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#test-configuration">Test Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#export-consistency-tests">Export Consistency Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#fingerprint-based-testing">Fingerprint-Based Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#reference-fingerprints">Reference Fingerprints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#test-classes">Test Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#sample-output-directory">Sample Output Directory</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#writing-tests">Writing Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#test-fixtures">Test Fixtures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#example-test">Example Test</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#known-issues">Known Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#vtk-version-compatibility">VTK Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#ci-cd-integration">CI/CD Integration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="testing.html#screenshot-tests-in-ci">Screenshot Tests in CI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="testing.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChemVista</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer/architecture.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture-overview">
+<h1>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Link to this heading"></a></h1>
+<p>ChemVista follows a hierarchical scene graph architecture inspired by 3D engines, with clear separation between data models, rendering, and UI.</p>
+<section id="core-design-patterns">
+<h2>Core Design Patterns<a class="headerlink" href="#core-design-patterns" title="Link to this heading"></a></h2>
+<section id="hierarchical-scene-graph">
+<h3>Hierarchical Scene Graph<a class="headerlink" href="#hierarchical-scene-graph" title="Link to this heading"></a></h3>
+<p>The central architectural pattern is a tree structure for organizing chemical objects:</p>
+<dl class="simple">
+<dt><strong>TreeNode</strong> (<code class="docutils literal notranslate"><span class="pre">tree_structure.py</span></code>)</dt><dd><p>Generic tree node with:</p>
+<ul class="simple">
+<li><p>UUID-based identification</p></li>
+<li><p>Parent/child relationships</p></li>
+<li><p>Visibility propagation</p></li>
+<li><p>Qt signals for GUI updates</p></li>
+</ul>
+</dd>
+<dt><strong>SceneObject</strong> (<code class="docutils literal notranslate"><span class="pre">scene_objects.py</span></code>)</dt><dd><p>Extends TreeNode for renderable chemical objects:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MoleculeObject</span></code>: Can have <code class="docutils literal notranslate"><span class="pre">ScalarFieldObject</span></code> children</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TrajectoryObject</span></code>: Can have <code class="docutils literal notranslate"><span class="pre">MoleculeObject</span></code> children</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ScalarFieldObject</span></code>: Leaf node, no children</p></li>
+</ul>
+</dd>
+<dt><strong>SceneManager</strong> (<code class="docutils literal notranslate"><span class="pre">scene_manager.py</span></code>)</dt><dd><p>Manages scene graph root and provides high-level operations:</p>
+<ul class="simple">
+<li><p>Loading files (XYZ, CUBE)</p></li>
+<li><p>Rendering coordination</p></li>
+<li><p>Object manipulation</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="tree-structure-constraints">
+<h3>Tree Structure Constraints<a class="headerlink" href="#tree-structure-constraints" title="Link to this heading"></a></h3>
+<p>Hierarchy rules enforced by <code class="docutils literal notranslate"><span class="pre">_can_add_child()</span></code> methods:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">MoleculeObject</span>
+<span class="err">└──</span> <span class="n">ScalarFieldObject</span>  <span class="c1"># Only scalar fields allowed</span>
+
+<span class="n">TrajectoryObject</span>
+<span class="err">└──</span> <span class="n">MoleculeObject</span>  <span class="c1"># Only molecules allowed</span>
+    <span class="err">└──</span> <span class="n">ScalarFieldObject</span>
+
+<span class="n">ScalarFieldObject</span>  <span class="c1"># No children allowed</span>
+</pre></div>
+</div>
+<p><strong>Bidirectional Synchronization:</strong></p>
+<p>When scene objects are modified, corresponding nx_ase data structures are automatically updated:</p>
+<ul class="simple">
+<li><p>Adding <code class="docutils literal notranslate"><span class="pre">ScalarFieldObject</span></code> → adds to <code class="docutils literal notranslate"><span class="pre">molecule.scalar_fields</span></code></p></li>
+<li><p>Reordering trajectory frames → reorders <code class="docutils literal notranslate"><span class="pre">Trajectory.images</span></code> list</p></li>
+</ul>
+</section>
+</section>
+<section id="component-architecture">
+<h2>Component Architecture<a class="headerlink" href="#component-architecture" title="Link to this heading"></a></h2>
+<section id="data-layer">
+<h3>Data Layer<a class="headerlink" href="#data-layer" title="Link to this heading"></a></h3>
+<p><strong>nx_ase Library</strong> (external dependency):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Molecule</span></code>: ASE Atoms wrapper with NetworkX graph for bonds</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ScalarField</span></code>: 3D grid data (electron density, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Trajectory</span></code>: List of molecules (animation frames)</p></li>
+</ul>
+<p>Repository: <a class="reference external" href="https://github.com/imtambovtcev/nx_ase.git">https://github.com/imtambovtcev/nx_ase.git</a></p>
+</section>
+<section id="rendering-layer">
+<h3>Rendering Layer<a class="headerlink" href="#rendering-layer" title="Link to this heading"></a></h3>
+<p><strong>Stateless Renderer Pattern:</strong></p>
+<p>Renderers convert data + settings → PyVista meshes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MoleculeRenderer</span><span class="p">(</span><span class="n">Renderer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">molecule</span><span class="p">,</span> <span class="n">plotter</span><span class="p">,</span> <span class="n">settings</span><span class="p">):</span>
+        <span class="c1"># Creates PyVista spheres for atoms</span>
+        <span class="c1"># Creates PyVista cylinders for bonds</span>
+        <span class="c1"># Adds meshes to plotter</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ScalarFieldRenderer</span><span class="p">(</span><span class="n">Renderer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">plotter</span><span class="p">,</span> <span class="n">settings</span><span class="p">):</span>
+        <span class="c1"># Creates structured grid</span>
+        <span class="c1"># Generates isosurface contours</span>
+        <span class="c1"># Adds meshes to plotter</span>
+</pre></div>
+</div>
+<p><strong>Key Point:</strong> Renderers are stateless - same inputs always produce same outputs.</p>
+</section>
+<section id="settings-management">
+<h3>Settings Management<a class="headerlink" href="#settings-management" title="Link to this heading"></a></h3>
+<p>Each object type has associated settings (dataclasses in <code class="docutils literal notranslate"><span class="pre">render_settings.py</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MoleculeRenderSettings</span><span class="p">:</span>
+    <span class="n">show_atoms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">show_bonds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">show_hydrogens</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+</pre></div>
+</div>
+<p>Changes to settings emit <code class="docutils literal notranslate"><span class="pre">render_changed</span></code> signal for GUI updates.</p>
+</section>
+<section id="export-layer">
+<h3>Export Layer<a class="headerlink" href="#export-layer" title="Link to this heading"></a></h3>
+<p><strong>Two Export Strategies:</strong></p>
+<ol class="arabic simple">
+<li><p><strong>Static Export</strong> (Trimesh-based):</p>
+<ul class="simple">
+<li><p>For single molecules, scalar fields</p></li>
+<li><p>Vertex colors + PBR materials</p></li>
+<li><p>Supports transparency (BLEND mode)</p></li>
+</ul>
+</li>
+<li><p><strong>Animated Export</strong> (Skeletal Animation):</p>
+<ul class="simple">
+<li><p>For molecular trajectories</p></li>
+<li><p>Custom glTF 2.0 generation</p></li>
+<li><p>PowerPoint-compatible</p></li>
+<li><p>Bones per atom, bonds stretch/compress</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<section id="gui-architecture">
+<h2>GUI Architecture<a class="headerlink" href="#gui-architecture" title="Link to this heading"></a></h2>
+<section id="qt-integration">
+<h3>Qt Integration<a class="headerlink" href="#qt-integration" title="Link to this heading"></a></h3>
+<p><strong>Main Components:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>ChemVistaApp (QMainWindow)
+├── MenuBar (File, View, Export menus)
+├── SceneWidget (QWidget wrapping QtInteractor)
+│   └── QtInteractor (PyVista&#39;s Qt integration)
+├── ObjectTreeWidget (QTreeView)
+│   └── ObjectTreeModel (QAbstractItemModel)
+└── SettingsDialog (QDialog)
+</pre></div>
+</div>
+<p><strong>Signal Flow:</strong></p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>User Action → Qt Signal → SceneManager Method
+     ↓
+TreeSignals Emitted
+     ↓
+GUI Widgets React (via Qt slots)
+</pre></div>
+</div>
+</section>
+<section id="treesignals-pattern">
+<h3>TreeSignals Pattern<a class="headerlink" href="#treesignals-pattern" title="Link to this heading"></a></h3>
+<p>Separate QObject for tree signals to avoid multiple inheritance:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TreeSignals</span><span class="p">(</span><span class="n">QObject</span><span class="p">):</span>
+    <span class="n">child_added</span> <span class="o">=</span> <span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+    <span class="n">child_removed</span> <span class="o">=</span> <span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">object</span><span class="p">)</span>
+    <span class="n">visibility_changed</span> <span class="o">=</span> <span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">render_changed</span> <span class="o">=</span> <span class="n">pyqtSignal</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This allows headless operation without Qt dependencies.</p>
+</section>
+</section>
+<section id="testing-architecture">
+<h2>Testing Architecture<a class="headerlink" href="#testing-architecture" title="Link to this heading"></a></h2>
+<section id="headless-testing">
+<h3>Headless Testing<a class="headerlink" href="#headless-testing" title="Link to this heading"></a></h3>
+<p>Tests run without display using:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># conftest.py</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;QT_QPA_PLATFORM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;offscreen&quot;</span>
+<span class="n">pv</span><span class="o">.</span><span class="n">OFF_SCREEN</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<p><strong>MockQtInteractor:</strong></p>
+<p>Replaces real QtInteractor in tests to avoid VTK render window creation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">chem_vista_app</span><span class="p">(</span><span class="n">qapp</span><span class="p">,</span> <span class="n">qtbot</span><span class="p">,</span> <span class="n">test_files</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">patch</span><span class="p">(</span><span class="s1">&#39;chemvista.gui.scene.QtInteractor&#39;</span><span class="p">,</span> <span class="n">MockQtInteractor</span><span class="p">):</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">ChemVistaApp</span><span class="p">()</span>
+        <span class="k">yield</span> <span class="n">app</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="fixtures">
+<h3>Fixtures<a class="headerlink" href="#fixtures" title="Link to this heading"></a></h3>
+<p>Key fixtures in <code class="docutils literal notranslate"><span class="pre">conftest.py</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">qapp</span></code>: Session-scoped QApplication</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">qtbot</span></code>: PyQt test helpers</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_files</span></code>: Paths to test data (XYZ/CUBE)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_objects</span></code>: Pre-loaded nx_ase objects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chem_vista_app</span></code>: Mocked ChemVistaApp</p></li>
+</ul>
+</section>
+</section>
+<section id="module-structure">
+<h2>Module Structure<a class="headerlink" href="#module-structure" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>chemvista/
+├── __init__.py
+├── cli.py                 # Command-line interface
+├── scene_manager.py       # Scene graph management
+├── scene_objects.py       # Object types (Molecule, Trajectory, etc.)
+├── tree_structure.py      # Generic tree node implementation
+├── exporter.py            # GLB export (static &amp; animated)
+├── renderer/
+│   ├── base.py           # Base renderer class
+│   ├── molecule.py       # Molecule rendering
+│   ├── scalar_field.py   # Scalar field rendering
+│   └── render_settings.py  # Settings dataclasses
+└── gui/
+    ├── main_window.py    # Main application window
+    ├── scene.py          # 3D viewport widget
+    ├── qt_utils.py       # Qt environment setup
+    └── widgets/
+        ├── object_tree/  # Tree view with drag-drop
+        └── settings_dialog.py  # Property editors
+</pre></div>
+</div>
+</section>
+<section id="key-algorithms">
+<h2>Key Algorithms<a class="headerlink" href="#key-algorithms" title="Link to this heading"></a></h2>
+<section id="skeletal-animation-export">
+<h3>Skeletal Animation Export<a class="headerlink" href="#skeletal-animation-export" title="Link to this heading"></a></h3>
+<p><strong>Challenge:</strong> Create PowerPoint-compatible animated 3D models from trajectory data.</p>
+<p><strong>Solution:</strong> Use glTF 2.0 skeletal animation with one bone per atom.</p>
+<p><strong>Algorithm:</strong></p>
+<ol class="arabic simple">
+<li><p>Create sphere geometry for each atom (bind pose = first frame)</p></li>
+<li><p>Assign vertices to bones (one bone per atom sphere)</p></li>
+<li><p>Create bond cylinders with two-bone skinning:</p>
+<ul class="simple">
+<li><p>Project each bond vertex onto bond axis</p></li>
+<li><p>Interpolate weights: <code class="docutils literal notranslate"><span class="pre">weight_a</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">weight_b</span> <span class="pre">=</span> <span class="pre">t</span></code></p></li>
+<li><p>Where <code class="docutils literal notranslate"><span class="pre">t</span></code> is normalized position along bond axis</p></li>
+</ul>
+</li>
+<li><p>Create inverse bind matrices: <code class="docutils literal notranslate"><span class="pre">translate(-atom_position)</span></code></p></li>
+<li><p>Create animation tracks (translation per bone per frame)</p></li>
+<li><p>Serialize to binary glTF format</p></li>
+</ol>
+<p><strong>Key Innovation:</strong> Axis-based linear interpolation for bonds ensures they stretch/compress correctly without rotation artifacts.</p>
+</section>
+<section id="vertex-concatenation">
+<h3>Vertex Concatenation<a class="headerlink" href="#vertex-concatenation" title="Link to this heading"></a></h3>
+<p><strong>Challenge:</strong> PyVista’s <code class="docutils literal notranslate"><span class="pre">merge()</span></code> deduplicates vertices, breaking index calculations.</p>
+<p><strong>Solution:</strong> Manual concatenation without deduplication:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">all_vertices</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">all_faces</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">vertex_offset</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">mesh</span> <span class="ow">in</span> <span class="n">meshes</span><span class="p">:</span>
+    <span class="n">all_vertices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">faces</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">faces</span> <span class="o">+</span> <span class="n">vertex_offset</span>
+    <span class="n">all_faces</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span>
+    <span class="n">vertex_offset</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+
+<span class="n">combined_vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">all_vertices</span><span class="p">)</span>
+<span class="n">combined_faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">all_faces</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This ensures predictable vertex indices for skinning assignment.</p>
+</section>
+<section id="visibility-propagation">
+<h3>Visibility Propagation<a class="headerlink" href="#visibility-propagation" title="Link to this heading"></a></h3>
+<p>When node visibility changes, all descendants inherit the state:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_visible</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visible</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_visible</span> <span class="o">=</span> <span class="n">visible</span>
+    <span class="c1"># Propagate to children</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="n">child</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="n">visible</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">signals</span><span class="o">.</span><span class="n">visibility_changed</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">visible</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Efficient iteration over visible nodes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">iter_visible</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">visible</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="bp">self</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">child</span><span class="o">.</span><span class="n">iter_visible</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="design-decisions">
+<h2>Design Decisions<a class="headerlink" href="#design-decisions" title="Link to this heading"></a></h2>
+<section id="why-scene-graph">
+<h3>Why Scene Graph?<a class="headerlink" href="#why-scene-graph" title="Link to this heading"></a></h3>
+<p><strong>Alternatives considered:</strong></p>
+<ul class="simple">
+<li><p>Flat list of objects</p></li>
+<li><p>Dictionary/registry pattern</p></li>
+</ul>
+<p><strong>Chosen:</strong> Hierarchical tree</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Natural representation of trajectory structure (trajectory → frames → scalar fields)</p></li>
+<li><p>Visibility/transform propagation built-in</p></li>
+<li><p>Familiar to 3D graphics programmers</p></li>
+<li><p>Supports complex molecular assemblies</p></li>
+</ul>
+</section>
+<section id="why-stateless-renderers">
+<h3>Why Stateless Renderers?<a class="headerlink" href="#why-stateless-renderers" title="Link to this heading"></a></h3>
+<p><strong>Alternatives:</strong></p>
+<ul class="simple">
+<li><p>Renderers cache meshes</p></li>
+<li><p>Objects render themselves</p></li>
+</ul>
+<p><strong>Chosen:</strong> Stateless render functions</p>
+<p><strong>Rationale:</strong></p>
+<ul class="simple">
+<li><p>Simpler to test (pure functions)</p></li>
+<li><p>No state management complexity</p></li>
+<li><p>Easier to parallelize (if needed)</p></li>
+<li><p>Clear separation: data vs. visualization</p></li>
+</ul>
+</section>
+<section id="why-two-export-modes">
+<h3>Why Two Export Modes?<a class="headerlink" href="#why-two-export-modes" title="Link to this heading"></a></h3>
+<p><strong>Why not unify?</strong></p>
+<p>Static and animated exports serve different purposes:</p>
+<p><strong>Static Export:</strong></p>
+<ul class="simple">
+<li><p>Optimized for static scenes</p></li>
+<li><p>Vertex colors for precise control</p></li>
+<li><p>Supports transparency blending</p></li>
+<li><p>Smaller files for non-animated content</p></li>
+</ul>
+<p><strong>Animated Export:</strong></p>
+<ul class="simple">
+<li><p>Specialized for trajectories</p></li>
+<li><p>Skeletal animation for PowerPoint</p></li>
+<li><p>Bone-based deformation</p></li>
+<li><p>Different optimization trade-offs</p></li>
+</ul>
+<p><strong>Attempting to unify would compromise both use cases.</strong></p>
+</section>
+</section>
+<section id="future-architecture-considerations">
+<h2>Future Architecture Considerations<a class="headerlink" href="#future-architecture-considerations" title="Link to this heading"></a></h2>
+<section id="potential-enhancements">
+<h3>Potential Enhancements<a class="headerlink" href="#potential-enhancements" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Plugin System:</strong> Allow custom renderers/exporters</p></li>
+<li><p><strong>Undo/Redo:</strong> Command pattern for scene modifications</p></li>
+<li><p><strong>Serialization:</strong> Save/load scene state</p></li>
+<li><p><strong>Scripting API:</strong> Python console in GUI</p></li>
+<li><p><strong>Parallel Rendering:</strong> Multi-threaded render pipeline</p></li>
+</ol>
+</section>
+<section id="scalability-limits">
+<h3>Scalability Limits<a class="headerlink" href="#scalability-limits" title="Link to this heading"></a></h3>
+<p>Current architecture handles:</p>
+<ul class="simple">
+<li><p><strong>Molecules:</strong> Up to ~10,000 atoms tested</p></li>
+<li><p><strong>Trajectories:</strong> Up to ~1000 frames tested</p></li>
+<li><p><strong>Scalar Fields:</strong> Up to 200³ grid tested</p></li>
+</ul>
+<p>For larger systems, consider:</p>
+<ul class="simple">
+<li><p>Level-of-detail (LOD) rendering</p></li>
+<li><p>Culling invisible objects</p></li>
+<li><p>Streaming/pagination for trajectories</p></li>
+<li><p>GPU-accelerated rendering (VTK/OpenGL)</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api/scene_objects.html" class="btn btn-neutral float-left" title="Scene Objects API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="testing.html" class="btn btn-neutral float-right" title="Testing Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ChemVista Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

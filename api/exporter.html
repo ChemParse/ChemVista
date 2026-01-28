@@ -1,0 +1,1170 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exporter API &mdash; ChemVista 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=01f34227"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Renderer API" href="renderer.html" />
+    <link rel="prev" title="Scene Manager API" href="scene_manager.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            ChemVista
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#requirements">Requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#python-version-compatibility">Python Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#installation-methods">Installation Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#using-poetry-recommended">Using Poetry (Recommended)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#using-pip">Using pip</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#development-installation">Development Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#verifying-installation">Verifying Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#common-issues">Common Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#qt-platform-plugin-not-found">Qt Platform Plugin Not Found</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#vtk-version-conflicts">VTK Version Conflicts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/installation.html#missing-opengl">Missing OpenGL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/installation.html#uninstallation">Uninstallation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/cli.html">Command Line Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#basic-usage">Basic Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#file-loading-options">File Loading Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#xyz">–xyz</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cube-mol">–cube-mol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cube-field">–cube-field</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#visualization-modes">Visualization Modes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#i-interactive">-i, –interactive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#r-render">-r, –render</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#s-screenshot">-s, –screenshot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#g-glb">-g, –glb</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#glb-animated">–glb-animated</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#animation-options">Animation Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#fps">–fps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#resolution">–resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#cycle">–cycle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#scale">–scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#rendering-options">Rendering Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#palette">–palette</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#examples">Examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#single-molecule-visualization">Single Molecule Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#trajectory-export-for-powerpoint">Trajectory Export for PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#scalar-field-visualization">Scalar Field Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#multiple-files">Multiple Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#environment-variables">Environment Variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/cli.html#qt-qpa-platform">QT_QPA_PLATFORM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#exit-codes">Exit Codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#getting-help">Getting Help</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/cli.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/gui.html">Graphical User Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#launching-the-gui">Launching the GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#main-window">Main Window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#menu-bar">Menu Bar</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#file-menu">File Menu</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#view-menu">View Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#d-viewport">3D Viewport</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#mouse-controls">Mouse Controls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#camera-controls">Camera Controls</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#object-tree">Object Tree</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#tree-structure">Tree Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#interactions">Interactions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#context-menu">Context Menu</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#object-properties">Object Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#molecule-settings">Molecule Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#scalar-field-settings">Scalar Field Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#trajectory-settings">Trajectory Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#export-dialogs">Export Dialogs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#static-export-glb">Static Export (GLB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#animated-export-glb">Animated Export (GLB)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#keyboard-shortcuts">Keyboard Shortcuts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#global">Global</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#view">View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#id1">Object Tree</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#tips-and-tricks">Tips and Tricks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#performance">Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#quality">Quality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#workflow">Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#powerpoint-integration">PowerPoint Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#animation-not-playing">Animation Not Playing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#objects-not-visible-after-export">Objects Not Visible After Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/gui.html#transparency-issues">Transparency Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/gui.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/palettes.html">Color Palettes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#available-palettes">Available Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#chemvista-default">chemvista (Default)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#cpk">cpk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#jmol">jmol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#powerpoint">powerpoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#using-palettes">Using Palettes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#command-line">Command Line</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#python-api">Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/palettes.html#gui">GUI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#adding-custom-palettes">Adding Custom Palettes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#palette-comparison">Palette Comparison</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/palettes.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/file_formats.html">Supported File Formats</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#input-formats">Input Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#xyz-files">XYZ Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#cube-files">CUBE Files</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#output-formats">Output Formats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#glb-format">GLB Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#png-jpg-screenshots">PNG/JPG Screenshots</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#file-format-details">File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#xyz-format-specification">XYZ Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#cube-format-specification">CUBE Format Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#glb-format-specification">GLB Format Specification</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../user_guide/file_formats.html#best-practices">Best Practices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#choosing-export-format">Choosing Export Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#quality-vs-file-size">Quality vs. File Size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../user_guide/file_formats.html#animation-tips">Animation Tips</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/basic_visualization.html">Basic Visualization Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/basic_visualization.html#coming-soon">Coming Soon</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/trajectory_export.html">Exporting Animated Trajectories</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#key-features">Key Features</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#basic-export">Basic Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-the-cli">Using the CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-python-api">Using Python API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#using-in-powerpoint">Using in PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#export-options">Export Options</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#resolution">Resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#frame-rate-fps">Frame Rate (FPS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#looping-cycle">Looping (Cycle)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#scale">Scale</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#scene-based-export">Scene-Based Export</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories">Multiple Trajectories</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#trajectories-with-static-molecules">Trajectories with Static Molecules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#transparency-support">Transparency Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#gui-export">GUI Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#complete-python-example">Complete Python Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#static-glb-export">Static GLB Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#optimization-tips">Optimization Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-large-molecules-100-atoms">For Large Molecules (&gt;100 atoms)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-many-frames-50">For Many Frames (&gt;50)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#for-powerpoint">For PowerPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#animation-not-playing-in-powerpoint">Animation Not Playing in PowerPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#transparent-objects-not-rendering-correctly">Transparent Objects Not Rendering Correctly</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#bonds-don-t-move-with-atoms">Bonds Don’t Move with Atoms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#file-too-large">File Too Large</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/trajectory_export.html#multiple-trajectories-with-different-frame-counts">Multiple Trajectories with Different Frame Counts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#command-line-reference">Command Line Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/trajectory_export.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scalar_fields.html">Scalar Fields Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scene_management.html">Scene Management Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="scene_manager.html">Scene Manager API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#scenemanager-class">SceneManager Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager"><code class="docutils literal notranslate"><span class="pre">SceneManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.__init__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#id0"><code class="docutils literal notranslate"><span class="pre">SceneManager.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.tree_signals"><code class="docutils literal notranslate"><span class="pre">SceneManager.tree_signals</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.set_palette"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_palette()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.__del__"><code class="docutils literal notranslate"><span class="pre">SceneManager.__del__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.create_plotter"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_plotter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.root_objects"><code class="docutils literal notranslate"><span class="pre">SceneManager.root_objects</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.load_xyz"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.load_molecule_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.load_scalar_field_from_cube"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.create_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.create_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_uuid"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_uuid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.get_object_by_name"><code class="docutils literal notranslate"><span class="pre">SceneManager.get_object_by_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.find_objects_by_type"><code class="docutils literal notranslate"><span class="pre">SceneManager.find_objects_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.set_visibility"><code class="docutils literal notranslate"><span class="pre">SceneManager.set_visibility()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.update_settings"><code class="docutils literal notranslate"><span class="pre">SceneManager.update_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.render"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.render_interpolated"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_interpolated()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.render_single_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.render_single_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.log_tree_changes"><code class="docutils literal notranslate"><span class="pre">SceneManager.log_tree_changes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.delete_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.delete_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.move_object"><code class="docutils literal notranslate"><span class="pre">SceneManager.move_object()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.add_molecule"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_molecule()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.add_scalar_field"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_scalar_field()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.add_trajectory"><code class="docutils literal notranslate"><span class="pre">SceneManager.add_trajectory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.add"><code class="docutils literal notranslate"><span class="pre">SceneManager.add()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.export_to_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_to_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">SceneManager.export_multi_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#file-loading-methods">File Loading Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#load-xyz">load_xyz</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#id1"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_xyz()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#load-molecule-from-cube">load_molecule_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#id2"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_molecule_from_cube()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#load-scalar-field-from-cube">load_scalar_field_from_cube</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#id3"><code class="docutils literal notranslate"><span class="pre">SceneManager.load_scalar_field_from_cube()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#rendering-methods">Rendering Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#render">render</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#id4"><code class="docutils literal notranslate"><span class="pre">SceneManager.render()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#scene-graph-access">Scene Graph Access</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#root">root</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.root"><code class="docutils literal notranslate"><span class="pre">SceneManager.root</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#molecule-renderer">molecule_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.molecule_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.molecule_renderer</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#scalar-field-renderer">scalar_field_renderer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager.scalar_field_renderer"><code class="docutils literal notranslate"><span class="pre">SceneManager.scalar_field_renderer</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#object-manipulation">Object Manipulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#finding-objects">Finding Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#removing-objects">Removing Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#visibility-control">Visibility Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#usage-patterns">Usage Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#basic-workflow">Basic Workflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#multiple-objects">Multiple Objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="scene_manager.html#trajectory-workflow">Trajectory Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="scene_manager.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Exporter API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#exporter-class">Exporter Class</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#chemvista.exporter.Exporter"><code class="docutils literal notranslate"><span class="pre">Exporter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.__init__"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">Exporter.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_multi_trajectory_animated_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_multi_trajectory_animated_glb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_stl"><code class="docutils literal notranslate"><span class="pre">Exporter.export_stl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chemvista.exporter.Exporter.export_scene_to_glb"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#static-export-methods">Static Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#export-glb">export_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">Exporter.export_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#export-scene-to-glb">export_scene_to_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">Exporter.export_scene_to_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#animated-export-methods">Animated Export Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#export-animated-glb">export_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">Exporter.export_animated_glb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#export-trajectory-animated-glb">export_trajectory_animated_glb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id4"><code class="docutils literal notranslate"><span class="pre">Exporter.export_trajectory_animated_glb()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#helper-methods">Helper Methods</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#collect-meshes-with-colors">_collect_meshes_with_colors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pv-to-trimesh">_pv_to_trimesh</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#export-file-format-details">Export File Format Details</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#static-glb-structure">Static GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#animated-glb-structure">Animated GLB Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#transparency-handling">Transparency Handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scale-parameter">Scale Parameter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage-notes">Usage Notes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#performance-considerations">Performance Considerations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-size-examples">File Size Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#powerpoint-compatibility">PowerPoint Compatibility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-integration">CLI Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gui-integration">GUI Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="renderer.html">Renderer API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scene_objects.html">Scene Objects API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer/architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#core-design-patterns">Core Design Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#hierarchical-scene-graph">Hierarchical Scene Graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#tree-structure-constraints">Tree Structure Constraints</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#component-architecture">Component Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#data-layer">Data Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#rendering-layer">Rendering Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#settings-management">Settings Management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#export-layer">Export Layer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#gui-architecture">GUI Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#qt-integration">Qt Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#treesignals-pattern">TreeSignals Pattern</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#testing-architecture">Testing Architecture</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#headless-testing">Headless Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#fixtures">Fixtures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#module-structure">Module Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#key-algorithms">Key Algorithms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#skeletal-animation-export">Skeletal Animation Export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#vertex-concatenation">Vertex Concatenation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#visibility-propagation">Visibility Propagation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#design-decisions">Design Decisions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-scene-graph">Why Scene Graph?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-stateless-renderers">Why Stateless Renderers?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#why-two-export-modes">Why Two Export Modes?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/architecture.html#future-architecture-considerations">Future Architecture Considerations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#potential-enhancements">Potential Enhancements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/architecture.html#scalability-limits">Scalability Limits</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/testing.html">Testing Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#running-tests">Running Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#basic-test-execution">Basic Test Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-categories">Test Categories</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#test-configuration">Test Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#export-consistency-tests">Export Consistency Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#fingerprint-based-testing">Fingerprint-Based Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#reference-fingerprints">Reference Fingerprints</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-classes">Test Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#sample-output-directory">Sample Output Directory</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#writing-tests">Writing Tests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#test-fixtures">Test Fixtures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#example-test">Example Test</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#known-issues">Known Issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#vtk-version-compatibility">VTK Version Compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#ci-cd-integration">CI/CD Integration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../developer/testing.html#screenshot-tests-in-ci">Screenshot Tests in CI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/testing.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/contributing.html">Contributing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">ChemVista</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Exporter API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/exporter.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="exporter-api">
+<h1>Exporter API<a class="headerlink" href="#exporter-api" title="Link to this heading"></a></h1>
+<p>The Exporter class handles all export functionality for ChemVista, including static GLB export and animated trajectory export.</p>
+<section id="exporter-class">
+<span id="module-chemvista.exporter"></span><h2>Exporter Class<a class="headerlink" href="#exporter-class" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">chemvista.exporter.</span></span><span class="sig-name descname"><span class="pre">Exporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager" title="chemvista.scene_manager.SceneManager"><span class="pre">SceneManager</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Handles export of ChemVista scenes to 3D file formats</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager" title="chemvista.scene_manager.SceneManager"><span class="pre">SceneManager</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Initialize the exporter with a scene manager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scene_manager</strong> – The SceneManager instance containing the scene to export</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scene_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager" title="chemvista.scene_manager.SceneManager"><span class="pre">SceneManager</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd><p>Initialize the exporter with a scene manager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>scene_manager</strong> – The SceneManager instance containing the scene to export</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_glb">
+<span class="sig-name descname"><span class="pre">export_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_glb" title="Link to this definition"></a></dt>
+<dd><p>Export the current scene to a GLB file.</p>
+<p>This method renders all visible objects and combines them into a single
+GLB file with proper vertex colors and transparency support.</p>
+<p>The exported GLB file will preserve:
+- Atom colors from the molecule renderer settings
+- Bond colors (light gray by default)
+- Scalar field isosurface colors
+- Transparency values from the alpha settings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>printing_mode</strong> – If True, optimize for 3D printing (no gaps, higher resolution, solid)</p></li>
+<li><p><strong>printing_resolution</strong> – Mesh resolution for 3D printing mode (default: 32)</p></li>
+<li><p><strong>**kwargs</strong> – Reserved for future options (currently unused)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no visible objects are found in the scene or invalid file extension</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When printing_mode=True:
+- Bonds connect center-to-center (no gaps between atoms and bonds)
+- Higher mesh resolution for smoother surfaces
+- All objects are fully opaque (alpha=1.0)
+- Recommended printing_resolution: 32-64 for good quality</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_trajectory_animated_glb">
+<span class="sig-name descname"><span class="pre">export_trajectory_animated_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trajectory_object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_animation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_trajectory_animated_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_trajectory_animated_glb" title="Link to this definition"></a></dt>
+<dd><p>Export a trajectory as an animated GLB file using skeletal animation.</p>
+<p>This creates a PowerPoint-compatible animated 3D model where each atom
+is a bone in a skeleton, and the bone positions are animated through
+the trajectory frames.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectory_object</strong> – TrajectoryObject to export</p></li>
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>fps</strong> – Frames per second for animation (default: 10)</p></li>
+<li><p><strong>resolution</strong> – Mesh resolution for spheres/cylinders (default: 10, lower = fewer triangles)</p></li>
+<li><p><strong>cycle_animation</strong> – If True, adds reverse frames to create a loop (default: False)</p></li>
+<li><p><strong>scale</strong> – Scale factor for the model. If None (default), coordinates are in Angstroms.
+Use scale=0.1 to convert to nanometers, or scale=”auto” to fit in a 2-unit box.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options (reserved for future use)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If trajectory has no frames or inconsistent atom counts</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All trajectory frames must have the same number of atoms in the same order.
+PowerPoint only plays the first animation in the GLB file.
+Lower resolution values create smaller files with fewer triangles.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_animated_glb">
+<span class="sig-name descname"><span class="pre">export_animated_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_animation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_animated_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_animated_glb" title="Link to this definition"></a></dt>
+<dd><p>Export the entire visible scene as an animated GLB file using skeletal animation.</p>
+<p>This method exports all visible trajectories and standalone molecules. Each atom
+becomes a bone in a unified skeleton. Trajectories are animated while standalone
+molecules remain static (but are included in the export).</p>
+<p>Limitations:
+- Scalar fields are not yet supported (warning will be shown)
+- All trajectories must have the same number of frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>fps</strong> – Frames per second for animation (default: 10)</p></li>
+<li><p><strong>resolution</strong> – Mesh resolution for spheres/cylinders (default: 10)</p></li>
+<li><p><strong>cycle_animation</strong> – If True, adds reverse frames to create a loop (default: False)</p></li>
+<li><p><strong>scale</strong> – Scale factor. Use “auto” to fit in 2-unit box, or a number.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options (reserved for future use)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no exportable objects found or frame count mismatch</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_multi_trajectory_animated_glb">
+<span class="sig-name descname"><span class="pre">export_multi_trajectory_animated_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trajectory_objects</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">animation_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.14)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_multi_trajectory_animated_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_multi_trajectory_animated_glb" title="Link to this definition"></a></dt>
+<dd><p>Export multiple trajectories as separate animations in a single GLB file.</p>
+<p>This creates a multi-animation 3D model file where each trajectory becomes
+a named animation that can be selected in compatible viewers. All animations
+share the same mesh geometry and skeleton structure but have different
+keyframe data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectory_objects</strong> – List of TrajectoryObject instances to export</p></li>
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>animation_names</strong> – Optional list of names for each animation. If None, uses trajectory names</p></li>
+<li><p><strong>fps</strong> – Frames per second for all animations (default: 10)</p></li>
+<li><p><strong>resolution</strong> – Mesh resolution for spheres/cylinders (default: 10)</p></li>
+<li><p><strong>scale</strong> – Scale factor. Use “auto” to fit in 2-unit box, or a number.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options (reserved for future use)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no trajectories provided or inconsistent atom counts/types</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>All trajectories must have the same number and types of atoms</p></li>
+<li><p>Each trajectory becomes a separate named animation in the file</p></li>
+<li><p>PowerPoint may only play the first animation by default</p></li>
+<li><p>Other viewers (Windows 3D Viewer, Babylon.js) support animation selection</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_stl">
+<span class="sig-name descname"><span class="pre">export_stl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_stl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_stl" title="Link to this definition"></a></dt>
+<dd><p>Export the current scene to an STL file suitable for 3D printing.</p>
+<p>Notes:
+- STL does not support vertex colors or transparency; exported mesh will be</p>
+<blockquote>
+<div><p>a watertight geometry suitable for slicers.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>This method prefers the same mesh-generation path used for GLB printing mode,
+ensuring center-to-center bonds and increased resolution.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the STL file will be saved</p></li>
+<li><p><strong>printing_mode</strong> – If True, optimize for 3D printing (no gaps, higher resolution, solid)</p></li>
+<li><p><strong>printing_resolution</strong> – Mesh resolution for 3D printing mode (default: 32)</p></li>
+<li><p><strong>**kwargs</strong> – Reserved for future options (currently unused)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no visible objects are found in the scene or invalid file extension</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="chemvista.exporter.Exporter.export_scene_to_glb">
+<span class="sig-name descname"><span class="pre">export_scene_to_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_scene_to_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#chemvista.exporter.Exporter.export_scene_to_glb" title="Link to this definition"></a></dt>
+<dd><p>Convenience method that exports the entire scene to GLB.</p>
+<p>This is an alias for export_glb() for clarity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments passed to export_glb()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="static-export-methods">
+<h2>Static Export Methods<a class="headerlink" href="#static-export-methods" title="Link to this heading"></a></h2>
+<section id="export-glb">
+<h3>export_glb<a class="headerlink" href="#export-glb" title="Link to this heading"></a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-prename descclassname"><span class="pre">Exporter.</span></span><span class="sig-name descname"><span class="pre">export_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">printing_resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
+<dd><p>Export the current scene to a GLB file.</p>
+<p>This method renders all visible objects and combines them into a single
+GLB file with proper vertex colors and transparency support.</p>
+<p>The exported GLB file will preserve:
+- Atom colors from the molecule renderer settings
+- Bond colors (light gray by default)
+- Scalar field isosurface colors
+- Transparency values from the alpha settings</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>printing_mode</strong> – If True, optimize for 3D printing (no gaps, higher resolution, solid)</p></li>
+<li><p><strong>printing_resolution</strong> – Mesh resolution for 3D printing mode (default: 32)</p></li>
+<li><p><strong>**kwargs</strong> – Reserved for future options (currently unused)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no visible objects are found in the scene or invalid file extension</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When printing_mode=True:
+- Bonds connect center-to-center (no gaps between atoms and bonds)
+- Higher mesh resolution for smoother surfaces
+- All objects are fully opaque (alpha=1.0)
+- Recommended printing_resolution: 32-64 for good quality</p>
+</div>
+</dd></dl>
+
+<p>Export the entire scene to a static GLB file. Suitable for single molecules and scalar fields.</p>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">chemvista.scene_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SceneManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chemvista.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Exporter</span>
+
+<span class="n">scene_manager</span> <span class="o">=</span> <span class="n">SceneManager</span><span class="p">()</span>
+<span class="n">scene_manager</span><span class="o">.</span><span class="n">load_xyz</span><span class="p">(</span><span class="s2">&quot;molecule.xyz&quot;</span><span class="p">)</span>
+
+<span class="n">exporter</span> <span class="o">=</span> <span class="n">Exporter</span><span class="p">(</span><span class="n">scene_manager</span><span class="p">)</span>
+<span class="n">exporter</span><span class="o">.</span><span class="n">export_glb</span><span class="p">(</span><span class="s2">&quot;output.glb&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p>Preserves vertex colors</p></li>
+<li><p>Supports transparency with BLEND mode</p></li>
+<li><p>Multiple materials (opaque/transparent separation)</p></li>
+<li><p>Suitable for static molecular structures</p></li>
+</ul>
+</section>
+<section id="export-scene-to-glb">
+<h3>export_scene_to_glb<a class="headerlink" href="#export-scene-to-glb" title="Link to this heading"></a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-prename descclassname"><span class="pre">Exporter.</span></span><span class="sig-name descname"><span class="pre">export_scene_to_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_scene_to_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
+<dd><p>Convenience method that exports the entire scene to GLB.</p>
+<p>This is an alias for export_glb() for clarity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments passed to export_glb()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Convenience alias for <code class="xref py py-meth docutils literal notranslate"><span class="pre">export_glb()</span></code>.</p>
+</section>
+</section>
+<section id="animated-export-methods">
+<h2>Animated Export Methods<a class="headerlink" href="#animated-export-methods" title="Link to this heading"></a></h2>
+<section id="export-animated-glb">
+<h3>export_animated_glb<a class="headerlink" href="#export-animated-glb" title="Link to this heading"></a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-prename descclassname"><span class="pre">Exporter.</span></span><span class="sig-name descname"><span class="pre">export_animated_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_animation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_animated_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
+<dd><p>Export the entire visible scene as an animated GLB file using skeletal animation.</p>
+<p>This method exports all visible trajectories and standalone molecules. Each atom
+becomes a bone in a unified skeleton. Trajectories are animated while standalone
+molecules remain static (but are included in the export).</p>
+<p>Limitations:
+- Scalar fields are not yet supported (warning will be shown)
+- All trajectories must have the same number of frames</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>fps</strong> – Frames per second for animation (default: 10)</p></li>
+<li><p><strong>resolution</strong> – Mesh resolution for spheres/cylinders (default: 10)</p></li>
+<li><p><strong>cycle_animation</strong> – If True, adds reverse frames to create a loop (default: False)</p></li>
+<li><p><strong>scale</strong> – Scale factor. Use “auto” to fit in 2-unit box, or a number.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options (reserved for future use)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If no exportable objects found or frame count mismatch</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Export the entire visible scene as an animated GLB file. This is the <strong>recommended method</strong> for exporting trajectories as it handles multiple objects, transparency, and scene-based export.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">output_path</span></code> (<em>str or Path</em>) – Output GLB file path</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fps</span></code> (<em>int, optional</em>) – Frames per second (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resolution</span></code> (<em>int, optional</em>) – Mesh resolution 1-20 (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cycle_animation</span></code> (<em>bool, optional</em>) – Add reverse frames for looping (default: False)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code> (<em>str or float, optional</em>) – Scale factor. Use <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> to fit in 2-unit box, or a number.</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">chemvista.scene_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SceneManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">chemvista.exporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Exporter</span>
+
+<span class="c1"># Load trajectory</span>
+<span class="n">scene_manager</span> <span class="o">=</span> <span class="n">SceneManager</span><span class="p">()</span>
+<span class="n">scene_manager</span><span class="o">.</span><span class="n">load_xyz</span><span class="p">(</span><span class="s2">&quot;trajectory.xyz&quot;</span><span class="p">)</span>
+
+<span class="c1"># Export with options</span>
+<span class="n">exporter</span> <span class="o">=</span> <span class="n">Exporter</span><span class="p">(</span><span class="n">scene_manager</span><span class="p">)</span>
+<span class="n">exporter</span><span class="o">.</span><span class="n">export_animated_glb</span><span class="p">(</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;animation.glb&quot;</span><span class="p">,</span>
+    <span class="n">fps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">cycle_animation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p>Exports entire visible scene (all trajectories and molecules)</p></li>
+<li><p>Multiple trajectories animated together (must have same frame count)</p></li>
+<li><p>Static molecules included with fixed positions</p></li>
+<li><p>Per-object transparency with separate opaque/transparent meshes</p></li>
+<li><p>Automatic scaling to fit viewer expectations</p></li>
+</ul>
+</section>
+<section id="export-trajectory-animated-glb">
+<h3>export_trajectory_animated_glb<a class="headerlink" href="#export-trajectory-animated-glb" title="Link to this heading"></a></h3>
+<dl class="py method">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-prename descclassname"><span class="pre">Exporter.</span></span><span class="sig-name descname"><span class="pre">export_trajectory_animated_glb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trajectory_object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.14)"><span class="pre">Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cycle_animation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/chemvista/exporter.html#Exporter.export_trajectory_animated_glb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition"></a></dt>
+<dd><p>Export a trajectory as an animated GLB file using skeletal animation.</p>
+<p>This creates a PowerPoint-compatible animated 3D model where each atom
+is a bone in a skeleton, and the bone positions are animated through
+the trajectory frames.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trajectory_object</strong> – TrajectoryObject to export</p></li>
+<li><p><strong>output_path</strong> – Path where the GLB file will be saved</p></li>
+<li><p><strong>fps</strong> – Frames per second for animation (default: 10)</p></li>
+<li><p><strong>resolution</strong> – Mesh resolution for spheres/cylinders (default: 10, lower = fewer triangles)</p></li>
+<li><p><strong>cycle_animation</strong> – If True, adds reverse frames to create a loop (default: False)</p></li>
+<li><p><strong>scale</strong> – Scale factor for the model. If None (default), coordinates are in Angstroms.
+Use scale=0.1 to convert to nanometers, or scale=”auto” to fit in a 2-unit box.</p></li>
+<li><p><strong>**kwargs</strong> – Additional options (reserved for future use)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If trajectory has no frames or inconsistent atom counts</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If export fails</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All trajectory frames must have the same number of atoms in the same order.
+PowerPoint only plays the first animation in the GLB file.
+Lower resolution values create smaller files with fewer triangles.</p>
+</div>
+</dd></dl>
+
+<p>Export a single trajectory with skeletal animation. This method exports only the specified trajectory, not the entire scene.</p>
+<p><strong>Parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">trajectory_object</span></code> (<em>TrajectoryObject</em>) – Trajectory to export</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_path</span></code> (<em>str or Path</em>) – Output GLB file path</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fps</span></code> (<em>int, optional</em>) – Frames per second (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">resolution</span></code> (<em>int, optional</em>) – Mesh resolution 1-20 (default: 10)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cycle_animation</span></code> (<em>bool, optional</em>) – Add reverse frames for looping (default: False)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale</span></code> (<em>str or float, optional</em>) – Scale factor. Use <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> or a number.</p></li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Export single trajectory</span>
+<span class="n">exporter</span><span class="o">.</span><span class="n">export_trajectory_animated_glb</span><span class="p">(</span>
+    <span class="n">trajectory_object</span><span class="o">=</span><span class="n">trajectory</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;animation.glb&quot;</span><span class="p">,</span>
+    <span class="n">fps</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">cycle_animation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For most use cases, prefer <code class="xref py py-meth docutils literal notranslate"><span class="pre">export_animated_glb()</span></code> which handles the entire scene automatically.</p>
+</div>
+</section>
+</section>
+<section id="helper-methods">
+<h2>Helper Methods<a class="headerlink" href="#helper-methods" title="Link to this heading"></a></h2>
+<section id="collect-meshes-with-colors">
+<h3>_collect_meshes_with_colors<a class="headerlink" href="#collect-meshes-with-colors" title="Link to this heading"></a></h3>
+<p>Internal method that collects all visible meshes from the scene with their vertex colors.</p>
+</section>
+<section id="pv-to-trimesh">
+<h3>_pv_to_trimesh<a class="headerlink" href="#pv-to-trimesh" title="Link to this heading"></a></h3>
+<p>Converts PyVista PolyData to trimesh.Trimesh format.</p>
+</section>
+</section>
+<section id="export-file-format-details">
+<h2>Export File Format Details<a class="headerlink" href="#export-file-format-details" title="Link to this heading"></a></h2>
+<section id="static-glb-structure">
+<h3>Static GLB Structure<a class="headerlink" href="#static-glb-structure" title="Link to this heading"></a></h3>
+<p>The static export uses trimesh to create glTF 2.0 files with:</p>
+<p><strong>Materials:</strong></p>
+<ul class="simple">
+<li><p><strong>OpaqueMaterial</strong>: <code class="docutils literal notranslate"><span class="pre">alphaMode:</span> <span class="pre">&quot;OPAQUE&quot;</span></code> for fully opaque meshes</p></li>
+<li><p><strong>TransparentMaterial</strong>: <code class="docutils literal notranslate"><span class="pre">alphaMode:</span> <span class="pre">&quot;BLEND&quot;</span></code> for transparent meshes</p></li>
+</ul>
+<p><strong>Vertex Attributes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">POSITION</span></code>: 3D coordinates (VEC3, FLOAT)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COLOR_0</span></code>: RGBA colors (VEC4, UNSIGNED_BYTE, normalized)</p></li>
+</ul>
+</section>
+<section id="animated-glb-structure">
+<h3>Animated GLB Structure<a class="headerlink" href="#animated-glb-structure" title="Link to this heading"></a></h3>
+<p>The animated export creates skeletal animation with:</p>
+<p><strong>Nodes:</strong></p>
+<ul class="simple">
+<li><p>Root node (parent of skeleton and mesh nodes)</p></li>
+<li><p>Skeleton root (parent of all bones)</p></li>
+<li><p>Bone nodes (one per atom across all objects)</p></li>
+<li><p>Mesh nodes (opaque and/or transparent, sharing the skeleton)</p></li>
+</ul>
+<p><strong>Meshes:</strong></p>
+<p>The exporter creates separate meshes for different transparency levels:</p>
+<ul class="simple">
+<li><p><strong>OpaqueMesh</strong>: Faces from objects with alpha=1.0, <code class="docutils literal notranslate"><span class="pre">alphaMode:</span> <span class="pre">&quot;OPAQUE&quot;</span></code></p></li>
+<li><p><strong>TransparentMesh</strong>: Faces from objects with alpha&lt;1.0, <code class="docutils literal notranslate"><span class="pre">alphaMode:</span> <span class="pre">&quot;BLEND&quot;</span></code></p></li>
+</ul>
+<p>Both meshes share the same vertex data and skeleton.</p>
+<p><strong>Mesh Attributes:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">POSITION</span></code>: Vertex positions (bind pose = first frame)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">COLOR_0</span></code>: Vertex colors with per-object alpha</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">JOINTS_0</span></code>: Bone indices (VEC4, UNSIGNED_SHORT)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">WEIGHTS_0</span></code>: Bone weights (VEC4, FLOAT)</p></li>
+</ul>
+<p><strong>Skinning:</strong></p>
+<ul class="simple">
+<li><p>Inverse bind matrices: Transform from bone space to mesh space (column-major order)</p></li>
+<li><p>Atom vertices: 100% weight to corresponding bone</p></li>
+<li><p>Bond vertices: Weighted between two endpoint atom bones using axis-based linear interpolation</p></li>
+</ul>
+<p><strong>Animation:</strong></p>
+<ul class="simple">
+<li><p>Time keyframes: [0, 1/fps, 2/fps, …, (n-1)/fps]</p></li>
+<li><p>Translation tracks: One per bone</p></li>
+<li><p>Interpolation: LINEAR</p></li>
+<li><p>All bones animated (static molecules repeat position for all frames)</p></li>
+</ul>
+</section>
+<section id="transparency-handling">
+<h3>Transparency Handling<a class="headerlink" href="#transparency-handling" title="Link to this heading"></a></h3>
+<p>Per-object transparency is preserved:</p>
+<ol class="arabic simple">
+<li><p>Each object’s <code class="docutils literal notranslate"><span class="pre">render_settings.alpha</span></code> value is applied to its geometry</p></li>
+<li><p>Faces are grouped by their alpha value (opaque vs transparent)</p></li>
+<li><p>Separate meshes are created for each group</p></li>
+<li><p>Both meshes share the same skeleton and animate together</p></li>
+</ol>
+<p>This ensures opaque objects render correctly without being affected by transparent objects.</p>
+</section>
+<section id="scale-parameter">
+<h3>Scale Parameter<a class="headerlink" href="#scale-parameter" title="Link to this heading"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">scale</span></code> parameter normalizes model size:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scale=None</span></code>: No scaling, coordinates in original units (typically Ångströms)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale=&quot;auto&quot;</span></code>: Auto-scale to fit in 2-unit bounding box</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scale=0.1</span></code>: Manual scale factor (multiply all coordinates)</p></li>
+</ul>
+<p>Scaling is applied to:</p>
+<ul class="simple">
+<li><p>Vertex positions</p></li>
+<li><p>Atom radii</p></li>
+<li><p>Animation translation data</p></li>
+</ul>
+</section>
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<p>Raised when:</p>
+<ul class="simple">
+<li><p>No visible objects found in scene</p></li>
+<li><p>Invalid file extension (not .glb or .gltf)</p></li>
+<li><p>Trajectory has no frames</p></li>
+<li><p>Inconsistent atom counts across frames</p></li>
+<li><p>Multiple trajectories with different frame counts</p></li>
+</ul>
+<p>Raised when export operation fails.</p>
+</section>
+<section id="usage-notes">
+<h2>Usage Notes<a class="headerlink" href="#usage-notes" title="Link to this heading"></a></h2>
+<section id="performance-considerations">
+<h3>Performance Considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Resolution</strong>: Lower values dramatically reduce file size</p>
+<ul>
+<li><p>resolution=20: High quality, 2-5x larger files</p></li>
+<li><p>resolution=10: Default, good balance</p></li>
+<li><p>resolution=5: Low quality, 70% size reduction</p></li>
+</ul>
+</li>
+<li><p><strong>Frame Count</strong>: More frames = larger files</p>
+<ul>
+<li><p>Consider subsampling long trajectories</p></li>
+<li><p>Use higher FPS to reduce duration</p></li>
+</ul>
+</li>
+<li><p><strong>Atom Count</strong>: More atoms = more bones = larger files</p>
+<ul>
+<li><p>Use lower resolution for large molecules</p></li>
+<li><p>Consider hiding hydrogen atoms</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="file-size-examples">
+<h3>File Size Examples<a class="headerlink" href="#file-size-examples" title="Link to this heading"></a></h3>
+<p>For a 47-atom, 10-frame trajectory:</p>
+<ul class="simple">
+<li><p>resolution=20, fps=10: ~2000 KB</p></li>
+<li><p>resolution=10, fps=10: ~600 KB</p></li>
+<li><p>resolution=5, fps=10: ~200 KB</p></li>
+<li><p>resolution=5, fps=10, cycled: ~210 KB</p></li>
+</ul>
+</section>
+<section id="powerpoint-compatibility">
+<h3>PowerPoint Compatibility<a class="headerlink" href="#powerpoint-compatibility" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Requires PowerPoint 2019 or later</p></li>
+<li><p>Maximum file size: ~100 MB</p></li>
+<li><p>Animation plays automatically when inserted</p></li>
+<li><p>Only first animation in GLB file is played</p></li>
+</ul>
+</section>
+<section id="cli-integration">
+<h3>CLI Integration<a class="headerlink" href="#cli-integration" title="Link to this heading"></a></h3>
+<p>The exporter is integrated with the CLI:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Static export</span>
+chemvista<span class="w"> </span>--xyz<span class="w"> </span>molecule.xyz<span class="w"> </span>--glb<span class="w"> </span>output.glb
+
+<span class="c1"># Animated export</span>
+chemvista<span class="w"> </span>--xyz<span class="w"> </span>trajectory.xyz<span class="w"> </span>--glb-animated<span class="w"> </span>output.glb<span class="w"> </span><span class="se">\</span>
+<span class="w">          </span>--fps<span class="w"> </span><span class="m">15</span><span class="w"> </span>--resolution<span class="w"> </span><span class="m">8</span><span class="w"> </span>--cycle<span class="w"> </span>--scale<span class="w"> </span>auto
+</pre></div>
+</div>
+</section>
+<section id="gui-integration">
+<h3>GUI Integration<a class="headerlink" href="#gui-integration" title="Link to this heading"></a></h3>
+<p>Export is available from the GUI menu:</p>
+<ul class="simple">
+<li><p><strong>File → Export to GLB (Static)</strong> or <code class="docutils literal notranslate"><span class="pre">Ctrl+E</span></code></p></li>
+<li><p><strong>File → Export to GLB (Animated)</strong> or <code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+E</span></code></p></li>
+</ul>
+<p>The animated export dialog allows configuration of FPS, resolution, cycling, and scale.</p>
+</section>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="scene_manager.html#chemvista.scene_manager.SceneManager" title="chemvista.scene_manager.SceneManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">chemvista.scene_manager.SceneManager</span></code></a> – For loading files</p></li>
+<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">chemvista.renderer</span></code> – For rendering settings</p></li>
+<li><p><a class="reference internal" href="../tutorials/trajectory_export.html"><span class="doc">Exporting Animated Trajectories</span></a> – Tutorial on exporting trajectories</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scene_manager.html" class="btn btn-neutral float-left" title="Scene Manager API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="renderer.html" class="btn btn-neutral float-right" title="Renderer API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, ChemVista Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
