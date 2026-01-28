@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ${{ matrix.os }}
-    name: test (${{ matrix.os }})
+    name: test (${{ matrix.os }}, py${{ matrix.python-version }})
     strategy:
       fail-fast: false
       matrix:
@@ -29,5 +29,8 @@ jobs:
         poetry install
 
     - name: Run tests with pytest
+      env:
+        CI: true
+        QT_QPA_PLATFORM: offscreen
       run: |
-        poetry run pytest
+        poetry run pytest -v

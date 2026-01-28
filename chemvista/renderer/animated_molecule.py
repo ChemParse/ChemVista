@@ -1,0 +1,513 @@
+"""
+Animated molecule renderer that supports in-place mesh updates for smooth animation.
+
+This renderer stores mesh references and allows updating atom/bond positions
+without clearing and re-rendering the entire scene.
+"""
+
+import numpy as np
+import pyvista as pv
+import json
+import pathlib
+from typing import Optional, List, Dict, Tuple, Any
+from nx_ase.molecule import Molecule
+import logging
+from .palettes import load_palette, load_default_settings
+
+logger = logging.getLogger("chemvista.renderer.animated_molecule")
+
+
+class AnimatedMoleculeRenderer:
+    """
+    Renderer that creates and caches meshes for real-time animation.
+
+    Uses merged meshes for fast initial setup, then updates vertex positions
+    in-place for smooth animation without re-adding meshes to the plotter.
+    """
+
+    # Default bond settings (used if not present in palette)
+    DEFAULT_BOND_SETTINGS = {
+        "color": [211, 211, 211],  # Light gray
+        "single": {"radius": 0.05},
+        "double": {"radius": 0.025, "offset": 0.03},
+        "triple": {"radius": 0.02, "offset": 0.05}
+    }
+
+    def __init__(self):
+        settings = load_default_settings()
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
+        self.bond_settings = settings.get(
+            'bonds', self.DEFAULT_BOND_SETTINGS.copy())
+
+        # Single merged mesh for all atoms
+        self._atoms_mesh: Optional[pv.PolyData] = None
+        # Single merged mesh for all bonds
+        self._bonds_mesh: Optional[pv.PolyData] = None
+
+        # Metadata for updating positions
+        # Per-atom: original_idx, vertex_start, vertex_count, base_points
+        self._atom_info: List[Dict] = []
+        # Per-bond: atom_indices, vertex_start, vertex_count, base_cylinder
+        self._bond_info: List[Dict] = []
+
+        self._base_molecule: Optional[Molecule] = None
+        self._plotter: Optional[pv.Plotter] = None
+        self._settings: Optional[Dict] = None
+
+    def set_atom_settings(self, settings: Dict[str, Any]) -> None:
+        """
+        Set custom atom settings (colors and radii).
+
+        Args:
+            settings: Dictionary mapping element symbols to their settings.
+                     Each entry should have 'color' (RGB list) and 'radius' (float).
+                     Can also include 'bonds' key with bond rendering settings.
+        """
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
+
+    def set_palette(self, name_or_path: str, radius_scale: float = 1.0) -> None:
+        """
+        Set atom colors/radii from a named palette or custom file.
+
+        Args:
+            name_or_path: Built-in palette name ('chemvista', 'cpk', 'jmol')
+                         or path to a custom JSON palette file.
+            radius_scale: Scale factor for atom radii (default: 1.0)
+        """
+        settings = load_palette(name_or_path, radius_scale)
+        self.atoms_settings = {k: v for k,
+                               v in settings.items() if k != 'bonds'}
+        if 'bonds' in settings:
+            self.bond_settings = settings['bonds']
+
+    def setup(self, molecule: Molecule, plotter: pv.Plotter, settings: dict) -> None:
+        """
+        Initial setup - creates merged meshes and adds them to the plotter.
+
+        Args:
+            molecule: Base molecule (first frame) defining structure
+            plotter: PyVista plotter to render to
+            settings: Render settings dict
+        """
+        import time
+        start_time = time.time()
+
+        self._base_molecule = molecule
+        self._plotter = plotter
+        self._settings = settings
+
+        # Clear any existing cache
+        self._atom_info.clear()
+        self._bond_info.clear()
+        self._atoms_mesh = None
+        self._bonds_mesh = None
+
+        resolution = settings.get('resolution', 20)
+        alpha = settings.get('alpha', 1.0)
+        show_hydrogens = settings.get('show_hydrogens', True)
+
+        # Build atoms mesh
+        self._atoms_mesh = self._build_atoms_mesh(
+            molecule, resolution, alpha, show_hydrogens)
+        if self._atoms_mesh is not None:
+            plotter.add_mesh(self._atoms_mesh, scalars='RGBA',
+                             rgb=True, smooth_shading=True)
+
+        # Build bonds mesh
+        self._bonds_mesh = self._build_bonds_mesh(
+            molecule, resolution, alpha, show_hydrogens)
+        if self._bonds_mesh is not None:
+            plotter.add_mesh(self._bonds_mesh, scalars='RGBA',
+                             rgb=True, smooth_shading=True)
+
+        elapsed = time.time() - start_time
+        logger.debug(f"AnimatedMoleculeRenderer setup completed in {elapsed:.3f}s "
+                     f"({len(molecule)} atoms, {len(self._bond_info)} bonds)")
+
+    def _build_atoms_mesh(self, molecule: Molecule, resolution: int, alpha: float,
+                          show_hydrogens: bool) -> Optional[pv.PolyData]:
+        """Build a single concatenated mesh for all atoms with tracking info."""
+        points_parts: List[np.ndarray] = []
+        faces_parts: List[np.ndarray] = []
+        rgba_parts: List[np.ndarray] = []
+        vertex_offset = 0
+
+        for i, (position, symbol) in enumerate(zip(molecule.positions, molecule.get_chemical_symbols())):
+            if not show_hydrogens and symbol == 'H':
+                continue
+
+            atom_settings = self.atoms_settings.get(
+                symbol, self.atoms_settings['Unknown'])
+            radius = atom_settings['radius']
+
+            # Create sphere at origin, triangulated
+            sphere = pv.Sphere(
+                radius=radius,
+                center=(0, 0, 0),
+                theta_resolution=resolution,
+                phi_resolution=resolution
+            ).triangulate()
+
+            # Store base points (relative to center) before translation
+            base_points = sphere.points.copy()
+
+            # Translate to actual position for initial mesh
+            sphere.points = base_points + position
+
+            # Track atom vertex range and base points for update
+            self._atom_info.append({
+                'original_idx': i,
+                'vertex_start': vertex_offset,
+                'vertex_count': sphere.n_points,
+                'base_points': base_points,
+            })
+
+            # Append points
+            points_parts.append(sphere.points)
+
+            # Convert faces to PyVista faces with global offset
+            faces_local = sphere.faces.reshape(-1, 4)  # [3, i, j, k]
+            faces_global = faces_local.copy()
+            faces_global[:, 1:] += vertex_offset
+            faces_parts.append(faces_global.reshape(-1))
+
+            # Add RGBA
+            color = np.array(atom_settings['color'], dtype=np.uint8)
+            alpha_value = int(alpha * 255)
+            rgba_array = np.zeros((sphere.n_points, 4), dtype=np.uint8)
+            rgba_array[:, :3] = color
+            rgba_array[:, 3] = alpha_value
+            rgba_parts.append(rgba_array)
+
+            vertex_offset += sphere.n_points
+
+        if not points_parts:
+            return None
+        points = np.vstack(points_parts)
+        faces = np.hstack(faces_parts)
+        rgba = np.vstack(rgba_parts)
+        poly = pv.PolyData(points, faces)
+        poly['RGBA'] = rgba
+        return poly
+
+    def _build_bonds_mesh(self, molecule: Molecule, resolution: int, alpha: float,
+                          show_hydrogens: bool) -> Optional[pv.PolyData]:
+        """Build a single merged mesh for all bonds and record vertex ranges for updates."""
+        points_parts: List[np.ndarray] = []
+        faces_parts: List[np.ndarray] = []
+        rgba_parts: List[np.ndarray] = []
+        vertex_offset = 0
+
+        for bond in molecule.get_all_bonds():
+            a_idx, b_idx = bond
+            symbol_a = molecule.symbols[a_idx]
+            symbol_b = molecule.symbols[b_idx]
+
+            if not show_hydrogens and ('H' in (symbol_a, symbol_b)):
+                continue
+
+            atom_a = molecule.positions[a_idx]
+            atom_b = molecule.positions[b_idx]
+            bond_type = molecule.G[a_idx][b_idx].get('bond_type', 1)
+
+            atom_radius_a = self.atoms_settings.get(
+                symbol_a, self.atoms_settings['Unknown'])['radius']
+            atom_radius_b = self.atoms_settings.get(
+                symbol_b, self.atoms_settings['Unknown'])['radius']
+
+            bond_params = self._get_bond_params(bond_type)
+            for params in bond_params:
+                radius = params['radius']
+                offset_factor = params.get('offset_factor', 0.0)
+
+                # Create cylinder mesh and store base points for fast transforms
+                cyl, base_points = self._create_cylinder_with_base(
+                    atom_a, atom_b, radius, offset_factor, alpha, resolution,
+                    atom_radius_a, atom_radius_b
+                )
+
+                if cyl is None or cyl.n_points == 0:
+                    continue
+
+                # Track this cylinder's vertex range for in-place updates
+                self._bond_info.append({
+                    'atom_indices': (a_idx, b_idx),
+                    'bond_type': bond_type,
+                    'vertex_start': vertex_offset,
+                    'vertex_count': cyl.n_points,
+                    'resolution': resolution,
+                    'radius': radius,
+                    'offset_factor': offset_factor,
+                    'base_points': base_points,
+                    'atom_radius_a': atom_radius_a,
+                    'atom_radius_b': atom_radius_b,
+                })
+
+                # Manually concatenate instead of merge to preserve vertex ordering
+                points_parts.append(cyl.points)
+
+                # Convert faces with global offset
+                faces_local = cyl.faces.reshape(-1, 4)  # [3, i, j, k]
+                faces_global = faces_local.copy()
+                faces_global[:, 1:] += vertex_offset
+                faces_parts.append(faces_global.reshape(-1))
+
+                # Add RGBA
+                if 'RGBA' in cyl.array_names:
+                    rgba_parts.append(cyl['RGBA'])
+                else:
+                    # Default color if not present
+                    rgba_array = np.full(
+                        (cyl.n_points, 4), 200, dtype=np.uint8)
+                    rgba_parts.append(rgba_array)
+
+                vertex_offset += cyl.n_points
+
+        if not points_parts:
+            return None
+
+        points = np.vstack(points_parts)
+        faces = np.hstack(faces_parts)
+        rgba = np.vstack(rgba_parts)
+        poly = pv.PolyData(points, faces)
+        poly['RGBA'] = rgba
+        return poly
+
+    def _get_bond_params(self, bond_type: int) -> List[Dict]:
+        """Get cylinder parameters for each bond type from bond_settings."""
+        single_settings = self.bond_settings.get('single', {'radius': 0.05})
+        double_settings = self.bond_settings.get(
+            'double', {'radius': 0.025, 'offset': 0.03})
+        triple_settings = self.bond_settings.get(
+            'triple', {'radius': 0.02, 'offset': 0.05})
+
+        if bond_type == 1:
+            return [{'radius': single_settings['radius'], 'offset_factor': 0.0}]
+        elif bond_type == 2:
+            offset = double_settings.get('offset', 0.03)
+            radius = double_settings['radius']
+            return [
+                {'radius': radius, 'offset_factor': -offset},
+                {'radius': radius, 'offset_factor': offset},
+            ]
+        elif bond_type == 3:
+            offset = triple_settings.get('offset', 0.05)
+            radius = triple_settings['radius']
+            return [
+                {'radius': radius, 'offset_factor': -offset},
+                {'radius': radius, 'offset_factor': 0.0},
+                {'radius': radius, 'offset_factor': offset},
+            ]
+        return [{'radius': single_settings['radius'], 'offset_factor': 0.0}]
+
+    def _create_cylinder_with_base(self, start: np.ndarray, end: np.ndarray,
+                                   radius: float, offset_factor: float,
+                                   alpha: float, resolution: int,
+                                   atom_radius_a: float = 0.0,
+                                   atom_radius_b: float = 0.0) -> Tuple[pv.PolyData, np.ndarray]:
+        """Create a cylinder and return both the mesh and base points for fast updates."""
+        bond_vector = end - start
+        length = np.linalg.norm(bond_vector)
+
+        if length < 1e-6:
+            # Return empty cylinder for zero-length bonds
+            cyl = pv.PolyData()
+            return cyl, np.array([])
+
+        # Create a unit cylinder along Z axis (height=1, centered at origin)
+        # Use capping=True to give closed end caps (important for watertight solids)
+        unit_cylinder = pv.Cylinder(
+            center=(0, 0, 0),
+            direction=(0, 0, 1),
+            height=1.0,
+            radius=radius,
+            resolution=resolution,
+            capping=True
+        ).triangulate()
+
+        # Store base points (unit cylinder)
+        base_points = unit_cylinder.points.copy()
+
+        # Transform to actual position (with surface offset)
+        transformed_points = self._transform_cylinder_points(
+            base_points, start, end, offset_factor, atom_radius_a, atom_radius_b
+        )
+        unit_cylinder.points = transformed_points
+
+        # Get bond color from settings
+        bond_color = self.bond_settings.get('color', [211, 211, 211])
+        color = np.array(bond_color, dtype=np.uint8)
+        alpha_value = int(alpha * 255)
+        rgba_array = np.zeros((unit_cylinder.n_points, 4), dtype=np.uint8)
+        rgba_array[:, :3] = color
+        rgba_array[:, 3] = alpha_value
+        unit_cylinder['RGBA'] = rgba_array
+
+        return unit_cylinder, base_points
+
+    def _transform_cylinder_points(self, base_points: np.ndarray,
+                                   start: np.ndarray, end: np.ndarray,
+                                   offset_factor: float,
+                                   atom_radius_a: float = 0.0,
+                                   atom_radius_b: float = 0.0) -> np.ndarray:
+        """Transform unit cylinder base points to connect start and end positions.
+
+        Args:
+            base_points: Unit cylinder points (height=1, centered at origin)
+            start: Position of first atom
+            end: Position of second atom
+            offset_factor: Perpendicular offset for double/triple bonds
+            atom_radius_a: Radius of first atom (to offset bond start to surface)
+            atom_radius_b: Radius of second atom (to offset bond end to surface)
+        """
+        if len(base_points) == 0:
+            return base_points
+
+        bond_vector = end - start
+        full_length = np.linalg.norm(bond_vector)
+
+        if full_length < 1e-6:
+            return base_points
+
+        # Unit direction
+        direction = bond_vector / full_length
+
+        # Calculate surface-to-surface length
+        surface_length = full_length - atom_radius_a - atom_radius_b
+
+        if surface_length < 1e-6:
+            # Atoms are overlapping, return empty
+            return np.zeros_like(base_points)
+
+        # Build rotation matrix from Z axis to bond direction
+        z_axis = np.array([0.0, 0.0, 1.0])
+        rotation = self._rotation_matrix_from_vectors(z_axis, direction)
+
+        # Scale z component by surface_length (not full length)
+        scaled_points = base_points.copy()
+        scaled_points[:, 2] *= surface_length
+
+        # Rotate
+        rotated_points = scaled_points @ rotation.T
+
+        # Calculate perpendicular offset if needed
+        if abs(offset_factor) > 1e-6:
+            perp = self._get_perpendicular_vector(direction)
+            offset_vec = offset_factor * perp
+            rotated_points = rotated_points + offset_vec
+
+        # Translate to center of bond (accounting for surface offset)
+        # Center is between the two surface points, not atom centers
+        surface_start = start + atom_radius_a * direction
+        surface_end = end - atom_radius_b * direction
+        center = 0.5 * (surface_start + surface_end)
+        return rotated_points + center
+
+    def _rotation_matrix_from_vectors(self, vec1: np.ndarray, vec2: np.ndarray) -> np.ndarray:
+        """Compute rotation matrix that rotates vec1 to vec2."""
+        # Normalize inputs
+        a = vec1 / np.linalg.norm(vec1)
+        b = vec2 / np.linalg.norm(vec2)
+
+        # Check if vectors are parallel or anti-parallel
+        dot = np.dot(a, b)
+        if dot > 0.9999:
+            return np.eye(3)
+        if dot < -0.9999:
+            # Find a perpendicular vector for 180-degree rotation
+            perp = np.array([1, 0, 0]) if abs(
+                a[0]) < 0.9 else np.array([0, 1, 0])
+            perp = perp - np.dot(perp, a) * a
+            perp = perp / np.linalg.norm(perp)
+            # 180-degree rotation around perp
+            return 2 * np.outer(perp, perp) - np.eye(3)
+
+        # Rodrigues' rotation formula
+        v = np.cross(a, b)
+        s = np.linalg.norm(v)
+        c = dot
+
+        vx = np.array([
+            [0, -v[2], v[1]],
+            [v[2], 0, -v[0]],
+            [-v[1], v[0], 0]
+        ])
+
+        return np.eye(3) + vx + vx @ vx * ((1 - c) / (s * s))
+
+    def update_positions(self, new_positions: np.ndarray) -> None:
+        """
+        Update atom and bond positions in-place for smooth animation.
+
+        Args:
+            new_positions: New atom positions array of shape (num_atoms, 3)
+        """
+        if self._atoms_mesh is None:
+            return
+
+        # Update atom positions in-place
+        for atom_info in self._atom_info:
+            original_idx = atom_info['original_idx']
+            if original_idx < len(new_positions):
+                start = atom_info['vertex_start']
+                count = atom_info['vertex_count']
+                new_pos = new_positions[original_idx]
+                # Update vertices: base_points + new position
+                self._atoms_mesh.points[start:start +
+                                        count] = atom_info['base_points'] + new_pos
+
+        # Update bond positions in-place using fast transformation
+        if self._bonds_mesh is not None:
+            for bond_info in self._bond_info:
+                atom_indices = bond_info['atom_indices']
+                pos_a = new_positions[atom_indices[0]]
+                pos_b = new_positions[atom_indices[1]]
+
+                start = bond_info['vertex_start']
+                count = bond_info['vertex_count']
+                base_points = bond_info.get('base_points')
+                offset_factor = bond_info.get('offset_factor', 0.0)
+                atom_radius_a = bond_info.get('atom_radius_a', 0.0)
+                atom_radius_b = bond_info.get('atom_radius_b', 0.0)
+
+                if base_points is not None and len(base_points) == count:
+                    # Fast transformation using stored base points
+                    new_cyl_points = self._transform_cylinder_points(
+                        base_points, pos_a, pos_b, offset_factor,
+                        atom_radius_a, atom_radius_b
+                    )
+                    self._bonds_mesh.points[start:start +
+                                            count] = new_cyl_points
+
+        # Trigger render update
+        if self._plotter:
+            self._plotter.render()
+
+    def _get_perpendicular_vector(self, vector: np.ndarray) -> np.ndarray:
+        """Get a vector perpendicular to the input vector."""
+        basis_vectors = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        smallest = np.argmin(np.abs(vector))
+        perp = np.cross(vector, basis_vectors[smallest])
+        norm = np.linalg.norm(perp)
+        if norm < 1e-6:
+            return basis_vectors[(smallest + 1) % 3]
+        return perp / norm
+
+    def clear(self) -> None:
+        """Clear cached meshes."""
+        self._atoms_mesh = None
+        self._bonds_mesh = None
+        self._atom_info.clear()
+        self._bond_info.clear()
+        self._base_molecule = None
+        self._plotter = None
+        self._settings = None
+
+    @property
+    def is_setup(self) -> bool:
+        """Check if renderer has been set up with meshes."""
+        return self._atoms_mesh is not None

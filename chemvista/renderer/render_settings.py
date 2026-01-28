@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, Optional
 import copy
 
 
@@ -33,11 +33,20 @@ class ScalarFieldRenderSettings(RenderSettings):
     smooth_surface: bool = True
     show_filtered_points: bool = False
     point_value_range: tuple = (0.0, 1.0)
+    # If True, attempt to produce a watertight solid (close/fill holes) for each isosurface.
+    # Useful when exporting to STL/OBJ for 3D printing.
+    solid_isosurface: bool = True
+    # Hole filling radius (passed to pyvista.PolyData.fill_holes). Increase if contours have large gaps.
+    # Set to 0 or None to skip hole-filling.
+    fill_holes_size: Optional[float] = 1000.0
 
 
 @dataclass
 class TrajectoryRenderSettings(RenderSettings):
-    pass
+    show_hydrogens: bool = True
+    show_numbers: bool = False
+    alpha: float = 1.0
+    resolution: int = 20
 
 
 class GlobalSettings:
