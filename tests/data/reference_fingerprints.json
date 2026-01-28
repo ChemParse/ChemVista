@@ -7,9 +7,9 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293071746826172,
+      -12.293072700500488,
       -6.003164291381836,
-      -3.4117238521575928
+      -3.411724090576172
     ],
     "bone_count": 0,
     "color_histogram": {
@@ -20,7 +20,7 @@
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "33173d2290142cf7",
+    "indices_hash": "aa8e1517724377e1",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -35,9 +35,9 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293071746826172,
+          -12.293072700500488,
           -6.003164291381836,
-          -3.4117238521575928
+          -3.411724090576172
         ],
         "colors": [
           [
@@ -64,7 +64,7 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "18908f921141cf01",
+    "positions_hash": "c4f4935654c7ad24",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
@@ -96,9 +96,9 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293071746826172,
+      -12.293072700500488,
       -6.003164291381836,
-      -3.4117238521575928
+      -3.411724090576172
     ],
     "bone_count": 0,
     "color_histogram": {
@@ -109,7 +109,7 @@
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "33173d2290142cf7",
+    "indices_hash": "aa8e1517724377e1",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -124,9 +124,9 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293071746826172,
+          -12.293072700500488,
           -6.003164291381836,
-          -3.4117238521575928
+          -3.411724090576172
         ],
         "colors": [
           [
@@ -153,7 +153,7 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "18908f921141cf01",
+    "positions_hash": "c4f4935654c7ad24",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
@@ -185,20 +185,20 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293071746826172,
+      -12.293072700500488,
       -6.003164291381836,
-      -3.4117238521575928
+      -3.411724090576172
     ],
     "bone_count": 0,
     "color_histogram": {
-      "R112_G112_B128": 7240,
-      "R32_G32_B32": 9774,
-      "R64_G64_B80": 2080
+      "R0_G0_B0": 2080,
+      "R16_G16_B16": 9774,
+      "R48_G48_B48": 7240
     },
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "33173d2290142cf7",
+    "indices_hash": "aa8e1517724377e1",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -213,27 +213,27 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293071746826172,
+          -12.293072700500488,
           -6.003164291381836,
-          -3.4117238521575928
+          -3.411724090576172
         ],
         "colors": [
           [
-            40,
-            40,
-            40,
+            11,
+            11,
+            13,
             255
           ],
           [
-            70,
-            70,
-            80,
+            16,
+            16,
+            16,
             255
           ],
           [
-            120,
-            120,
-            140,
+            48,
+            48,
+            56,
             255
           ]
         ],
@@ -242,25 +242,25 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "18908f921141cf01",
+    "positions_hash": "c4f4935654c7ad24",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
-        40,
-        40,
-        40,
+        11,
+        11,
+        13,
         255
       ],
       [
-        70,
-        70,
-        80,
+        16,
+        16,
+        16,
         255
       ],
       [
-        120,
-        120,
-        140,
+        48,
+        48,
+        56,
         255
       ]
     ],
@@ -288,7 +288,7 @@
     "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "04c73001f4ac764d",
+    "indices_hash": "83e9ca000f28ba94",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -338,7 +338,7 @@
       }
     },
     "node_count": 58,
-    "positions_hash": "8fb9c7021eebcaff",
+    "positions_hash": "e6aa66232e4894da",
     "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [
@@ -382,15 +382,15 @@
     ],
     "bone_count": 56,
     "color_histogram": {
-      "R112_G112_B128": 850,
-      "R32_G32_B32": 1500,
-      "R64_G128_B32": 450,
-      "R64_G64_B80": 1952
+      "R0_G0_B0": 1952,
+      "R16_G16_B16": 1500,
+      "R16_G48_B16": 450,
+      "R48_G48_B48": 850
     },
     "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "04c73001f4ac764d",
+    "indices_hash": "83e9ca000f28ba94",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -411,27 +411,27 @@
         ],
         "colors": [
           [
-            40,
-            40,
-            40,
+            11,
+            11,
+            13,
             255
           ],
           [
-            70,
-            70,
-            80,
+            16,
+            16,
+            16,
             255
           ],
           [
-            70,
-            140,
-            40,
+            28,
+            56,
+            16,
             255
           ],
           [
-            120,
-            120,
-            140,
+            48,
+            48,
+            56,
             255
           ]
         ],
@@ -440,31 +440,31 @@
       }
     },
     "node_count": 58,
-    "positions_hash": "8fb9c7021eebcaff",
+    "positions_hash": "e6aa66232e4894da",
     "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [
-        40,
-        40,
-        40,
+        11,
+        11,
+        13,
         255
       ],
       [
-        70,
-        70,
-        80,
+        16,
+        16,
+        16,
         255
       ],
       [
-        70,
-        140,
-        40,
+        28,
+        56,
+        16,
         255
       ],
       [
-        120,
-        120,
-        140,
+        48,
+        48,
+        56,
         255
       ]
     ],
