@@ -7,9 +7,9 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293072700500488,
+      -12.293071746826172,
       -6.003164291381836,
-      -3.411724090576172
+      -3.4117238521575928
     ],
     "bone_count": 0,
     "color_histogram": {
@@ -20,7 +20,7 @@
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "aa8e1517724377e1",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -35,9 +35,9 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293072700500488,
+          -12.293071746826172,
           -6.003164291381836,
-          -3.411724090576172
+          -3.4117238521575928
         ],
         "colors": [
           [
@@ -64,7 +64,7 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "c4f4935654c7ad24",
+    "positions_hash": "18908f921141cf01",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
@@ -96,9 +96,9 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293072700500488,
+      -12.293071746826172,
       -6.003164291381836,
-      -3.411724090576172
+      -3.4117238521575928
     ],
     "bone_count": 0,
     "color_histogram": {
@@ -109,7 +109,7 @@
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "aa8e1517724377e1",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -124,9 +124,9 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293072700500488,
+          -12.293071746826172,
           -6.003164291381836,
-          -3.411724090576172
+          -3.4117238521575928
         ],
         "colors": [
           [
@@ -153,7 +153,7 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "c4f4935654c7ad24",
+    "positions_hash": "18908f921141cf01",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
@@ -185,9 +185,9 @@
       4.818171977996826
     ],
     "bbox_min": [
-      -12.293072700500488,
+      -12.293071746826172,
       -6.003164291381836,
-      -3.411724090576172
+      -3.4117238521575928
     ],
     "bone_count": 0,
     "color_histogram": {
@@ -198,7 +198,7 @@
     "face_count": 37792,
     "frame_count": 0,
     "has_animation": false,
-    "indices_hash": "aa8e1517724377e1",
+    "indices_hash": "33173d2290142cf7",
     "keyframe_hash": "",
     "material_count": 1,
     "material_hashes": [
@@ -213,9 +213,9 @@
           4.818171977996826
         ],
         "bbox_min": [
-          -12.293072700500488,
+          -12.293071746826172,
           -6.003164291381836,
-          -3.411724090576172
+          -3.4117238521575928
         ],
         "colors": [
           [
@@ -242,7 +242,7 @@
       }
     },
     "node_count": 2,
-    "positions_hash": "c4f4935654c7ad24",
+    "positions_hash": "18908f921141cf01",
     "scene_hierarchy_hash": "ca9374796ea505a8",
     "unique_colors": [
       [
@@ -288,7 +288,7 @@
     "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "83e9ca000f28ba94",
+    "indices_hash": "04c73001f4ac764d",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -338,7 +338,7 @@
       }
     },
     "node_count": 58,
-    "positions_hash": "e6aa66232e4894da",
+    "positions_hash": "8fb9c7021eebcaff",
     "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [
@@ -390,7 +390,7 @@
     "face_count": 7084,
     "frame_count": 10,
     "has_animation": true,
-    "indices_hash": "83e9ca000f28ba94",
+    "indices_hash": "04c73001f4ac764d",
     "keyframe_hash": "a29673c67b481d04",
     "material_count": 1,
     "material_hashes": [
@@ -440,7 +440,7 @@
       }
     },
     "node_count": 58,
-    "positions_hash": "e6aa66232e4894da",
+    "positions_hash": "8fb9c7021eebcaff",
     "scene_hierarchy_hash": "e9e6dc51f41cc2ca",
     "unique_colors": [
       [

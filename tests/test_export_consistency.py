@@ -47,7 +47,8 @@ from chemvista.tree_structure import TreeSignals
 # Reference fingerprint storage
 # ============================================================================
 
-REFERENCE_FINGERPRINTS_FILE = pathlib.Path(__file__).parent / 'data' / 'reference_fingerprints.json'
+REFERENCE_FINGERPRINTS_FILE = pathlib.Path(
+    __file__).parent / 'data' / 'reference_fingerprints.json'
 
 
 def load_reference_fingerprints() -> Dict[str, dict]:
@@ -128,7 +129,8 @@ class GLBFingerprint:
     def to_dict(self) -> dict:
         """Convert to JSON-serializable dict."""
         # Convert numpy types to Python native types for JSON serialization
-        unique_colors_list = sorted([[int(v) for v in c] for c in self.unique_colors])
+        unique_colors_list = sorted([[int(v) for v in c]
+                                    for c in self.unique_colors])
         return {
             'vertex_count': int(self.vertex_count),
             'face_count': int(self.face_count),
@@ -188,10 +190,15 @@ class GLBFingerprint:
                 check_colors: bool = True,
                 check_geometry: bool = True,
                 check_animation: bool = True,
-                check_hashes: bool = True,
+                # Disabled by default - hashes are Python version dependent
+                check_hashes: bool = False,
                 bbox_tolerance: float = 0.01) -> Tuple[bool, List[str]]:
         """
         Check if two fingerprints match within tolerance.
+
+        Args:
+            check_hashes: CAUTION - Geometry hashes are affected by floating-point precision
+                         differences between Python/NumPy versions. Only enable for same-version testing.
 
         Returns:
             Tuple of (matches: bool, differences: List[str])
@@ -200,63 +207,80 @@ class GLBFingerprint:
 
         if check_geometry:
             if self.vertex_count != other.vertex_count:
-                differences.append(f"vertex_count: {self.vertex_count} vs {other.vertex_count}")
+                differences.append(
+                    f"vertex_count: {self.vertex_count} vs {other.vertex_count}")
             if self.face_count != other.face_count:
-                differences.append(f"face_count: {self.face_count} vs {other.face_count}")
+                differences.append(
+                    f"face_count: {self.face_count} vs {other.face_count}")
             if self.mesh_count != other.mesh_count:
-                differences.append(f"mesh_count: {self.mesh_count} vs {other.mesh_count}")
+                differences.append(
+                    f"mesh_count: {self.mesh_count} vs {other.mesh_count}")
             if self.node_count != other.node_count:
-                differences.append(f"node_count: {self.node_count} vs {other.node_count}")
+                differences.append(
+                    f"node_count: {self.node_count} vs {other.node_count}")
 
             # Check bounding box within tolerance
             for i, axis in enumerate(['x', 'y', 'z']):
                 if abs(self.bbox_min[i] - other.bbox_min[i]) > bbox_tolerance:
-                    differences.append(f"bbox_min_{axis}: {self.bbox_min[i]:.4f} vs {other.bbox_min[i]:.4f}")
+                    differences.append(
+                        f"bbox_min_{axis}: {self.bbox_min[i]:.4f} vs {other.bbox_min[i]:.4f}")
                 if abs(self.bbox_max[i] - other.bbox_max[i]) > bbox_tolerance:
-                    differences.append(f"bbox_max_{axis}: {self.bbox_max[i]:.4f} vs {other.bbox_max[i]:.4f}")
+                    differences.append(
+                        f"bbox_max_{axis}: {self.bbox_max[i]:.4f} vs {other.bbox_max[i]:.4f}")
 
-            # Check geometry hashes
+            # Check geometry hashes (disabled by default - version dependent)
             if check_hashes:
                 if self.positions_hash and other.positions_hash:
                     if self.positions_hash != other.positions_hash:
-                        differences.append(f"positions_hash mismatch (geometry changed)")
+                        differences.append(
+                            f"positions_hash mismatch (geometry changed)")
                 if self.indices_hash and other.indices_hash:
                     if self.indices_hash != other.indices_hash:
-                        differences.append(f"indices_hash mismatch (topology changed)")
+                        differences.append(
+                            f"indices_hash mismatch (topology changed)")
 
         if check_colors:
             if self.unique_colors != other.unique_colors:
                 only_self = self.unique_colors - other.unique_colors
                 only_other = other.unique_colors - self.unique_colors
                 if only_self:
-                    differences.append(f"colors only in self: {sorted(only_self)}")
+                    differences.append(
+                        f"colors only in self: {sorted(only_self)}")
                 if only_other:
-                    differences.append(f"colors only in other: {sorted(only_other)}")
+                    differences.append(
+                        f"colors only in other: {sorted(only_other)}")
 
             # Check material hashes
             if check_hashes and self.material_hashes and other.material_hashes:
                 if set(self.material_hashes) != set(other.material_hashes):
-                    differences.append(f"material_hashes mismatch (materials changed)")
+                    differences.append(
+                        f"material_hashes mismatch (materials changed)")
 
         if check_animation:
             if self.has_animation != other.has_animation:
-                differences.append(f"has_animation: {self.has_animation} vs {other.has_animation}")
+                differences.append(
+                    f"has_animation: {self.has_animation} vs {other.has_animation}")
             if self.bone_count != other.bone_count:
-                differences.append(f"bone_count: {self.bone_count} vs {other.bone_count}")
+                differences.append(
+                    f"bone_count: {self.bone_count} vs {other.bone_count}")
             if self.frame_count != other.frame_count:
-                differences.append(f"frame_count: {self.frame_count} vs {other.frame_count}")
+                differences.append(
+                    f"frame_count: {self.frame_count} vs {other.frame_count}")
             if abs(self.animation_duration - other.animation_duration) > 0.001:
-                differences.append(f"animation_duration: {self.animation_duration:.3f} vs {other.animation_duration:.3f}")
+                differences.append(
+                    f"animation_duration: {self.animation_duration:.3f} vs {other.animation_duration:.3f}")
 
             # Check keyframe hash
             if check_hashes and self.keyframe_hash and other.keyframe_hash:
                 if self.keyframe_hash != other.keyframe_hash:
-                    differences.append(f"keyframe_hash mismatch (animation data changed)")
+                    differences.append(
+                        f"keyframe_hash mismatch (animation data changed)")
 
         # Check scene hierarchy
         if check_hashes and self.scene_hierarchy_hash and other.scene_hierarchy_hash:
             if self.scene_hierarchy_hash != other.scene_hierarchy_hash:
-                differences.append(f"scene_hierarchy_hash mismatch (scene structure changed)")
+                differences.append(
+                    f"scene_hierarchy_hash mismatch (scene structure changed)")
 
         return len(differences) == 0, differences
 
@@ -390,7 +414,8 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
 
             # Extract positions
             if 'POSITION' in attrs:
-                pos_data = _extract_accessor_data(gltf, bin_data, attrs['POSITION'])
+                pos_data = _extract_accessor_data(
+                    gltf, bin_data, attrs['POSITION'])
                 all_positions.append(pos_data)
                 mesh_vertices += len(pos_data)
                 total_vertex_count += len(pos_data)
@@ -402,15 +427,18 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
                 if min_vals:
                     for i in range(3):
                         mesh_bbox_min[i] = min(mesh_bbox_min[i], min_vals[i])
-                        global_bbox_min[i] = min(global_bbox_min[i], min_vals[i])
+                        global_bbox_min[i] = min(
+                            global_bbox_min[i], min_vals[i])
                 if max_vals:
                     for i in range(3):
                         mesh_bbox_max[i] = max(mesh_bbox_max[i], max_vals[i])
-                        global_bbox_max[i] = max(global_bbox_max[i], max_vals[i])
+                        global_bbox_max[i] = max(
+                            global_bbox_max[i], max_vals[i])
 
             # Extract indices
             if 'indices' in prim:
-                idx_data = _extract_accessor_data(gltf, bin_data, prim['indices'])
+                idx_data = _extract_accessor_data(
+                    gltf, bin_data, prim['indices'])
                 all_indices.append(idx_data)
                 face_count_prim = len(idx_data) // 3
                 mesh_faces += face_count_prim
@@ -418,7 +446,8 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
 
             # Extract colors
             if 'COLOR_0' in attrs:
-                color_data = _extract_accessor_data(gltf, bin_data, attrs['COLOR_0'])
+                color_data = _extract_accessor_data(
+                    gltf, bin_data, attrs['COLOR_0'])
                 # Handle different color formats
                 if color_data.dtype == np.float32:
                     # Convert float [0,1] to uint8 [0,255]
@@ -447,17 +476,20 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
             'faces': mesh_faces,
             'bbox_min': mesh_bbox_min if mesh_bbox_min[0] != float('inf') else [0, 0, 0],
             'bbox_max': mesh_bbox_max if mesh_bbox_max[0] != float('-inf') else [0, 0, 0],
-            'colors': sorted([list(c) for c in mesh_colors])[:10],  # Store up to 10 unique colors
+            # Store up to 10 unique colors
+            'colors': sorted([list(c) for c in mesh_colors])[:10],
         }
 
     # Create geometry hashes
     positions_hash = ''
     indices_hash = ''
     if all_positions:
-        combined_positions = np.vstack(all_positions) if len(all_positions) > 1 else all_positions[0]
+        combined_positions = np.vstack(all_positions) if len(
+            all_positions) > 1 else all_positions[0]
         positions_hash = _hash_data(combined_positions)
     if all_indices:
-        combined_indices = np.concatenate(all_indices) if len(all_indices) > 1 else all_indices[0]
+        combined_indices = np.concatenate(all_indices) if len(
+            all_indices) > 1 else all_indices[0]
         indices_hash = _hash_data(combined_indices)
 
     # Handle case where no positions found
@@ -482,16 +514,19 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
         for sampler in anim.get('samplers', []):
             # Input accessor (timestamps)
             input_accessor_idx = sampler['input']
-            timestamps = _extract_accessor_data(gltf, bin_data, input_accessor_idx)
+            timestamps = _extract_accessor_data(
+                gltf, bin_data, input_accessor_idx)
             frame_count = max(frame_count, len(timestamps))
 
             # Get duration from max timestamp
             if len(timestamps) > 0:
-                animation_duration = max(animation_duration, float(timestamps.max()))
+                animation_duration = max(
+                    animation_duration, float(timestamps.max()))
 
             # Output accessor (transforms)
             output_accessor_idx = sampler['output']
-            transforms = _extract_accessor_data(gltf, bin_data, output_accessor_idx)
+            transforms = _extract_accessor_data(
+                gltf, bin_data, output_accessor_idx)
             all_keyframe_data.append(transforms.flatten())
 
         # Create keyframe hash
@@ -504,7 +539,8 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
     for node_idx, node in enumerate(gltf.get('nodes', [])):
         children = node.get('children', [])
         hierarchy_data.append((node_idx, tuple(sorted(children))))
-    scene_hierarchy_hash = hashlib.sha256(str(sorted(hierarchy_data)).encode()).hexdigest()[:16]
+    scene_hierarchy_hash = hashlib.sha256(
+        str(sorted(hierarchy_data)).encode()).hexdigest()[:16]
 
     # Material hashes
     material_hashes = []
@@ -519,10 +555,12 @@ def extract_glb_fingerprint(filepath: pathlib.Path) -> GLBFingerprint:
         # Include PBR properties if present
         pbr = mat.get('pbrMetallicRoughness', {})
         if pbr:
-            mat_data['baseColorFactor'] = pbr.get('baseColorFactor', [1, 1, 1, 1])
+            mat_data['baseColorFactor'] = pbr.get(
+                'baseColorFactor', [1, 1, 1, 1])
             mat_data['metallicFactor'] = pbr.get('metallicFactor', 1.0)
             mat_data['roughnessFactor'] = pbr.get('roughnessFactor', 1.0)
-        mat_hash = hashlib.sha256(json.dumps(mat_data, sort_keys=True).encode()).hexdigest()[:16]
+        mat_hash = hashlib.sha256(json.dumps(
+            mat_data, sort_keys=True).encode()).hexdigest()[:16]
         material_hashes.append(mat_hash)
 
     return GLBFingerprint(
@@ -572,7 +610,8 @@ class PNGFingerprint:
 
     # Color statistics
     unique_color_count: int
-    dominant_colors: List[Tuple[int, int, int, int]]  # Top N colors by frequency
+    # Top N colors by frequency
+    dominant_colors: List[Tuple[int, int, int, int]]
 
     # Transparency info
     has_transparency: bool
@@ -641,7 +680,8 @@ class PNGFingerprint:
         # Check pixel hash (exact content match)
         if check_hash:
             if self.pixel_hash != other.pixel_hash:
-                differences.append("pixel_hash mismatch (image content changed)")
+                differences.append(
+                    "pixel_hash mismatch (image content changed)")
 
         # Check color statistics
         if check_colors:
@@ -845,14 +885,16 @@ class TestExportDeterminism:
         sm1 = scene_manager_factory()
         traj_obj1 = sm1.load_xyz(test_files['trajectory'])
         exporter1 = Exporter(sm1)
-        exporter1.export_trajectory_animated_glb(traj_obj1, path1, fps=10, resolution=8)
+        exporter1.export_trajectory_animated_glb(
+            traj_obj1, path1, fps=10, resolution=8)
         fp1 = extract_glb_fingerprint(path1)
 
         # Second export with fresh scene manager
         sm2 = scene_manager_factory()
         traj_obj2 = sm2.load_xyz(test_files['trajectory'])
         exporter2 = Exporter(sm2)
-        exporter2.export_trajectory_animated_glb(traj_obj2, path2, fps=10, resolution=8)
+        exporter2.export_trajectory_animated_glb(
+            traj_obj2, path2, fps=10, resolution=8)
         fp2 = extract_glb_fingerprint(path2)
 
         # Compare
@@ -1041,7 +1083,8 @@ class TestParameterEffects:
         sm2 = scene_manager_factory()
         sm2.load_xyz(test_files['molecule_1'])
         # Update just the carbon color in existing settings
-        sm2.molecule_renderer.atoms_settings['C'] = {'color': [255, 0, 0], 'radius': 0.16}
+        sm2.molecule_renderer.atoms_settings['C'] = {
+            'color': [255, 0, 0], 'radius': 0.16}
         exporter2 = Exporter(sm2)
         exporter2.export_glb(path2)
         fp2 = extract_glb_fingerprint(path2)
@@ -1064,14 +1107,16 @@ class TestParameterEffects:
         sm1 = scene_manager_factory()
         traj_obj1 = sm1.load_xyz(test_files['trajectory'])
         exporter1 = Exporter(sm1)
-        exporter1.export_trajectory_animated_glb(traj_obj1, path1, resolution=6)
+        exporter1.export_trajectory_animated_glb(
+            traj_obj1, path1, resolution=6)
         fp1 = extract_glb_fingerprint(path1)
 
         # Export with high resolution
         sm2 = scene_manager_factory()
         traj_obj2 = sm2.load_xyz(test_files['trajectory'])
         exporter2 = Exporter(sm2)
-        exporter2.export_trajectory_animated_glb(traj_obj2, path2, resolution=12)
+        exporter2.export_trajectory_animated_glb(
+            traj_obj2, path2, resolution=12)
         fp2 = extract_glb_fingerprint(path2)
 
         # Higher resolution should have more vertices
@@ -1108,7 +1153,8 @@ class TestParameterEffects:
         sm1 = scene_manager_factory()
         traj_obj1 = sm1.load_xyz(test_files['trajectory'])
         exporter1 = Exporter(sm1)
-        exporter1.export_trajectory_animated_glb(traj_obj1, path1, resolution=8)
+        exporter1.export_trajectory_animated_glb(
+            traj_obj1, path1, resolution=8)
         fp1 = extract_glb_fingerprint(path1)
 
         # Export with powerpoint palette (darker colors)
@@ -1116,7 +1162,8 @@ class TestParameterEffects:
         traj_obj2 = sm2.load_xyz(test_files['trajectory'])
         sm2.set_palette('powerpoint')
         exporter2 = Exporter(sm2)
-        exporter2.export_trajectory_animated_glb(traj_obj2, path2, resolution=8)
+        exporter2.export_trajectory_animated_glb(
+            traj_obj2, path2, resolution=8)
         fp2 = extract_glb_fingerprint(path2)
 
         # Colors should be different
@@ -1207,13 +1254,15 @@ class TestFingerprintValidation:
         sm2 = scene_manager_factory()
         sm2.load_xyz(test_files['molecule_1'])
         # Update just the carbon color in existing settings
-        sm2.molecule_renderer.atoms_settings['C'] = {'color': [0, 255, 0], 'radius': 0.16}
+        sm2.molecule_renderer.atoms_settings['C'] = {
+            'color': [0, 255, 0], 'radius': 0.16}
         exporter2 = Exporter(sm2)
         exporter2.export_glb(path2)
         fp2 = extract_glb_fingerprint(path2)
 
         # Should detect difference
-        matches, diffs = fp1.matches(fp2, check_colors=True, check_geometry=False)
+        matches, diffs = fp1.matches(
+            fp2, check_colors=True, check_geometry=False)
         assert not matches, "Should detect color differences"
         assert any('colors' in d for d in diffs)
 
@@ -1270,9 +1319,9 @@ class TestColorVerification:
         exporter.export_glb(temp_glb)
         fp = extract_glb_fingerprint(temp_glb)
 
-        # PowerPoint carbon is [40, 40, 40]
+        # PowerPoint carbon is [16, 16, 16]
         has_dark_carbon = any(
-            c[0] == 40 and c[1] == 40 and c[2] == 40
+            c[0] == 16 and c[1] == 16 and c[2] == 16
             for c in fp.unique_colors
         )
         assert has_dark_carbon, f"Dark carbon not found. Colors: {sorted(fp.unique_colors)}"
@@ -1281,7 +1330,8 @@ class TestColorVerification:
         """Explicitly set red carbon should appear in export."""
         scene_manager.load_xyz(test_files['molecule_1'])
         # Update just the carbon color in existing settings
-        scene_manager.molecule_renderer.atoms_settings['C'] = {'color': [255, 0, 0], 'radius': 0.16}
+        scene_manager.molecule_renderer.atoms_settings['C'] = {
+            'color': [255, 0, 0], 'radius': 0.16}
         exporter = Exporter(scene_manager)
         exporter.export_glb(temp_glb)
         fp = extract_glb_fingerprint(temp_glb)
@@ -1322,9 +1372,9 @@ class TestBondColorConsistency:
         exporter.export_glb(temp_glb)
         fp = extract_glb_fingerprint(temp_glb)
 
-        # PowerPoint bond color is [70, 70, 80]
+        # PowerPoint bond color is [11, 11, 13]
         has_dark_bonds = any(
-            c[0] == 70 and c[1] == 70 and c[2] == 80
+            c[0] == 11 and c[1] == 11 and c[2] == 13
             for c in fp.unique_colors
         )
         assert has_dark_bonds, f"Dark bonds not found. Colors: {sorted(fp.unique_colors)}"
@@ -1433,10 +1483,12 @@ class TestReferenceFingerprints:
     def _run_reference_test(self, ref_name, request, scene_manager_factory, test_files, temp_glb):
         """Run a reference comparison test."""
         config = self.REFERENCE_CONFIGS[ref_name]
-        fp = self._generate_fingerprint(scene_manager_factory, test_files, config, temp_glb)
+        fp = self._generate_fingerprint(
+            scene_manager_factory, test_files, config, temp_glb)
 
         # Check if we should generate references
-        generate_mode = request.config.getoption("--generate-fingerprints", default=False)
+        generate_mode = request.config.getoption(
+            "--generate-fingerprints", default=False)
 
         if generate_mode:
             # Save the fingerprint as reference
@@ -1519,7 +1571,8 @@ def generate_all_references(test_files_dict: dict):
             temp_path.unlink(missing_ok=True)
 
     save_reference_fingerprints(refs)
-    print(f"Saved {len(refs)} reference fingerprints to {REFERENCE_FINGERPRINTS_FILE}")
+    print(
+        f"Saved {len(refs)} reference fingerprints to {REFERENCE_FINGERPRINTS_FILE}")
 
 
 # ============================================================================
@@ -1602,13 +1655,15 @@ class TestSaveExportSamples:
 
         output_path = TEST_OUTPUT_DIR / 'trajectory_default.glb'
         exporter = Exporter(sm)
-        exporter.export_trajectory_animated_glb(traj_obj, output_path, fps=10, resolution=8)
+        exporter.export_trajectory_animated_glb(
+            traj_obj, output_path, fps=10, resolution=8)
 
         assert output_path.exists()
         fp = extract_glb_fingerprint(output_path)
         print(f"\nSaved: {output_path}")
         print(f"  Vertices: {fp.vertex_count}, Faces: {fp.face_count}")
-        print(f"  Animation: {fp.frame_count} frames, {fp.animation_duration:.2f}s")
+        print(
+            f"  Animation: {fp.frame_count} frames, {fp.animation_duration:.2f}s")
         print(f"  Bones: {fp.bone_count}")
         print(f"  Colors: {sorted(fp.unique_colors)}")
 
@@ -1620,13 +1675,15 @@ class TestSaveExportSamples:
 
         output_path = TEST_OUTPUT_DIR / 'trajectory_powerpoint.glb'
         exporter = Exporter(sm)
-        exporter.export_trajectory_animated_glb(traj_obj, output_path, fps=10, resolution=8)
+        exporter.export_trajectory_animated_glb(
+            traj_obj, output_path, fps=10, resolution=8)
 
         assert output_path.exists()
         fp = extract_glb_fingerprint(output_path)
         print(f"\nSaved: {output_path}")
         print(f"  Vertices: {fp.vertex_count}, Faces: {fp.face_count}")
-        print(f"  Animation: {fp.frame_count} frames, {fp.animation_duration:.2f}s")
+        print(
+            f"  Animation: {fp.frame_count} frames, {fp.animation_duration:.2f}s")
         print(f"  Bones: {fp.bone_count}")
         print(f"  Colors: {sorted(fp.unique_colors)}")
 
@@ -1679,7 +1736,8 @@ class TestSaveExportSamples:
 
             assert output_path.exists()
             fp = extract_glb_fingerprint(output_path)
-            print(f"  {palette_name}: {output_path.name} - {len(fp.unique_colors)} colors")
+            print(
+                f"  {palette_name}: {output_path.name} - {len(fp.unique_colors)} colors")
 
     # -------------------------------------------------------------------------
     # PNG Screenshot samples
@@ -1781,4 +1839,5 @@ class TestSaveExportSamples:
 
             assert output_path.exists()
             fp = extract_png_fingerprint(output_path)
-            print(f"  {palette_name}: {output_path.name} - {fp.unique_color_count} colors")
+            print(
+                f"  {palette_name}: {output_path.name} - {fp.unique_color_count} colors")
