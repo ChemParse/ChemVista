@@ -1,4 +1,0 @@
-# Ignore all test output files
-*
-# But keep this .gitignore
-!.gitignore

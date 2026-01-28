@@ -7,7 +7,7 @@ import numpy as np
 import pyvista as pv
 from nx_ase import Molecule, ScalarField, Trajectory
 
-from .renderer import MoleculeRenderer, ScalarFieldRenderer, load_palette
+from .renderer import MoleculeRenderer, ScalarFieldRenderer
 from .renderer.render_settings import (MoleculeRenderSettings,
                                        ScalarFieldRenderSettings)
 from .scene_objects import (MoleculeObject, ScalarFieldObject, SceneObject,
@@ -46,28 +46,6 @@ class SceneManager():
         for node_path, tree_node in self.root.iter_tree():
             logger.debug(f"Setting signals for {tree_node.name}")
             tree_node.signals = value
-
-    def set_palette(self, name_or_path: str, radius_scale: float = 1.0) -> None:
-        """
-        Set the color palette for molecule rendering.
-
-        This affects all molecule renderers (static and animated) and
-        exports. Changes take effect on the next render/export.
-
-        Args:
-            name_or_path: Built-in palette name ('chemvista', 'cpk', 'jmol')
-                         or path to a custom JSON palette file.
-            radius_scale: Scale factor for atom radii (default: 1.0)
-
-        Example:
-            >>> scene_manager.set_palette("cpk")
-            >>> scene_manager.set_palette("jmol", radius_scale=0.8)
-            >>> scene_manager.set_palette("/path/to/custom_palette.json")
-        """
-        settings = load_palette(name_or_path, radius_scale)
-        self.molecule_renderer.set_atom_settings(settings)
-        logger.info(
-            f"Palette set to: {name_or_path} (radius_scale={radius_scale})")
 
     def __del__(self):
         """Cleanup resources"""
@@ -213,18 +191,12 @@ class SceneManager():
 
         obj.update_settings(settings)
 
-    def render(self, plotter: Optional[pv.Plotter] = None, **kwargs) -> Tuple[pv.Plotter, Dict[str, List]]:
-        """Render all visible objects and return actor mappings.
-
-        Returns:
-            Tuple of (plotter, actor_map) where actor_map maps object UUIDs to their actors.
-        """
+    def render(self, plotter: Optional[pv.Plotter] = None, **kwargs) -> pv.Plotter:
+        """Render all visible objects"""
         if plotter is None:
             if self.plotter is not None:
                 self.plotter.clear()
             plotter = self.plotter or self.create_plotter(**kwargs)
-
-        actor_map: Dict[str, List] = {}
 
         # Use the TreeNode's iter_visible to efficiently render only visible nodes
         for obj in self.root.iter_visible():
@@ -232,62 +204,7 @@ class SceneManager():
             if obj == self.root:
                 continue
 
-            # Render based on object type and track actors
-            if isinstance(obj, MoleculeObject):
-                actors = self.molecule_renderer.render(
-                    molecule=obj.molecule,
-                    plotter=plotter,
-                    settings=vars(obj.render_settings)
-                )
-                actor_map[obj.uuid] = actors
-            elif isinstance(obj, ScalarFieldObject):
-                actors = self.scalar_field_renderer.render(
-                    field=obj.scalar_field,
-                    plotter=plotter,
-                    settings=vars(obj.render_settings)
-                )
-                actor_map[obj.uuid] = actors
-
-        plotter.reset_camera()
-        return plotter, actor_map
-
-    def render_interpolated(self, plotter: pv.Plotter, trajectory_uuid: str, time_value: float) -> pv.Plotter:
-        """
-        Render scene with interpolated trajectory positions for smooth animation.
-
-        Args:
-            plotter: PyVista plotter to render to
-            trajectory_uuid: UUID of the trajectory to interpolate
-            time_value: Continuous time value for interpolation (0.0 to num_frames-1)
-
-        Returns:
-            The plotter with rendered scene
-        """
-        trajectory_obj = self.get_object_by_uuid(trajectory_uuid)
-
-        # Render all visible objects, with special handling for the animating trajectory
-        for obj in self.root.iter_visible():
-            # Skip root node
-            if obj == self.root:
-                continue
-
-            # Handle the animating trajectory specially
-            if obj == trajectory_obj and isinstance(obj, TrajectoryObject):
-                # Get interpolated molecule and render it
-                interp_molecule = obj.get_frame_molecule_at_time(time_value)
-                if interp_molecule is not None:
-                    self.molecule_renderer.render(
-                        molecule=interp_molecule,
-                        plotter=plotter,
-                        settings=vars(obj.render_settings)
-                    )
-                continue
-
-            # Skip trajectory's child molecules (we rendered the interpolated one above)
-            if isinstance(obj, MoleculeObject) and obj.parent == trajectory_obj:
-                continue
-
-            # Render other objects normally
+            # Render based on object type
             if isinstance(obj, MoleculeObject):
                 self.molecule_renderer.render(
                     molecule=obj.molecule,
@@ -303,62 +220,6 @@ class SceneManager():
 
         plotter.reset_camera()
         return plotter
-
-    def render_single_object(self, obj: SceneObject, plotter: pv.Plotter, visible: bool = True) -> List:
-        """Render a single object to the plotter and return its actors.
-
-        This is useful for preloading or incremental rendering.
-
-        Args:
-            obj: The scene object to render
-            plotter: The plotter to render to
-            visible: Whether actors should be visible after creation (default: True)
-                    Set to False for background preloading to avoid flash.
-
-        Returns:
-            List of VTK actors that were added
-        """
-        actors = []
-
-        # Suppress rendering during mesh creation to prevent flash
-        # This prevents the brief visibility of actors before SetVisibility(False)
-        suppress_rendering = not visible
-        vtk_iren = None
-        if suppress_rendering:
-            # Access VTK's interactor through PyVista's wrapper
-            if hasattr(plotter, 'iren') and plotter.iren is not None:
-                pv_iren = plotter.iren
-                # PyVista's iren wraps VTK's interactor
-                if hasattr(pv_iren, 'interactor') and pv_iren.interactor is not None:
-                    vtk_iren = pv_iren.interactor
-                    if hasattr(vtk_iren, 'EnableRenderOff'):
-                        vtk_iren.EnableRenderOff()
-
-        try:
-            if isinstance(obj, MoleculeObject):
-                actors = self.molecule_renderer.render(
-                    molecule=obj.molecule,
-                    plotter=plotter,
-                    settings=vars(obj.render_settings)
-                )
-            elif isinstance(obj, ScalarFieldObject):
-                actors = self.scalar_field_renderer.render(
-                    field=obj.scalar_field,
-                    plotter=plotter,
-                    settings=vars(obj.render_settings)
-                )
-
-            # Set visibility immediately after creation to prevent flash
-            if not visible:
-                for actor in actors:
-                    if hasattr(actor, 'SetVisibility'):
-                        actor.SetVisibility(False)
-        finally:
-            # Re-enable rendering
-            if vtk_iren is not None and hasattr(vtk_iren, 'EnableRenderOn'):
-                vtk_iren.EnableRenderOn()
-
-        return actors
 
     def log_tree_changes(self, message: str = ""):
         """Log the current tree structure"""
@@ -442,219 +303,3 @@ class SceneManager():
             return self.add_trajectory(nx_object, name)
         else:
             logger.error(f"Unsupported object type: {type(nx_object)}")
-
-    def export_to_glb(self, output_path: Union[str, pathlib.Path],
-                      printing_mode: bool = False,
-                      printing_resolution: int = 32,
-                      **kwargs) -> None:
-        """
-        Export the current scene to a GLB file for PowerPoint 3D and other viewers.
-
-        This method creates an Exporter instance and exports all visible objects
-        in the scene to a GLB file with proper vertex colors and transparency.
-
-        Args:
-            output_path: Path where the GLB file will be saved
-            printing_mode: If True, optimize for 3D printing (default: False)
-            printing_resolution: Mesh resolution for 3D printing (default: 32)
-            **kwargs: Additional arguments passed to Exporter.export_glb()
-                     (double_sided, alpha_mode, etc.)
-
-        Raises:
-            ValueError: If no visible objects are found in the scene
-            RuntimeError: If export fails
-
-        Example:
-            >>> scene_manager = SceneManager()
-            >>> scene_manager.load_molecule_from_cube("molecule.cube")
-            >>> # For visualization
-            >>> scene_manager.export_to_glb("output.glb")
-            >>> # For 3D printing (no gaps, higher resolution, solid)
-            >>> scene_manager.export_to_glb("output_print.glb", printing_mode=True, printing_resolution=64)
-        """
-        from .exporter import Exporter
-
-        exporter = Exporter(self)
-        exporter.export_glb(output_path, printing_mode=printing_mode,
-                            printing_resolution=printing_resolution, **kwargs)
-        mode_str = " (3D printing mode)" if printing_mode else ""
-        logger.info(f"Scene exported to {output_path}{mode_str}")
-
-    def export_animated_glb(
-        self,
-        output_path: Union[str, pathlib.Path],
-        fps: int = 10,
-        **kwargs
-    ) -> None:
-        """
-        Export the scene as an animated GLB file for PowerPoint.
-
-        This creates a PowerPoint-compatible animated 3D model using skeletal
-        animation. Trajectories in the scene will be animated, while static
-        molecules remain fixed.
-
-        Args:
-            output_path: Path where the GLB file will be saved
-            fps: Frames per second for animation (default: 10)
-            **kwargs: Additional arguments (resolution, cycle_animation, scale)
-
-        Raises:
-            ValueError: If no exportable objects found
-            RuntimeError: If export fails
-
-        Example:
-            >>> scene_manager = SceneManager()
-            >>> scene_manager.load_xyz("trajectory.xyz")
-            >>> scene_manager.export_animated_glb("animation.glb", fps=15)
-
-        Note:
-            - Scalar fields are not yet supported (warning will be shown)
-            - If multiple trajectories exist, only the first is animated
-            - PowerPoint only plays the first animation in a GLB file
-        """
-        from .exporter import Exporter
-
-        exporter = Exporter(self)
-        exporter.export_animated_glb(output_path, fps=fps, **kwargs)
-        logger.info(f"Animated scene exported to {output_path}")
-
-    def export_trajectory_animated_glb(
-        self,
-        trajectory_object,
-        output_path: Union[str, pathlib.Path],
-        fps: int = 10,
-        **kwargs
-    ) -> None:
-        """
-        Export a specific trajectory as an animated GLB file for PowerPoint.
-
-        This creates a PowerPoint-compatible animated 3D model using skeletal
-        animation, where each atom is a bone that animates through the trajectory.
-
-        Args:
-            trajectory_object: TrajectoryObject to export
-            output_path: Path where the GLB file will be saved
-            fps: Frames per second for animation (default: 10)
-            **kwargs: Additional arguments passed to Exporter
-
-        Raises:
-            ValueError: If trajectory has no frames or inconsistent atom counts
-            RuntimeError: If export fails
-
-        Example:
-            >>> scene_manager = SceneManager()
-            >>> traj = scene_manager.load_xyz("trajectory.xyz")
-            >>> scene_manager.export_trajectory_animated_glb(traj, "anim.glb", fps=15)
-
-        Note:
-            PowerPoint only plays the first animation in a GLB file.
-            All trajectory frames must have the same number of atoms.
-        """
-        from .exporter import Exporter
-
-        exporter = Exporter(self)
-        exporter.export_trajectory_animated_glb(
-            trajectory_object, output_path, fps=fps, **kwargs)
-        logger.info(f"Animated trajectory exported to {output_path}")
-
-    def export_multi_trajectory_animated_glb(
-        self,
-        trajectory_objects: List[TrajectoryObject],
-        output_path: Union[str, pathlib.Path],
-        animation_names: Optional[List[str]] = None,
-        fps: int = 10,
-        **kwargs
-    ) -> None:
-        """
-        Export multiple trajectories as separate animations in a single GLB file.
-
-        This creates a 3D model with multiple named animations that can be selected
-        in compatible viewers. All trajectories share the same mesh and skeleton
-        but have different keyframe data. Perfect for exporting related simulations
-        (e.g., different phases of a molecular motor).
-
-        Args:
-            trajectory_objects: List of TrajectoryObject instances to export
-            output_path: Path where the GLB file will be saved
-            animation_names: Optional list of names for each animation. If None, uses trajectory names
-            fps: Frames per second for all animations (default: 10)
-            **kwargs: Additional arguments (resolution, scale, etc.)
-
-        Raises:
-            ValueError: If no trajectories provided or inconsistent atom counts
-            RuntimeError: If export fails
-
-        Example:
-            >>> scene_manager = SceneManager()
-            >>> phase1 = scene_manager.load_xyz("phase1.xyz")
-            >>> phase2 = scene_manager.load_xyz("phase2.xyz")
-            >>> scene_manager.export_multi_trajectory_animated_glb(
-            ...     [phase1, phase2], "motor_phases.glb",
-            ...     animation_names=["Phase 1", "Phase 2"], fps=15)
-
-        Note:
-            - All trajectories must have the same number and type of atoms
-            - PowerPoint may only play the first animation by default
-            - Other viewers (like Windows 3D Viewer) can select animations
-            - Similar to how the T-Rex.glb has multiple animations (run, bite, etc.)
-        """
-        from .exporter import Exporter
-
-        exporter = Exporter(self)
-        exporter.export_multi_trajectory_animated_glb(
-            trajectory_objects, output_path, animation_names=animation_names, fps=fps, **kwargs
-        )
-        logger.info(f"Multi-animation trajectory exported to {output_path}")
-
-    def export_multi_trajectory_animated_glb(
-        self,
-        trajectory_objects: List[TrajectoryObject],
-        output_path: Union[str, pathlib.Path],
-        animation_names: Optional[List[str]] = None,
-        fps: int = 10,
-        **kwargs
-    ) -> None:
-        """
-        Export multiple trajectories as separate animations in a single GLB file.
-
-        This creates a multi-animation 3D model file where each trajectory becomes
-        a named animation that can be selected in compatible viewers. All animations
-        share the same mesh geometry and skeleton structure but have different
-        keyframe data.
-
-        Args:
-            trajectory_objects: List of TrajectoryObject instances to export
-            output_path: Path where the GLB file will be saved
-            animation_names: Optional list of names for each animation. If None, uses trajectory names
-            fps: Frames per second for all animations (default: 10)
-            **kwargs: Additional arguments (resolution, scale, etc.)
-
-        Raises:
-            ValueError: If no trajectories provided or inconsistent atom counts/types
-            RuntimeError: If export fails
-
-        Example:
-            >>> scene_manager = SceneManager()
-            >>> traj1 = scene_manager.load_xyz("phase1.xyz")
-            >>> traj2 = scene_manager.load_xyz("phase2.xyz")
-            >>> traj3 = scene_manager.load_xyz("phase3.xyz")
-            >>> scene_manager.export_multi_trajectory_animated_glb(
-            ...     [traj1, traj2, traj3], "motor_cycle.glb",
-            ...     animation_names=["Phase 1", "Phase 2", "Phase 3"])
-
-        Note:
-            - All trajectories must have the same number and types of atoms
-            - Each trajectory becomes a separate named animation in the file
-            - PowerPoint may only play the first animation by default
-            - Other viewers (Windows 3D Viewer, Babylon.js) support animation selection
-        """
-        from .exporter import Exporter
-
-        exporter = Exporter(self)
-        exporter.export_multi_trajectory_animated_glb(
-            trajectory_objects, output_path,
-            animation_names=animation_names,
-            fps=fps,
-            **kwargs
-        )
-        logger.info(f"Multi-animation GLB exported to {output_path}")

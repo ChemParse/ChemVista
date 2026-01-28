@@ -25,9 +25,11 @@ scipy = ">=1.11.2"
 nx-ase = {git = "https://github.com/imtambovtcev/nx_ase.git"}
 pyqt5 = ">=5.15.11"
 pyvistaqt = ">=0.11.2"
-trimesh = ">=4.0.0"
 
-vtk = ">=9.5.0"  # VTK 9.5+ required for consistent mesh merge behavior
+vtk = [
+    { version = "<9.4.0", python = "~3.10" },   # For Python 3.10 and 3.11
+    { version = ">=9.5.0", python = ">=3.12" }  # For Python 3.12 and newer
+]
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=3.2.0"

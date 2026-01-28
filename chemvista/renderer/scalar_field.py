@@ -1,6 +1,5 @@
 import numpy as np
 import pyvista as pv
-from typing import List
 from nx_ase.scalar_field import ScalarField
 from .base import Renderer
 
@@ -29,20 +28,11 @@ class ScalarFieldRenderer(Renderer):
             'grid_points_color', 'grid_points_size', 'smooth_surface',
             'show_filtered_points', 'point_value_range'
         }
-        # allow optional keys used for producing solids
-        optional = {'solid_isosurface', 'fill_holes_size'}
         return all(key in settings for key in required)
 
-    def render(self, field: ScalarField, plotter: pv.Plotter, settings: dict) -> List:
-        """Render scalar field to plotter and return list of actors.
-
-        Returns:
-            List of VTK actors that were added to the plotter.
-        """
+    def render(self, field: ScalarField, plotter: pv.Plotter, settings: dict) -> None:
         if not self.validate_settings(settings):
             raise ValueError("Invalid settings for scalar field rendering")
-
-        actors = []
 
         # Create structured grid using the field coordinates
         grid = pv.StructuredGrid(
@@ -80,61 +70,25 @@ class ScalarFieldRenderer(Renderer):
 
                     # Only try to smooth if we have valid triangles
                     if contour.n_points > 0:
-                        # Convert to triangle mesh and clean
                         try:
-                            contour = contour.triangulate()
-                        except Exception:
+                            if settings['smooth_surface']:
+                                contour = contour.subdivide(
+                                    nsub=2, subfilter='loop')
+                                contour = contour.smooth(n_iter=50)
+                        except pv.core.errors.NotAllTrianglesError:
+                            # If smoothing fails, just use the unsmoothed contour
                             pass
-                        try:
-                            contour = contour.clean()
-                        except Exception:
-                            pass
-
-                        # Optionally attempt to fill holes to make mesh watertight (best-effort)
-                        fill_size = settings.get('fill_holes_size', None)
-                        if settings.get('solid_isosurface', False) and fill_size:
-                            try:
-                                # fill_holes radius expects a float; large value closes large openings
-                                contour.fill_holes(fill_size)
-                            except Exception:
-                                # ignore if method not available / fails
-                                pass
-
-                        # Recompute normals (needed for some downstream ops and for extrusions)
-                        try:
-                            contour = contour.compute_normals(
-                                cell_normals=False, point_normals=True, inplace=False)
-                        except Exception:
-                            pass
-
-                        # If the user wants a true volumetric rendering (not a triangle surface),
-                        # allow add_volume for visualization (not for STL export). We still
-                        # produce the closed surface mesh above for exporters.
-                        if settings.get('use_volume_rendering', False):
-                            try:
-                                actor = plotter.add_volume(
-                                    grid, scalars="scalar_field", opacity=settings['opacity'])
-                                actors.append(actor)
-                                print(
-                                    f'Added volumetric rendering for isovalue {iso_value}')
-                                continue
-                            except Exception:
-                                # fallback to surface mesh if volume render fails
-                                pass
-
                         # Use the corresponding color for this isosurface
-                        color_str = colors[i].strip() if isinstance(
+                        color = colors[i].strip() if isinstance(
                             colors[i], str) else colors[i]
-                        actor = plotter.add_mesh(
+                        plotter.add_mesh(
                             contour,
-                            color=color_str,
+                            color=color,
                             opacity=settings['opacity'],
-                            show_scalar_bar=False,
-                            smooth_shading=True
+                            show_scalar_bar=False
                         )
-                        actors.append(actor)
                         print(
-                            f'Contour with isovalue {iso_value} and color {color_str} created (solid={settings.get("solid_isosurface", False)})')
+                            f'Contour with isovalue {iso_value} and color {color} created')
                     else:
                         print(
                             f"No isosurface found for value {iso_value}")
@@ -153,23 +107,21 @@ class ScalarFieldRenderer(Renderer):
 
         # Show grid surface if requested
         if settings['show_grid_surface']:
-            actor = plotter.add_mesh(
+            plotter.add_mesh(
                 grid.outline(),
                 color=settings['grid_surface_color'],
                 opacity=0.1
             )
-            actors.append(actor)
 
         # Show grid points if requested
         if settings['show_grid_points']:
-            actor = plotter.add_mesh(
+            plotter.add_mesh(
                 grid,
                 style='points',
                 point_size=settings['grid_points_size'],
                 color=settings['grid_points_color'],
                 render_points_as_spheres=True
             )
-            actors.append(actor)
 
         # Show filtered points if requested
         if settings['show_filtered_points']:
@@ -182,14 +134,11 @@ class ScalarFieldRenderer(Renderer):
             selected_points = points_flat[mask]
 
             if len(selected_points) > 0:
-                actor = plotter.add_points(
+                plotter.add_points(
                     selected_points,
                     color=settings['grid_points_color'],
                     point_size=settings['grid_points_size'],
                     render_points_as_spheres=True
                 )
-                actors.append(actor)
             else:
                 print(f"No points found in range {value_range}")
-
-        return actors

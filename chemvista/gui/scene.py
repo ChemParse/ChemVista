@@ -1,7 +1,7 @@
 # Log the visibility change
 import json
 import logging
-from typing import Optional, Dict, List
+from typing import Optional
 
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QFrame, QVBoxLayout, QWidget, QApplication, QMessageBox
@@ -9,12 +9,10 @@ from pyvistaqt import QtInteractor
 
 from ..tree_structure import TreeSignals
 from .. import SceneManager
-from ..renderer import AnimatedMoleculeRenderer
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, QPushButton, QDoubleSpinBox, QLabel, QDialogButtonBox
 
 
 logger = logging.getLogger("chemvista.scene")
-
 
 
 class SceneWidgetSignals(QObject):
@@ -54,17 +52,6 @@ class SceneWidget(QWidget):
         self.scene_signals = scene_widget_signals
         self.tree_signals = tree_signals
 
-        # Animation state - caches animated renderer for smooth playback
-        self._animated_renderer: Optional[AnimatedMoleculeRenderer] = None
-        self._animated_trajectory_uuid: Optional[str] = None
-
-        # Actor cache for fast visibility toggling
-        # Maps object UUID to list of VTK actors
-        self._actor_cache: Dict[str, List] = {}
-
-        # Track UUIDs that had visibility handled (to skip redundant render_changed)
-        self._visibility_handled_uuids: set = set()
-
     @property
     def scene_signals(self):
         """Get the scene widget signals object"""
@@ -94,10 +81,6 @@ class SceneWidget(QWidget):
             if hasattr(self._tree_signals, "render_changed"):
                 self._tree_signals.render_changed.connect(
                     self._on_render_changed)
-            # Connect visibility_changed for fast actor visibility toggle
-            if hasattr(self._tree_signals, "visibility_changed"):
-                self._tree_signals.visibility_changed.connect(
-                    self._on_visibility_changed)
 
     def setup_ui(self):
         """Create and setup the UI components"""
@@ -131,125 +114,12 @@ class SceneWidget(QWidget):
             logger.info("Refreshing view")
             logger.debug(f'Camera position: {camera.position}')
             self.plotter.clear()
-
-            # Clear caches when doing full refresh
-            self._clear_animation_cache()
-            self._clear_actor_cache()
-
-            # Render and populate actor cache
-            _, self._actor_cache = self.scene_manager.render(self.plotter)
-            logger.debug(f"Actor cache populated with {len(self._actor_cache)} objects")
-
+            self.scene_manager.render(self.plotter)
             self.plotter.update()
             self.plotter.camera = camera
             self.scene_signals.view_updated.emit()
         except Exception as e:
-            logger.error(f"Error refreshing view: {e}")
-
-    def refresh_interpolated_view(self, trajectory_uuid: str, time_value: float):
-        """
-        Update the 3D visualization with interpolated trajectory positions.
-
-        Uses cached AnimatedMoleculeRenderer for fast in-place mesh updates.
-        """
-        try:
-            from ..scene_objects import TrajectoryObject
-
-            trajectory_obj = self.scene_manager.get_object_by_uuid(trajectory_uuid)
-            if not isinstance(trajectory_obj, TrajectoryObject):
-                logger.warning(f"Object {trajectory_uuid} is not a trajectory")
-                return
-
-            # Check if we need to set up the animated renderer
-            if (self._animated_renderer is None or
-                self._animated_trajectory_uuid != trajectory_uuid or
-                not self._animated_renderer.is_setup):
-
-                logger.debug(f"Setting up animated renderer for trajectory {trajectory_uuid}")
-                self._setup_animated_renderer(trajectory_obj)
-
-            # Get interpolated positions and update meshes in-place
-            positions = trajectory_obj.get_interpolated_positions(time_value)
-            if positions is not None:
-                self._animated_renderer.update_positions(positions)
-                self.scene_signals.view_updated.emit()
-
-        except Exception as e:
-            logger.error(f"Error refreshing interpolated view: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def _setup_animated_renderer(self, trajectory_obj) -> None:
-        """Set up the animated renderer for a trajectory"""
-        import time
-        start_time = time.time()
-
-        from ..scene_objects import TrajectoryObject, MoleculeObject, ScalarFieldObject
-
-        # Store camera before clearing
-        camera = self.plotter.camera
-
-        # Clear plotter and create fresh animated renderer
-        self.plotter.clear()
-
-        if self._animated_renderer:
-            self._animated_renderer.clear()
-
-        self._animated_renderer = AnimatedMoleculeRenderer()
-        # Copy palette settings from molecule_renderer to animated renderer
-        self._animated_renderer.atoms_settings = self.scene_manager.molecule_renderer.atoms_settings.copy()
-        self._animated_renderer.bond_settings = self.scene_manager.molecule_renderer.bond_settings.copy()
-        self._animated_trajectory_uuid = trajectory_obj.uuid
-
-        # Get first frame molecule as base for the animated mesh
-        frames = list(trajectory_obj.children)
-        if not frames:
-            logger.warning("Trajectory has no frames")
-            return
-
-        base_molecule = frames[0].molecule
-        settings = vars(trajectory_obj.render_settings)
-
-        # Setup animated renderer for the trajectory
-        self._animated_renderer.setup(base_molecule, self.plotter, settings)
-
-        # Also render other visible objects (non-trajectory) using standard renderer
-        for obj in self.scene_manager.root.iter_visible():
-            if obj == self.scene_manager.root:
-                continue
-
-            # Skip the animating trajectory and its children
-            if obj == trajectory_obj:
-                continue
-            if isinstance(obj, MoleculeObject) and obj.parent == trajectory_obj:
-                continue
-
-            # Render other objects normally
-            if isinstance(obj, MoleculeObject):
-                self.scene_manager.molecule_renderer.render(
-                    molecule=obj.molecule,
-                    plotter=self.plotter,
-                    settings=vars(obj.render_settings)
-                )
-            elif isinstance(obj, ScalarFieldObject):
-                self.scene_manager.scalar_field_renderer.render(
-                    field=obj.scalar_field,
-                    plotter=self.plotter,
-                    settings=vars(obj.render_settings)
-                )
-
-        # Restore camera instead of reset (faster)
-        self.plotter.camera = camera
-
-        elapsed = time.time() - start_time
-        logger.info(f"Animated renderer setup complete in {elapsed:.3f}s")
-
-    def _clear_animation_cache(self) -> None:
-        """Clear the animation renderer cache"""
-        if self._animated_renderer:
-            self._animated_renderer.clear()
-        self._animated_renderer = None
-        self._animated_trajectory_uuid = None
+            import logging
 
     def reset_camera(self):
         """Reset the camera to show all objects"""
@@ -268,119 +138,11 @@ class SceneWidget(QWidget):
             self.plotter.update()
 
     def _on_render_changed(self, uuid):
-        """Handle render changes from the scene manager.
-
-        This is called when render settings change OR visibility changes.
-        Skip if we already handled this UUID via visibility_changed (fast path).
-        """
-        # Check if this was already handled by _on_visibility_changed
-        if uuid in self._visibility_handled_uuids:
-            self._visibility_handled_uuids.discard(uuid)
-            logger.debug(f"Skipping render_changed for {uuid} - already handled by visibility toggle")
-            return
-
-        logger.info(f"Render changed for {uuid} - refreshing view")
+        """Handle render changes from the scene manager"""
+        logger.info(
+            f"Render changed for {uuid} - refreshing view")
         # Refresh the view when rendering needs to be updated
         self.refresh_view()
-
-    def _on_visibility_changed(self, uuid: str, visible: bool):
-        """Handle visibility changes - use fast actor toggle if possible.
-
-        This is called when only visibility changes (not settings).
-        Uses cached actors for O(1) visibility toggle instead of full re-render.
-
-        For container objects (TrajectoryObject), this toggles visibility of all
-        descendant actors that are in the cache, respecting each child's own
-        visibility state.
-        """
-        from ..scene_objects import TrajectoryObject, MoleculeObject, ScalarFieldObject
-
-        obj = self.scene_manager.get_object_by_uuid(uuid)
-        if obj is None:
-            return
-
-        # Collect all (uuid, should_be_visible) pairs that need visibility toggling
-        uuids_to_toggle = []
-
-        # For container objects (like TrajectoryObject), collect all descendant UUIDs
-        # When parent becomes visible, children should only be visible if their own
-        # visibility is also True. When parent becomes invisible, all children hide.
-        if isinstance(obj, TrajectoryObject):
-            # Toggle all cached children (MoleculeObjects in the trajectory)
-            for child in obj.children:
-                if child.uuid in self._actor_cache:
-                    # Child should be visible only if parent is visible AND child is visible
-                    child_visible = visible and child.visible
-                    uuids_to_toggle.append((child.uuid, child_visible))
-                # Also handle scalar fields attached to molecules in trajectory
-                if isinstance(child, MoleculeObject):
-                    for grandchild in child.children:
-                        if grandchild.uuid in self._actor_cache:
-                            # Grandchild visible only if all ancestors are visible
-                            grandchild_visible = visible and child.visible and grandchild.visible
-                            uuids_to_toggle.append((grandchild.uuid, grandchild_visible))
-        else:
-            # For leaf objects, just toggle themselves
-            if uuid in self._actor_cache:
-                uuids_to_toggle.append((uuid, visible))
-
-        # If we have actors to toggle, do the fast path
-        if uuids_to_toggle:
-            logger.debug(f"Fast visibility toggle for {uuid} ({len(uuids_to_toggle)} actors): {visible}")
-            for toggle_uuid, should_be_visible in uuids_to_toggle:
-                for actor in self._actor_cache[toggle_uuid]:
-                    if hasattr(actor, 'SetVisibility'):
-                        actor.SetVisibility(should_be_visible)
-            self.plotter.render()
-            self.scene_signals.view_updated.emit()
-            # Mark as handled so we skip the subsequent render_changed
-            self._visibility_handled_uuids.add(uuid)
-        else:
-            # Object not in cache - either invisible or not yet rendered
-            logger.debug(f"Object {uuid} not in actor cache, visibility: {visible}")
-            if visible:
-                # Object becoming visible but not in cache - try to preload it
-                self._preload_single_object(uuid, visible=True)
-                # Mark as handled if preload succeeded
-                if uuid in self._actor_cache:
-                    self._visibility_handled_uuids.add(uuid)
-
-    def _clear_actor_cache(self):
-        """Clear the actor cache"""
-        self._actor_cache.clear()
-        logger.debug("Actor cache cleared")
-
-    def _preload_single_object(self, uuid: str, visible: bool = False):
-        """Preload a single object into the cache.
-
-        Args:
-            uuid: Object UUID to preload
-            visible: Whether to make the actors visible after loading
-        """
-        if uuid in self._actor_cache:
-            # Already cached - just update visibility if needed
-            if visible:
-                for actor in self._actor_cache[uuid]:
-                    if hasattr(actor, 'SetVisibility'):
-                        actor.SetVisibility(True)
-                self.plotter.render()
-            return
-
-        obj = self.scene_manager.get_object_by_uuid(uuid)
-        if obj is None:
-            return
-
-        try:
-            # Render the object with visibility set immediately to prevent flash
-            # The render_single_object will set visibility before returning
-            actors = self.scene_manager.render_single_object(obj, self.plotter, visible=visible)
-            if actors:
-                self._actor_cache[uuid] = actors
-                if visible:
-                    self.plotter.render()
-                logger.debug(f"Preloaded object {uuid} with {len(actors)} actors, visible={visible}")
-        except Exception as e:
-            logger.warning(f"Failed to preload object {uuid}: {e}")
 
     def take_screenshot(self, filename=None):
         """

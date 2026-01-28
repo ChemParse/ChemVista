@@ -31,11 +31,6 @@ tests/test_orca.cpython-310-*
 *.csv
 *.png
 
-# 3D model exports
-*.glb
-*.gltf
-*.stl
-
 # Logs and other temporary files
 *.log
 *.tmp
@@ -61,5 +56,3 @@ dist/
 *.egg-info/
 
 .vscode/
-
-CLAUDE.md
