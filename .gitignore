@@ -30,6 +30,9 @@ tests/test_orca.cpython-310-*
 # CSV and rendered files
 *.csv
 *.png
+# Don't ignore image/ and its contents (override *.png)
+!image/
+!image/**
 
 # 3D model exports
 *.glb
