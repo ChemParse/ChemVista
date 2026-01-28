@@ -33,10 +33,10 @@ vtk = ">=9.5.0"  # VTK 9.5+ required for consistent mesh merge behavior
 pre-commit = ">=3.2.0"
 pytest-cov = ">=4.1.0"
 ipykernel = ">=6.25.2"
-
-[tool.poetry.dev-dependencies]
 pytest = ">=8.3.4"
 pytest-qt = ">=4"
+sphinx = ">=7.0.0"
+sphinx-rtd-theme = ">=2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
